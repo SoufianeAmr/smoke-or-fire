@@ -1,0 +1,31 @@
+# Render Blueprint: the verdict engine as a free web service over HTTPS.
+# Render → New → Blueprint → pick this repo. The service URL is https://<name>.onrender.com.
+#
+# Free services sleep after 15 minutes without requests: an external ping (cron-job.org,
+# GET /health every 10 minutes) keeps it awake.
+#
+# The engine reads ../data, and Render hides files outside a service's root directory,
+# so the service root is the repo root and the commands run inside engine/.
+# The disk is wiped on every deploy: after one, live wind takes a few minutes to load
+# (/verdict?mode=live answers 503 until then). buildFilter skips deploys for web-only changes.
+services:
+  - type: web
+    name: smoke-or-fire-engine
+    runtime: python
+    plan: free
+    region: virginia
+    buildCommand: pip install uv && cd engine && uv sync --frozen --no-dev
+    startCommand: cd engine && .venv/bin/uvicorn smoke_engine.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    autoDeploy: true
+    buildFilter:
+      paths:
+        - engine/**
+        - data/places/**
+        - data/replay/**
+        - render.yaml
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.13"
+      - key: UV_PYTHON_PREFERENCE
+        value: only-system
