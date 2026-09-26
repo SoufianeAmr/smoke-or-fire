@@ -1,6 +1,6 @@
 // Everything the verdict screens (7a–7d) say, from the engine's answer. Pure: no React, no DOM.
 import { translate, type Lang, type StringKey, type Vars } from "../i18n";
-import type { AqhiCategory, Confidence, Fire, VerdictJson } from "./types";
+import type { AqhiCategory, Confidence, Fire, LastSeen, VerdictJson } from "./types";
 
 const NBSP = String.fromCharCode(0xa0); // no-break space: keeps a fire's name on one line in French
 
@@ -22,6 +22,8 @@ export interface VerdictView {
     fireLabel: string | null;
     approachLabel: string | null;
     approachKm: string | null;
+    /** The fire's last NASA FIRMS detection: satellite, latency and age. Null when it was not FIRMS. */
+    badge: string | null;
     edgeLabel: (hoursAgo: number, area: string | null) => string;
     legend: { path: string; hour: string; corridor: string | null; closest: string | null; fire: string | null; you: string; otherHeights: string };
   };
@@ -79,6 +81,13 @@ export function verdictView(json: VerdictJson, lang: Lang): VerdictView {
   const fireTitle = (f: Fire) =>
     f.name ? t("fire.title.named", { name: lang === "fr" ? f.name.replace(/ /g, NBSP) : f.name }) : f.nearCommunity ? t("fire.title.near", { community: f.nearCommunity }) : t("fire.title.in", { where: area(f.province, "in") ?? "" });
   const hours = (h: number, one: StringKey, many: StringKey, under: StringKey) => (h <= 0 ? t(under) : h === 1 ? t(one) : t(many, { h }));
+  // How long ago a satellite saw the fire: minutes under an hour, otherwise hours.
+  const ago = (s: LastSeen) => {
+    const minutes = Math.max(1, s.minutesAgo);
+    return minutes < 60 ? t(minutes === 1 ? "time.minutes.one" : "time.minutes", { n: minutes }) : t(s.hoursAgo === 1 ? "time.hours.one" : "time.hours", { n: s.hoursAgo });
+  };
+  const agoShort = (s: LastSeen) => (s.minutesAgo < 60 ? t("time.short.minutes", { n: Math.max(1, s.minutesAgo) }) : t("time.short.hours", { n: s.hoursAgo }));
+  const firmsSighting = fire?.lastSeen?.latencyClass ? fire.lastSeen : null;
 
   // Band
   const band =
@@ -141,6 +150,13 @@ export function verdictView(json: VerdictJson, lang: Lang): VerdictView {
     fireLabel: fire ? fireTitle(fire) : null,
     approachLabel: variant === "7a" && approach ? hours(approach.hoursAgo, "map.hoursAgo.one", "map.hoursAgo", "map.hoursAgo.under") : null,
     approachKm: variant === "7c" && approach ? t("unit.km", { km: approach.km }) : null,
+    badge: firmsSighting
+      ? t("map.badge", {
+          satellite: [firmsSighting.instrument, firmsSighting.satellite].filter(Boolean).join(" "),
+          latency: t(`latency.${firmsSighting.latencyClass}` as StringKey),
+          time: agoShort(firmsSighting),
+        })
+      : null,
     edgeLabel: (h, code) => {
       const ago = hours(h, "map.hoursAgo.one", "map.hoursAgo", "map.hoursAgo.under");
       const where = area(code, "short");
@@ -212,7 +228,9 @@ export function verdictView(json: VerdictJson, lang: Lang): VerdictView {
   const edge = json.path.stoppedAtGridEdge ? " " + t("why.gridEdge") : "";
   const traced = { title: t("why.traced", { n: json.path.hoursTraced }), body: (variant === "7a" ? t("why.traced.body", { town }) : reached) + edge };
   const seen = (f: Fire) =>
-    f.lastSeenHoursAgo === null ? t("why.onList") : f.lastSeenHoursAgo <= 1 ? t("why.seen.one") : t("why.seen", { n: f.lastSeenHoursAgo });
+    f.lastSeen?.satellite
+      ? t("why.seenBy", { satellite: f.lastSeen.satellite, time: ago(f.lastSeen) })
+      : f.lastSeenHoursAgo === null ? t("why.onList") : f.lastSeenHoursAgo <= 1 ? t("why.seen.one") : t("why.seen", { n: f.lastSeenHoursAgo });
   const overFire = () => {
     const h = approach!.hoursAgo;
     return t(h <= 0 ? "why.over.under" : h === 1 ? "why.over.one" : "why.over", { h, fire: fireThe(fire!) }) + " " + seen(fire!);

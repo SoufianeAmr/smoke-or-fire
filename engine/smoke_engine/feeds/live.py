@@ -5,7 +5,11 @@ One refresh is 693 Open-Meteo calls, over the free tier's 600 a minute, so it
 takes about 2 minutes; requests never wait for it, they read the last grid.
 Each refresh is saved to disk; after a restart a saved grid under 6 hours old
 is used at once, so live mode answers immediately.
-Fires and AQHI: fetched when asked, cached for 15 minutes.
+NASA FIRMS: the 4 near-real-time sources are refreshed in another background
+thread every 10 minutes, and saved to disk the same way. Detections older than
+30 minutes count as FIRMS being down. The MAP_KEY is masked in every log line,
+error and saved file.
+CWFIS fires and AQHI: fetched when asked, cached for 15 minutes.
 """
 
 import json
@@ -29,10 +33,28 @@ WIND_RETRY_AFTER = timedelta(minutes=5)
 SAVED_WIND_MAX_AGE = timedelta(hours=6)
 CACHE_FOR = timedelta(minutes=15)
 WIND_FILE = Path(__file__).resolve().parents[2] / ".cache" / "live-wind.json"
+FIRMS_REFRESH_EVERY = timedelta(minutes=10)
+FIRMS_MAX_AGE = timedelta(minutes=30)
+FIRMS_DAY_RANGE = 2  # today and yesterday (UTC); the verdict keeps the 24 hours before the check
+FIRMS_FILE = WIND_FILE.with_name("live-firms.json")
 
 
 def _utc_now() -> datetime:
     return datetime.now(timezone.utc)
+
+
+class _MaskKey(logging.Filter):
+    """Replaces the MAP_KEY in log records (httpx logs every request URL at INFO)."""
+
+    def __init__(self, key: str):
+        super().__init__()
+        self._key = key
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        message = record.getMessage()
+        if self._key in message:
+            record.msg, record.args = sources.mask_key(message, self._key), None
+        return True
 
 
 def _bucket(t: datetime) -> datetime:
@@ -46,6 +68,8 @@ class LiveFeeds:
         self,
         client: httpx.Client | None = None,
         wind_file: Path = WIND_FILE,
+        firms_file: Path = FIRMS_FILE,
+        firms_key: str | None = None,
         now=_utc_now,
         sleep=time.sleep,
     ):
@@ -57,6 +81,14 @@ class LiveFeeds:
         self._wind: list | None = None
         self._wind_fetched_at: datetime | None = None
         self._wind_error: str | None = None
+        self._firms_file = Path(firms_file)
+        self._firms_key = firms_key
+        self._firms: dict[str, str] | None = None
+        self._firms_fetched_at: datetime | None = None
+        self._firms_error: str | None = None
+        if firms_key:
+            for name in ("httpx", "httpcore"):
+                logging.getLogger(name).addFilter(_MaskKey(firms_key))
         self._cache: dict = {}
         self._stop = threading.Event()
         self._thread: threading.Thread | None = None
@@ -72,8 +104,10 @@ class LiveFeeds:
 
     def start(self) -> None:
         self._load_saved_wind()
+        self._load_saved_firms()
         self._thread = threading.Thread(target=self._refresh_loop, name="wind-refresh", daemon=True)
         self._thread.start()
+        threading.Thread(target=self._firms_loop, name="firms-refresh", daemon=True).start()
 
     def stop(self) -> None:
         self._stop.set()
@@ -134,6 +168,71 @@ class LiveFeeds:
         )
         os.replace(partial, self._wind_file)
 
+    # --- background FIRMS refresh --------------------------------------------------------------
+
+    def _load_saved_firms(self) -> None:
+        try:
+            saved = json.loads(self._firms_file.read_text(encoding="utf-8"))
+            fetched_at = datetime.fromisoformat(saved["fetchedAt"].replace("Z", "+00:00"))
+            answers = saved["answers"]
+        except (OSError, ValueError, KeyError) as error:
+            log.info("no saved FIRMS detections used (%s)", type(error).__name__)
+            return
+        age = self._now() - fetched_at
+        if age >= FIRMS_MAX_AGE or set(answers) != set(sources.FIRMS_LIVE_SOURCES):
+            log.info("saved FIRMS detections from %s not used (%.0f min old)", saved["fetchedAt"], age.total_seconds() / 60)
+            return
+        with self._lock:
+            self._firms, self._firms_fetched_at = answers, fetched_at
+        log.info("using saved FIRMS detections from %s (%.0f min old)", saved["fetchedAt"], age.total_seconds() / 60)
+
+    def _firms_loop(self) -> None:
+        with self._lock:
+            fetched_at = self._firms_fetched_at
+        first_wait = (fetched_at + FIRMS_REFRESH_EVERY - self._now()) if fetched_at else timedelta(0)
+        self._stop.wait(max(0.0, first_wait.total_seconds()))
+        while not self._stop.is_set():
+            try:
+                self.refresh_firms()
+            except FeedUnavailable:
+                pass  # logged by refresh_firms; the last good detections stay until they are 30 minutes old
+            self._stop.wait(FIRMS_REFRESH_EVERY.total_seconds())
+
+    def refresh_firms(self) -> None:
+        """Fetch the 4 near-real-time FIRMS sources; all must answer with CSV, or the last good set is kept."""
+        key = self._firms_key
+        answers = {}
+        try:
+            if not key:
+                raise FeedUnavailable("FIRMS_MAP_KEY is not set")
+            for source in sources.FIRMS_LIVE_SOURCES:
+                response = self._client.get(sources.firms_area_url(key, source, FIRMS_DAY_RANGE))
+                response.raise_for_status()
+                if not response.text.startswith("latitude,"):
+                    raise FeedUnavailable(f"{source}: FIRMS answered without CSV: {response.text[:120]!r}")
+                answers[source] = response.text
+        except (httpx.HTTPError, FeedUnavailable) as error:
+            message = sources.mask_key(f"{type(error).__name__}: {error}", key)
+            with self._lock:
+                self._firms_error = message
+            log.warning("FIRMS refresh failed: %s", message)
+            raise FeedUnavailable(message) from None
+        fetched_at = self._now()
+        with self._lock:
+            self._firms, self._firms_fetched_at, self._firms_error = answers, fetched_at, None
+        self._save_firms(answers, fetched_at)
+        rows = sum(max(0, len(text.strip().splitlines()) - 1) for text in answers.values())
+        log.info("FIRMS refreshed: %d detections from %d sources", rows, len(answers))
+
+    def _save_firms(self, answers: dict[str, str], fetched_at: datetime) -> None:
+        self._firms_file.parent.mkdir(parents=True, exist_ok=True)
+        partial = self._firms_file.with_suffix(".partial")
+        partial.write_text(
+            json.dumps({"fetchedAt": fetched_at.strftime("%Y-%m-%dT%H:%M:%SZ"), "answers": answers}, separators=(",", ":")),
+            encoding="utf-8",
+        )
+        os.replace(partial, self._firms_file)
+
     def status(self) -> dict:
         with self._lock:
             hours = self._wind[0]["hourly"]["time"] if self._wind else []
@@ -142,6 +241,8 @@ class LiveFeeds:
                 "windFetchedAt": self._wind_fetched_at.strftime("%Y-%m-%dT%H:%M:%SZ") if self._wind_fetched_at else None,
                 "windCovers": [hours[0] + "Z", hours[-1] + "Z"] if hours else None,
                 "windLastError": self._wind_error,
+                "firmsFetchedAt": self._firms_fetched_at.strftime("%Y-%m-%dT%H:%M:%SZ") if self._firms_fetched_at else None,
+                "firmsLastError": self._firms_error,
             }
 
     # --- feed interface ------------------------------------------------------------------------
@@ -151,6 +252,12 @@ class LiveFeeds:
             if self._wind is None:
                 raise FeedUnavailable("the live wind grid has not loaded yet")
             return self._wind
+
+    def firms(self, start, end):
+        with self._lock:
+            if self._firms is None or self._now() - self._firms_fetched_at >= FIRMS_MAX_AGE:
+                raise FeedUnavailable("no FIRMS detections fetched in the last 30 minutes")
+            return self._firms
 
     def active_fires(self, at):
         slot = _bucket(at)

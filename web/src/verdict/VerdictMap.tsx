@@ -125,6 +125,13 @@ export function VerdictMap({ json, view }: { json: VerdictJson; view: VerdictVie
       </svg>
       <Legend view={view} />
       <FireRow view={view} />
+      {view.map.badge && (
+        <p style={{ margin: "0", padding: "0 20px 16px" }}>
+          <span style={{ display: "inline-block", padding: "4px 10px", borderRadius: "8px", background: "#F3EEE6", color: "#4F5561", fontSize: "16px", lineHeight: "1.35", fontVariantNumeric: "tabular-nums" }}>
+            {view.map.badge}
+          </span>
+        </p>
+      )}
     </section>
   );
 }

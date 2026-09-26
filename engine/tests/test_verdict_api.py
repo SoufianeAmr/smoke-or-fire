@@ -12,6 +12,7 @@ from tests.fakes import (
     FakeFeeds,
     active_fire,
     aqhi_reading,
+    firms_detection,
     hotspot,
     uniform_wind,
     wind_by_height,
@@ -95,8 +96,8 @@ def test_the_biggest_wind_shift_is_timed():
     assert shift == {"time": "2025-08-25T03:00:00Z", "hoursAgo": 9, "fromDeg": 270, "toDeg": 200}
 
 
-def test_fire_data_down_is_an_error_not_no_fires():
-    feeds = FakeFeeds(wind=uniform_wind(from_deg=270, speed_ms=5), down={"hotspots"})
+def test_both_fire_sources_down_is_an_error_not_no_fires():
+    feeds = FakeFeeds(wind=uniform_wind(from_deg=270, speed_ms=5), down={"hotspots", "firms"})
 
     response = get_verdict(feeds)
 
@@ -226,3 +227,78 @@ def test_heights_that_disagree_lower_confidence_by_one_level():
     body = get_verdict(feeds).json()
 
     assert (body["verdict"], body["confidence"], body["heights"]["agree"]) == ("drifting", "medium", False)
+
+
+# FIRE_WEST_OF_MONCTON, 0.5 km (or 2 km) farther east.
+KM_EAST = 1 / KM_PER_DEGREE_LON
+
+
+def test_a_firms_detection_and_a_cwfis_hotspot_within_1_km_and_30_minutes_are_one_detection():
+    lat, lon = FIRE_WEST_OF_MONCTON["lat"], FIRE_WEST_OF_MONCTON["lon"]
+    feeds = FakeFeeds(
+        wind=uniform_wind(from_deg=270, speed_ms=5),
+        hotspots=[FIRE_WEST_OF_MONCTON],  # seen 06:00 UTC
+        firms=[firms_detection(lat, lon + 0.5 * KM_EAST, seen="2025-08-25T06:20:00Z")],
+    )
+
+    fire = get_verdict(feeds).json()["closestApproach"]["fire"]
+
+    assert fire["detections"] == {"total": 1, "bySource": {"FIRMS": 0, "CWFIS": 0, "both": 1}}
+
+
+def test_a_firms_detection_2_km_from_a_cwfis_hotspot_is_a_second_detection_of_the_same_fire():
+    lat, lon = FIRE_WEST_OF_MONCTON["lat"], FIRE_WEST_OF_MONCTON["lon"]
+    feeds = FakeFeeds(
+        wind=uniform_wind(from_deg=270, speed_ms=5),
+        hotspots=[FIRE_WEST_OF_MONCTON],
+        firms=[firms_detection(lat, lon + 2 * KM_EAST, seen="2025-08-25T06:00:00Z")],
+    )
+
+    fire = get_verdict(feeds).json()["closestApproach"]["fire"]
+
+    assert fire["detections"] == {"total": 2, "bySource": {"FIRMS": 1, "CWFIS": 1, "both": 0}}
+
+
+def test_firms_down_gives_the_verdict_from_cwfis_alone():
+    feeds = FakeFeeds(wind=uniform_wind(from_deg=270, speed_ms=5), hotspots=[FIRE_WEST_OF_MONCTON], down={"firms"})
+
+    response = get_verdict(feeds)
+
+    body = response.json()
+    assert (response.status_code, body["verdict"], body["sources"]["cwfis"]["ok"], body["sources"]["firms"]["ok"]) == (
+        200, "drifting", True, False
+    )
+
+
+def test_cwfis_down_gives_the_verdict_from_firms_alone():
+    lat, lon = FIRE_WEST_OF_MONCTON["lat"], FIRE_WEST_OF_MONCTON["lon"]
+    feeds = FakeFeeds(
+        wind=uniform_wind(from_deg=270, speed_ms=5),
+        firms=[firms_detection(lat, lon, seen="2025-08-25T06:12:00Z")],
+        down={"hotspots"},
+    )
+
+    body = get_verdict(feeds).json()
+
+    assert (body["verdict"], body["sources"]["cwfis"]["ok"], body["sources"]["firms"]["ok"]) == ("drifting", False, True)
+
+
+def test_a_fires_last_sighting_names_the_satellite_and_how_fast_its_data_came_in():
+    # CWFIS saw the fire at 06:00; NOAA-21 saw it again at 11:20, 40 minutes before the noon check (ultra real-time).
+    lat, lon = FIRE_WEST_OF_MONCTON["lat"], FIRE_WEST_OF_MONCTON["lon"]
+    feeds = FakeFeeds(
+        wind=uniform_wind(from_deg=270, speed_ms=5),
+        hotspots=[FIRE_WEST_OF_MONCTON],
+        firms=[firms_detection(lat, lon, seen="2025-08-25T11:20:00Z", satellite="N21", version="2.0URT")],
+    )
+
+    fire = get_verdict(feeds).json()["closestApproach"]["fire"]
+
+    assert fire["lastSeen"] == {
+        "time": "2025-08-25T11:20:00Z",
+        "hoursAgo": 1,
+        "minutesAgo": 40,
+        "satellite": "NOAA-21",
+        "instrument": "VIIRS",
+        "latencyClass": "URT",
+    }

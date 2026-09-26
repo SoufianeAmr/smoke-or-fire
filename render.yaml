@@ -29,3 +29,6 @@ services:
         value: "3.13"
       - key: UV_PYTHON_PREFERENCE
         value: only-system
+      # NASA FIRMS MAP_KEY: set its value in the Render dashboard, never in this file.
+      - key: FIRMS_MAP_KEY
+        sync: false

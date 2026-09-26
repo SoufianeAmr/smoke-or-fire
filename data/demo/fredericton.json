@@ -183,20 +183,35 @@
   "lat": 44.7351,
   "lon": -66.5532,
   "fire": {
-   "id": "hotspots:44.701,-65.201",
+   "id": "hotspots:44.703,-65.202",
    "cwfisIds": [],
    "name": "Long Lake",
    "locality": "West Dalhousie",
    "nearCommunity": "Hannamville",
    "province": "NS",
-   "lat": 44.7015,
-   "lon": -65.2008,
-   "km": 180,
+   "lat": 44.7025,
+   "lon": -65.2024,
+   "km": 179,
    "compass": "SE",
-   "lastSeen": "2025-08-25T07:00:00Z",
+   "lastSeen": {
+    "time": "2025-08-25T07:00:00Z",
+    "hoursAgo": 5,
+    "minutesAgo": 300,
+    "satellite": null,
+    "instrument": "MODIS",
+    "latencyClass": null
+   },
    "lastSeenHoursAgo": 5,
    "sizeHa": null,
-   "stage": null
+   "stage": null,
+   "detections": {
+    "total": 383,
+    "bySource": {
+     "FIRMS": 81,
+     "CWFIS": 92,
+     "both": 210
+    }
+   }
   }
  },
  "nearestFire": {
@@ -212,10 +227,25 @@
   "lon": -66.4733,
   "km": 117,
   "compass": "N",
-  "lastSeen": "2025-08-25T05:40:00Z",
+  "lastSeen": {
+   "time": "2025-08-25T05:40:00Z",
+   "hoursAgo": 6,
+   "minutesAgo": 380,
+   "satellite": "NOAA-21",
+   "instrument": "VIIRS-I",
+   "latencyClass": null
+  },
   "lastSeenHoursAgo": 6,
   "sizeHa": 238,
-  "stage": "OC"
+  "stage": "OC",
+  "detections": {
+   "total": 28,
+   "bySource": {
+    "FIRMS": 2,
+    "CWFIS": 14,
+    "both": 12
+   }
+  }
  },
  "heights": {
   "chosen": "100m",
@@ -658,6 +688,28 @@
    "nameEn": "Fredericton",
    "nameFr": "Fredericton",
    "km": 0
+  }
+ },
+ "sources": {
+  "cwfis": {
+   "ok": true,
+   "newestDetection": "2025-08-25T07:00:00Z"
+  },
+  "firms": {
+   "ok": true,
+   "newestDetection": "2025-08-25T06:31:00Z",
+   "satellitesUsed": [
+    "Aqua",
+    "NOAA-20",
+    "Suomi NPP",
+    "Terra"
+   ],
+   "countsByLatencyClass": {
+    "URT": 0,
+    "RT": 0,
+    "NRT": 0,
+    "SP": 312
+   }
   }
  }
 }

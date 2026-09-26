@@ -7,6 +7,8 @@ the same queries as live mode (smoke_engine/feeds/sources.py). The files are
 committed; replay mode never goes to the network.
 
 Covers arrival times on 2025-08-25 (UTC): wind from 2025-08-24 00:00 UTC.
+Ends with the NASA FIRMS archive download (scripts/fetch_firms_replay.py), which
+needs FIRMS_MAP_KEY and adds its files to the manifest.
 """
 
 import csv
@@ -16,6 +18,7 @@ from datetime import datetime, timezone
 
 import httpx
 
+from scripts import fetch_firms_replay
 from smoke_engine.feeds import sources
 from smoke_engine.feeds.replay import REPLAY_DIR
 from smoke_engine.wind import GRID_POINTS
@@ -110,6 +113,7 @@ def main() -> None:
             },
         },
     })
+    fetch_firms_replay.main()
 
 
 if __name__ == "__main__":

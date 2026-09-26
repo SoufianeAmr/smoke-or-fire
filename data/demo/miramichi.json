@@ -246,7 +246,15 @@
    "lastSeen": null,
    "lastSeenHoursAgo": null,
    "sizeHa": 0.2,
-   "stage": "BH"
+   "stage": "BH",
+   "detections": {
+    "total": 0,
+    "bySource": {
+     "FIRMS": 0,
+     "CWFIS": 0,
+     "both": 0
+    }
+   }
   }
  },
  "nearestFire": {
@@ -265,7 +273,15 @@
   "lastSeen": null,
   "lastSeenHoursAgo": null,
   "sizeHa": 1403,
-  "stage": "BH"
+  "stage": "BH",
+  "detections": {
+   "total": 0,
+   "bySource": {
+    "FIRMS": 0,
+    "CWFIS": 0,
+    "both": 0
+   }
+  }
  },
  "heights": {
   "chosen": "100m",
@@ -796,6 +812,28 @@
    "nameEn": "Miramichi",
    "nameFr": "Miramichi",
    "km": 0
+  }
+ },
+ "sources": {
+  "cwfis": {
+   "ok": true,
+   "newestDetection": "2025-08-25T07:00:00Z"
+  },
+  "firms": {
+   "ok": true,
+   "newestDetection": "2025-08-25T06:31:00Z",
+   "satellitesUsed": [
+    "Aqua",
+    "NOAA-20",
+    "Suomi NPP",
+    "Terra"
+   ],
+   "countsByLatencyClass": {
+    "URT": 0,
+    "RT": 0,
+    "NRT": 0,
+    "SP": 312
+   }
   }
  }
 }

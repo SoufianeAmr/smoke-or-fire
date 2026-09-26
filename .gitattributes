@@ -1,0 +1,2 @@
+# Raw NASA FIRMS answers: keep the bytes exactly as downloaded (no line-ending conversion).
+data/replay/*/firms/*.csv -text

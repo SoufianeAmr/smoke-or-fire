@@ -1,7 +1,9 @@
 """The queries the engine sends to each outside service, shared by live mode and the replay download."""
 
+import os
 import time
 from datetime import datetime
+from pathlib import Path
 
 from smoke_engine.wind import GRID_LAT_MAX, GRID_LAT_MIN, GRID_LON_MAX, GRID_LON_MIN, HEIGHTS, WIND_MODEL
 
@@ -124,3 +126,40 @@ def readings_params(station_id: str, start: datetime, end: datetime) -> dict:
         "sortby": "-observation_datetime",
         "limit": 100,
     }
+
+
+# --- NASA FIRMS: satellite fire detections (VIIRS and MODIS) -------------------------------------
+# The MAP_KEY sits inside every URL: never print, log or save a URL or error without mask_key().
+FIRMS_API = "https://firms.modaps.eosdis.nasa.gov/api"
+FIRMS_BBOX = "-72,41,-56,51"  # west,south,east,north: the wind grid
+FIRMS_LIVE_SOURCES = ("VIIRS_NOAA20_NRT", "VIIRS_NOAA21_NRT", "VIIRS_SNPP_NRT", "MODIS_NRT")  # URT + RT + NRT
+FIRMS_ARCHIVE_SOURCES = ("VIIRS_NOAA20_SP", "VIIRS_SNPP_SP", "MODIS_SP")  # FIRMS has no NOAA-21 archive
+FIRMS_KEY_FILE = Path(__file__).resolve().parents[2] / ".env"
+
+
+def firms_key() -> str | None:
+    """FIRMS_MAP_KEY from the environment (Render), or from engine/.env (local, gitignored)."""
+    if os.environ.get("FIRMS_MAP_KEY"):
+        return os.environ["FIRMS_MAP_KEY"]
+    try:
+        lines = FIRMS_KEY_FILE.read_text(encoding="utf-8").splitlines()
+    except OSError:
+        return None
+    for line in lines:
+        name, _, value = line.partition("=")
+        if name.strip() == "FIRMS_MAP_KEY" and value.strip():
+            return value.strip()
+    return None
+
+
+def mask_key(text: str, key: str | None) -> str:
+    return text.replace(key, "***") if key else text
+
+
+def firms_area_url(key: str, source: str, day_range: int, date: str | None = None) -> str:
+    """Detections in FIRMS_BBOX: [date, date + day_range - 1], or the last day_range days up to today."""
+    return f"{FIRMS_API}/area/csv/{key}/{source}/{FIRMS_BBOX}/{day_range}" + (f"/{date}" if date else "")
+
+
+def firms_availability_url(key: str) -> str:
+    return f"{FIRMS_API}/data_availability/csv/{key}/ALL"

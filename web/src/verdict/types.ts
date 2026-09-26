@@ -4,6 +4,8 @@ export type Verdict = "drifting" | "unclear" | "unexplained";
 export type Confidence = "high" | "medium" | "low";
 export type Height = "100m" | "925hPa" | "850hPa";
 export type AqhiCategory = "low" | "moderate" | "high" | "very_high";
+/** NASA FIRMS: ultra real-time, real-time, near real-time, standard processing. */
+export type LatencyClass = "URT" | "RT" | "NRT" | "SP";
 
 export interface PathPoint {
   hoursAgo: number;
@@ -21,6 +23,16 @@ export interface Path {
   origin: { hoursAgo: number; area: string | null; km: number; compass: string };
 }
 
+/** The newest satellite detection of a fire. latencyClass is set when it came from NASA FIRMS. */
+export interface LastSeen {
+  time: string;
+  hoursAgo: number;
+  minutesAgo: number;
+  satellite: string | null;
+  instrument: string | null;
+  latencyClass: LatencyClass | null;
+}
+
 export interface Fire {
   id: string;
   cwfisIds: string[];
@@ -32,10 +44,11 @@ export interface Fire {
   lon: number;
   km: number;
   compass: string;
-  lastSeen: string | null;
+  lastSeen: LastSeen | null;
   lastSeenHoursAgo: number | null;
   sizeHa: number | null;
   stage: string | null;
+  detections: { total: number; bySource: { FIRMS: number; CWFIS: number; both: number } };
 }
 
 export interface ClosestApproach {
@@ -88,4 +101,8 @@ export interface VerdictJson {
     observedAt: string;
     station: { id: string; nameEn: string; nameFr: string; km: number };
   } | null;
+  sources: {
+    cwfis: { ok: boolean; newestDetection: string | null };
+    firms: { ok: boolean; newestDetection: string | null; satellitesUsed: string[]; countsByLatencyClass: Record<LatencyClass, number> };
+  };
 }

@@ -249,10 +249,25 @@
    "lon": -66.6335,
    "km": 132,
    "compass": "ESE",
-   "lastSeen": "2025-08-24T14:37:00Z",
+   "lastSeen": {
+    "time": "2025-08-24T14:37:00Z",
+    "hoursAgo": 21,
+    "minutesAgo": 1283,
+    "satellite": "Terra",
+    "instrument": "MODIS",
+    "latencyClass": "SP"
+   },
    "lastSeenHoursAgo": 21,
    "sizeHa": null,
-   "stage": null
+   "stage": null,
+   "detections": {
+    "total": 2,
+    "bySource": {
+     "FIRMS": 0,
+     "CWFIS": 0,
+     "both": 2
+    }
+   }
   }
  },
  "nearestFire": {
@@ -271,7 +286,15 @@
   "lastSeen": null,
   "lastSeenHoursAgo": null,
   "sizeHa": 0.1,
-  "stage": "OC"
+  "stage": "OC",
+  "detections": {
+   "total": 0,
+   "bySource": {
+    "FIRMS": 0,
+    "CWFIS": 0,
+    "both": 0
+   }
+  }
  },
  "heights": {
   "chosen": "100m",
@@ -810,6 +833,28 @@
    "nameEn": "Edmundston",
    "nameFr": "Edmundston",
    "km": 0
+  }
+ },
+ "sources": {
+  "cwfis": {
+   "ok": true,
+   "newestDetection": "2025-08-25T07:00:00Z"
+  },
+  "firms": {
+   "ok": true,
+   "newestDetection": "2025-08-25T06:31:00Z",
+   "satellitesUsed": [
+    "Aqua",
+    "NOAA-20",
+    "Suomi NPP",
+    "Terra"
+   ],
+   "countsByLatencyClass": {
+    "URT": 0,
+    "RT": 0,
+    "NRT": 0,
+    "SP": 312
+   }
   }
  }
 }

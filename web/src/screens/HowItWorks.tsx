@@ -113,6 +113,7 @@ export function HowItWorks() {
           <h2 id="src-h" style={{ margin: "0", fontSize: "22px", fontWeight: "700" }}>{t("how.sources")}</h2>
           <ul style={{ listStyle: "none", margin: "0", padding: "0", display: "flex", flexDirection: "column" }}>
             {source("how.nrcan", "how.nrcan.body", "12px 0")}
+            {source("how.firms", "how.firms.body", "12px 0")}
             {source("how.eccc", "how.eccc.body", "12px 0")}
             {source("how.openMeteo", "how.openMeteo.body", "12px 0 0", true)}
           </ul>

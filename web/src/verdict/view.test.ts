@@ -3,7 +3,7 @@ import { describe, expect, test } from "vitest";
 import halifax from "../../../data/demo/halifax.json";
 import miramichi from "../../../data/demo/miramichi.json";
 import moncton from "../../../data/demo/moncton.json";
-import type { VerdictJson } from "./types";
+import type { Fire, VerdictJson } from "./types";
 import { verdictView } from "./view";
 
 const json = (data: unknown) => data as VerdictJson;
@@ -16,7 +16,7 @@ describe("Moncton replay (drifting, low: the three heights disagree)", () => {
       "7a",
       "DRIFTING SMOKE",
       "Likely from the Long Lake fire",
-      "Smoke drifting from Nova Scotia, about 159 km south-southwest of you.",
+      "Smoke drifting from Nova Scotia, about 158 km south-southwest of you.",
     ]);
   });
 
@@ -44,7 +44,7 @@ describe("Moncton replay (drifting, low: the three heights disagree)", () => {
     const fr = verdictView(json(moncton), "fr");
     expect([fr.band.headline, fr.band.sub, fr.fireRow.kind === "fire" && fr.fireRow.subtitle]).toEqual([
       "Elle vient probablement du feu de Long Lake",
-      "Fumée venue de la Nouvelle-Écosse, à environ 159 km au sud-sud-ouest de chez vous.",
+      "Fumée venue de la Nouvelle-Écosse, à environ 158 km au sud-sud-ouest de chez vous.",
       "West Dalhousie (N.‑É.)",
     ]);
   });
@@ -64,7 +64,7 @@ test("Halifax replay is the unexplained screen, with Long Lake as the nearest fi
   expect([view.variant, view.fireRow.kind === "nearest" && view.fireRow.title, view.why.items[1].body]).toEqual([
     "7b",
     "Long Lake fire, N.S.",
-    "No fire within 50 km of any hourly step. The nearest, Long Lake, is 127 km away and off the path.",
+    "No fire within 50 km of any hourly step. The nearest, Long Lake, is 128 km away and off the path.",
   ]);
 });
 
@@ -85,4 +85,45 @@ test("a missing AQHI shows no reading, never a number", () => {
     "No recent reading",
     "No air quality reading from the last 2 hours.",
   ]);
+});
+
+describe("the last satellite sighting of the fire (Why item 2, map badge)", () => {
+  const withLastSeen = (lastSeen: Record<string, unknown>) => {
+    const data = json(moncton);
+    const fire = { ...data.closestApproach!.fire, lastSeen: { time: "2025-08-25T11:20:00Z", instrument: "VIIRS", ...lastSeen } } as Fire;
+    return { ...data, closestApproach: { ...data.closestApproach!, fire } };
+  };
+  const sighted40MinutesAgo = withLastSeen({ hoursAgo: 1, minutesAgo: 40, satellite: "NOAA-21", latencyClass: "URT" });
+  const sighted5HoursAgo = withLastSeen({ hoursAgo: 5, minutesAgo: 300, satellite: "NOAA-20", latencyClass: "NRT" });
+
+  test("names the satellite, in minutes under an hour", () => {
+    expect([verdictView(sighted40MinutesAgo, "en").why.items[1].body, verdictView(sighted40MinutesAgo, "fr").why.items[1].body]).toEqual([
+      "About 6 hours ago, that air was over the Long Lake fire. NOAA-21 saw it burning 40 minutes ago.",
+      expect.stringMatching(/ Le satellite NOAA-21 l’a vu brûler il y a 40 minutes\.$/),
+    ]);
+  });
+
+  test("names the satellite, in hours from an hour on", () => {
+    expect([verdictView(sighted5HoursAgo, "en").why.items[1].body, verdictView(sighted5HoursAgo, "fr").why.items[1].body]).toEqual([
+      "About 6 hours ago, that air was over the Long Lake fire. NOAA-20 saw it burning 5 hours ago.",
+      expect.stringMatching(/ Le satellite NOAA-20 l’a vu brûler il y a 5 heures\.$/),
+    ]);
+  });
+
+  test("keeps the satellites sentence when no satellite is named (Moncton replay)", () => {
+    expect(verdictView(json(moncton), "en").why.items[1].body).toBe(
+      "About 6 hours ago, that air was over the Long Lake fire. Satellites saw it burning in the last 5 hours.",
+    );
+  });
+
+  test("shows a FIRMS badge on the map card", () => {
+    expect([verdictView(sighted40MinutesAgo, "en").map.badge, verdictView(sighted5HoursAgo, "fr").map.badge]).toEqual([
+      "📡 VIIRS NOAA-21 • Ultra Real-Time (detected 40 min ago)",
+      "📡 VIIRS NOAA-20 • Quasi temps réel (détecté il y a 5 h)",
+    ]);
+  });
+
+  test("shows no badge when the last sighting is not from FIRMS (Moncton replay)", () => {
+    expect(verdictView(json(moncton), "en").map.badge).toBeNull();
+  });
 });

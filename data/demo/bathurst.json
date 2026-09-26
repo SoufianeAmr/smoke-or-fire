@@ -214,7 +214,15 @@
    "lastSeen": null,
    "lastSeenHoursAgo": null,
    "sizeHa": 218,
-   "stage": "BH"
+   "stage": "BH",
+   "detections": {
+    "total": 0,
+    "bySource": {
+     "FIRMS": 0,
+     "CWFIS": 0,
+     "both": 0
+    }
+   }
   }
  },
  "nearestFire": {
@@ -230,10 +238,25 @@
   "lon": -66.2878,
   "km": 50,
   "compass": "W",
-  "lastSeen": "2025-08-25T01:37:20Z",
+  "lastSeen": {
+   "time": "2025-08-25T01:37:20Z",
+   "hoursAgo": 10,
+   "minutesAgo": 623,
+   "satellite": "Sentinel-3A",
+   "instrument": "SLSTR",
+   "latencyClass": null
+  },
   "lastSeenHoursAgo": 10,
   "sizeHa": 184.2,
-  "stage": "OC"
+  "stage": "OC",
+  "detections": {
+   "total": 7,
+   "bySource": {
+    "FIRMS": 1,
+    "CWFIS": 5,
+    "both": 1
+   }
+  }
  },
  "heights": {
   "chosen": "925hPa",
@@ -812,6 +835,28 @@
    "nameEn": "Bathurst",
    "nameFr": "Bathurst",
    "km": 0
+  }
+ },
+ "sources": {
+  "cwfis": {
+   "ok": true,
+   "newestDetection": "2025-08-25T07:00:00Z"
+  },
+  "firms": {
+   "ok": true,
+   "newestDetection": "2025-08-25T06:31:00Z",
+   "satellitesUsed": [
+    "Aqua",
+    "NOAA-20",
+    "Suomi NPP",
+    "Terra"
+   ],
+   "countsByLatencyClass": {
+    "URT": 0,
+    "RT": 0,
+    "NRT": 0,
+    "SP": 312
+   }
   }
  }
 }

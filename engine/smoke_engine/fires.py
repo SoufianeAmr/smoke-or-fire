@@ -1,15 +1,16 @@
-"""Known fires near the user, from CWFIS active fires and satellite hotspots."""
+"""Known fires near the user, from CWFIS active fires and satellite detections (CWFIS hotspots, NASA FIRMS)."""
 
 import math
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 
+from smoke_engine.detections import Detection
 from smoke_engine.geo import closest_point_on_segment, distance_km
 from smoke_engine.trajectory import Path
 
 FIRE_RADIUS_KM = 500.0
 HOTSPOT_HOURS = 24
-CLUSTER_KM = 5.0  # hotspots (and a CWFIS record) this close together are one fire
+CLUSTER_KM = 5.0  # detections (and a CWFIS record) this close together are one fire
 BURNING_STAGES = {"OC", "BH"}  # out of control, being held; UC (under control) is skipped
 
 
@@ -22,6 +23,7 @@ class Fire:
     stage: str | None = None
     size_ha: float | None = None
     last_seen: datetime | None = None
+    detections: list[Detection] = field(default_factory=list)
 
 
 @dataclass
@@ -75,11 +77,11 @@ def _time(text: str | None) -> datetime | None:
     return datetime.fromisoformat(text.replace("Z", "+00:00")) if text else None
 
 
-def known_fires(active_fires: dict, hotspots: dict, at: datetime, lat: float, lon: float) -> list[Fire]:
+def known_fires(active_fires: dict, detections: list[Detection], at: datetime, lat: float, lon: float) -> list[Fire]:
     """Fires within FIRE_RADIUS_KM of (lat, lon) at time `at`.
 
     Counts CWFIS active fires that are out of control or being held as of `at`,
-    and hotspots detected in the HOTSPOT_HOURS before `at`. Hotspots within
+    and satellite detections in the HOTSPOT_HOURS before `at`. Detections within
     CLUSTER_KM of each other are one fire, and a CWFIS record within CLUSTER_KM
     of a cluster joins it.
     """
@@ -105,15 +107,10 @@ def known_fires(active_fires: dict, hotspots: dict, at: datetime, lat: float, lo
         )
 
     since = at - timedelta(hours=HOTSPOT_HOURS)
-    spots = []
-    for feature in hotspots.get("features", []):
-        p = feature["properties"]
-        seen = _time(p.get("rep_date"))
-        if seen is None or not (since < seen <= at):
-            continue
-        if distance_km(lat, lon, p["lat"], p["lon"]) > FIRE_RADIUS_KM:
-            continue
-        spots.append((p["lat"], p["lon"], seen))
+    spots = [
+        d for d in detections
+        if since < d.time <= at and distance_km(lat, lon, d.lat, d.lon) <= FIRE_RADIUS_KM
+    ]
 
     clusters = [_fire_from_hotspots(group) for group in _cluster(spots)]
     for reported in fires:
@@ -138,8 +135,8 @@ def _near_any(lat: float, lon: float, points: list[tuple[float, float]]) -> bool
     return any(_flat_km(lat, lon, plat, plon) <= CLUSTER_KM for plat, plon in points)
 
 
-def _cluster(spots: list[tuple[float, float, datetime]]) -> list[list[tuple[float, float, datetime]]]:
-    """Group hotspots that chain together within CLUSTER_KM of each other."""
+def _cluster(spots: list[Detection]) -> list[list[Detection]]:
+    """Group detections that chain together within CLUSTER_KM of each other."""
     parent = list(range(len(spots)))
 
     def root(i: int) -> int:
@@ -148,13 +145,13 @@ def _cluster(spots: list[tuple[float, float, datetime]]) -> list[list[tuple[floa
             i = parent[i]
         return i
 
-    order = sorted(range(len(spots)), key=lambda i: spots[i][0])
+    order = sorted(range(len(spots)), key=lambda i: spots[i].lat)
     lat_window = CLUSTER_KM / 110.0
     for n, i in enumerate(order):
         for j in order[n + 1:]:
-            if spots[j][0] - spots[i][0] > lat_window:
+            if spots[j].lat - spots[i].lat > lat_window:
                 break
-            if _flat_km(spots[i][0], spots[i][1], spots[j][0], spots[j][1]) <= CLUSTER_KM:
+            if _flat_km(spots[i].lat, spots[i].lon, spots[j].lat, spots[j].lon) <= CLUSTER_KM:
                 parent[root(i)] = root(j)
 
     groups: dict[int, list] = {}
@@ -163,10 +160,11 @@ def _cluster(spots: list[tuple[float, float, datetime]]) -> list[list[tuple[floa
     return list(groups.values())
 
 
-def _fire_from_hotspots(group: list[tuple[float, float, datetime]]) -> Fire:
+def _fire_from_hotspots(group: list[Detection]) -> Fire:
     return Fire(
-        lat=sum(s[0] for s in group) / len(group),
-        lon=sum(s[1] for s in group) / len(group),
-        points=[(s[0], s[1]) for s in group],
-        last_seen=max(s[2] for s in group),
+        lat=sum(d.lat for d in group) / len(group),
+        lon=sum(d.lon for d in group) / len(group),
+        points=[(d.lat, d.lon) for d in group],
+        last_seen=max(d.time for d in group),
+        detections=group,
     )

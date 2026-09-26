@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from smoke_engine.aqhi import Reading, nearest_reading
+from smoke_engine.detections import LATENCY_CLASSES, Detection, cwfis_detections, firms_detections, fuse, within
 from smoke_engine.feeds import FeedUnavailable
 from smoke_engine.fires import FIRE_RADIUS_KM, HOTSPOT_HOURS, Approach, Fire, closest_approach, known_fires
 from smoke_engine.geo import bearing_deg, compass, distance_km
@@ -98,6 +99,49 @@ def _wind_json(path: Path, height: str) -> dict:
     }
 
 
+def _detections_json(detections: list[Detection]) -> dict:
+    by_source = {"FIRMS": 0, "CWFIS": 0, "both": 0}
+    for d in detections:
+        by_source[d.by] += 1
+    return {"total": len(detections), "bySource": by_source}
+
+
+def _sources_json(cwfis_ok: bool, cwfis: list[Detection], firms_ok: bool, firms: list[Detection]) -> dict:
+    """Each fire source: did it answer, and its newest detection in the 24 hours before the check."""
+
+    def newest(detections: list[Detection]) -> str | None:
+        return _iso(max(d.time for d in detections)) if detections else None
+
+    counts = {latency: 0 for latency in LATENCY_CLASSES}
+    for d in firms:
+        counts[d.latency_class] += 1
+    return {
+        "cwfis": {"ok": cwfis_ok, "newestDetection": newest(cwfis)},
+        "firms": {
+            "ok": firms_ok,
+            "newestDetection": newest(firms),
+            "satellitesUsed": sorted({d.satellite for d in firms if d.satellite}),
+            "countsByLatencyClass": counts,
+        },
+    }
+
+
+def _last_seen_json(detections: list[Detection], arrival: datetime) -> dict | None:
+    """The fire's newest detection: when, and which satellite and instrument saw it."""
+    if not detections:
+        return None
+    newest = max(detections, key=lambda d: d.time)
+    seconds = (arrival - newest.time).total_seconds()
+    return {
+        "time": _iso(newest.time),
+        "hoursAgo": int(seconds / 3600 + 0.5),
+        "minutesAgo": int(seconds / 60 + 0.5),
+        "satellite": newest.satellite,
+        "instrument": newest.instrument,
+        "latencyClass": newest.latency_class,
+    }
+
+
 def _fire_json(fire: Fire | None, lat: float, lon: float, arrival: datetime) -> dict | None:
     if fire is None:
         return None
@@ -114,10 +158,11 @@ def _fire_json(fire: Fire | None, lat: float, lon: float, arrival: datetime) -> 
         "lon": round(fire.lon, 4),
         "km": int(distance_km(lat, lon, fire.lat, fire.lon) + 0.5),
         "compass": compass(bearing_deg(lat, lon, fire.lat, fire.lon)),
-        "lastSeen": _iso(fire.last_seen) if fire.last_seen else None,
+        "lastSeen": _last_seen_json(fire.detections, arrival),
         "lastSeenHoursAgo": int((arrival - fire.last_seen).total_seconds() / 3600 + 0.5) if fire.last_seen else None,
         "sizeHa": fire.size_ha,
         "stage": fire.stage,
+        "detections": _detections_json(fire.detections),
     }
 
 
@@ -188,14 +233,24 @@ def create_app(feeds_by_mode: dict, now=_utc_now, lifespan=None) -> FastAPI:
             return _unavailable("wind_data_unavailable")
         paths = {height: trace_back(winds[height], lat, lon, arrival, HOURS_BACK) for height in HEIGHTS}
 
+        # Two fire sources: CWFIS (active fires and hotspots) and NASA FIRMS. Each may be down alone.
+        since = arrival - timedelta(hours=HOTSPOT_HOURS)
         try:
             active = feeds.active_fires(arrival)
-            hotspots = feeds.hotspots(arrival - timedelta(hours=HOTSPOT_HOURS), arrival)
+            cwfis = within(cwfis_detections(feeds.hotspots(since, arrival)), since, arrival)
+            cwfis_ok = True
         except FeedUnavailable:
+            active, cwfis, cwfis_ok = {"features": []}, [], False
+        try:
+            firms = within(firms_detections(feeds.firms(since, arrival)), since, arrival)
+            firms_ok = True
+        except (FeedUnavailable, KeyError, ValueError):
+            firms, firms_ok = [], False
+        if not cwfis_ok and not firms_ok:
             # "No fires" must mean the fire feeds answered with none (screen 7d),
             # never that they failed to answer (screen 9b).
             return _unavailable("fire_data_unavailable")
-        fires = known_fires(active, hotspots, arrival, lat, lon)
+        fires = known_fires(active, fuse(firms, cwfis), arrival, lat, lon)
         approaches = {height: closest_approach(path, fires) for height, path in paths.items()}
         km_by_height = {height: a.km if a else None for height, a in approaches.items()}
         results = {height: classify(km_by_height[height], paths[height].steady) for height in HEIGHTS}
@@ -232,6 +287,7 @@ def create_app(feeds_by_mode: dict, now=_utc_now, lifespan=None) -> FastAPI:
                 "paths": path_json,
             },
             "aqhi": _aqhi_json(nearest_reading(feeds, lat, lon, arrival)),
+            "sources": _sources_json(cwfis_ok, cwfis, firms_ok, firms),
         }
 
     return app

@@ -1,4 +1,4 @@
-"""In-memory stand-ins for the outside data sources (Open-Meteo, CWFIS, ECCC).
+"""In-memory stand-ins for the outside data sources (Open-Meteo, CWFIS, NASA FIRMS, ECCC).
 
 Each fake answers in the same shape as the real service, so the engine's own
 parsing runs in every test.
@@ -68,6 +68,18 @@ def hotspot(lat: float, lon: float, seen: str) -> dict:
     return {"lat": lat, "lon": lon, "rep_date": seen, "source": "NASA", "sensor": "VIIRS-I", "agency": "NB"}
 
 
+FIRMS_HEADER = "latitude,longitude,bright_ti4,scan,track,acq_date,acq_time,satellite,instrument,confidence,version,bright_ti5,frp,daynight"
+
+
+def firms_detection(
+    lat: float, lon: float, seen: str, satellite: str = "N20", confidence: str = "n", version: str = "2.0NRT"
+) -> str:
+    """One row of a FIRMS VIIRS area API CSV, acquired at `seen` (UTC)."""
+    t = datetime.fromisoformat(seen.replace("Z", "+00:00"))
+    daynight = "D" if 10 <= t.hour < 22 else "N"
+    return f"{lat},{lon},330.5,0.4,0.4,{t:%Y-%m-%d},{t:%H%M},{satellite},VIIRS,{confidence},{version},290.1,4.2,{daynight}"
+
+
 def active_fire(lat: float, lon: float, stage: str, fire_id: str = "2025_NB_00001", size_ha: float = 12.0) -> dict:
     """Properties of one CWFIS `public:cwfif_national_activefires` record, valid all of Aug 2025."""
     return {
@@ -119,10 +131,11 @@ def _feature_collection(properties: list[dict]) -> dict:
 class FakeFeeds:
     """`down` names feeds that fail, the way a live feed fails when its service is down."""
 
-    def __init__(self, *, wind, active_fires=(), hotspots=(), aqhi_stations=(), aqhi_readings=(), down=()):
+    def __init__(self, *, wind, active_fires=(), hotspots=(), firms=(), aqhi_stations=(), aqhi_readings=(), down=()):
         self._wind = wind
         self._active_fires = list(active_fires)
         self._hotspots = list(hotspots)
+        self._firms = list(firms)
         self._aqhi_stations = list(aqhi_stations)
         self._aqhi_readings = list(aqhi_readings)
         self._down = set(down)
@@ -142,6 +155,11 @@ class FakeFeeds:
     def hotspots(self, start, end):
         self._check("hotspots")
         return _feature_collection(self._hotspots)
+
+    def firms(self, start, end):
+        """FIRMS answers by source, as CSV text."""
+        self._check("firms")
+        return {"VIIRS_NOAA20_NRT": "\n".join([FIRMS_HEADER, *self._firms]) + "\n"}
 
     def aqhi_stations(self):
         self._check("aqhi")

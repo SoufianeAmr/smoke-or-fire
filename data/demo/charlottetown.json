@@ -199,20 +199,35 @@
   "lat": 44.4855,
   "lon": -64.7711,
   "fire": {
-   "id": "hotspots:44.701,-65.201",
+   "id": "hotspots:44.703,-65.202",
    "cwfisIds": [],
    "name": "Long Lake",
    "locality": "West Dalhousie",
    "nearCommunity": "Hannamville",
    "province": "NS",
-   "lat": 44.7015,
-   "lon": -65.2008,
+   "lat": 44.7025,
+   "lon": -65.2024,
    "km": 235,
    "compass": "SW",
-   "lastSeen": "2025-08-25T07:00:00Z",
+   "lastSeen": {
+    "time": "2025-08-25T07:00:00Z",
+    "hoursAgo": 5,
+    "minutesAgo": 300,
+    "satellite": null,
+    "instrument": "MODIS",
+    "latencyClass": null
+   },
    "lastSeenHoursAgo": 5,
    "sizeHa": null,
-   "stage": null
+   "stage": null,
+   "detections": {
+    "total": 383,
+    "bySource": {
+     "FIRMS": 81,
+     "CWFIS": 92,
+     "both": 210
+    }
+   }
   }
  },
  "nearestFire": {
@@ -231,7 +246,15 @@
   "lastSeen": null,
   "lastSeenHoursAgo": null,
   "sizeHa": 1,
-  "stage": "BH"
+  "stage": "BH",
+  "detections": {
+   "total": 0,
+   "bySource": {
+    "FIRMS": 0,
+    "CWFIS": 0,
+    "both": 0
+   }
+  }
  },
  "heights": {
   "chosen": "850hPa",
@@ -786,6 +809,28 @@
    "nameEn": "Charlottetown",
    "nameFr": "Charlottetown",
    "km": 0
+  }
+ },
+ "sources": {
+  "cwfis": {
+   "ok": true,
+   "newestDetection": "2025-08-25T07:00:00Z"
+  },
+  "firms": {
+   "ok": true,
+   "newestDetection": "2025-08-25T06:31:00Z",
+   "satellitesUsed": [
+    "Aqua",
+    "NOAA-20",
+    "Suomi NPP",
+    "Terra"
+   ],
+   "countsByLatencyClass": {
+    "URT": 0,
+    "RT": 0,
+    "NRT": 0,
+    "SP": 312
+   }
   }
  }
 }

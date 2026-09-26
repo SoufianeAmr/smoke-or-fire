@@ -29,6 +29,17 @@ class ReplayFeeds:
     def hotspots(self, start, end):
         return self._load("hotspots.json")
 
+    def firms(self, start, end):
+        return self._firms()
+
+    @cache
+    def _firms(self):
+        """The saved FIRMS archive answers (firms/<SOURCE>.csv), by source."""
+        files = sorted((self._directory / "firms").glob("*.csv"))
+        if not files:
+            raise FeedUnavailable(f"no FIRMS files in {self._directory / 'firms'}")
+        return {f.stem: f.read_text(encoding="utf-8") for f in files}
+
     def aqhi_stations(self):
         return self._load("aqhi-stations.json")
 
