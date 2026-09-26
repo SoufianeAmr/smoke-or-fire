@@ -1,4 +1,12 @@
 
+# Secrets
+.env
+.env.*
+
+# Packed design bundles and PDF exports (design/screens/ is the source of truth)
+design/*.html
+*.pdf
+
 # Live wind grid saved by the engine between restarts
 .cache/
 
@@ -7,10 +15,19 @@
 __pycache__/
 *.pyc
 .pytest_cache/
+.ruff_cache/
+.mypy_cache/
 
 # Web app
 node_modules/
 web/dist/
 web/test-results/
 web/playwright-report/
+web/blob-report/
+*.tsbuildinfo
+.eslintcache
 .vercel/
+
+# OS
+.DS_Store
+Thumbs.db
