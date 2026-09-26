@@ -93,12 +93,12 @@
    "lon": -65.46667,
    "cgndbType": "CITY",
    "file": "miramichi.json",
-   "verdict": "drifting",
-   "confidence": "medium",
-   "closestKm": 17,
-   "fire": "near Little Bartibog",
+   "verdict": "unclear",
+   "confidence": "low",
+   "closestKm": 42,
+   "fire": "near Fontaine",
    "chosenHeight": "100m",
-   "heightsAgree": true
+   "heightsAgree": false
   },
   {
    "town": "Bathurst",

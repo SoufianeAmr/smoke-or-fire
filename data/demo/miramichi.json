@@ -7,8 +7,8 @@
   "name": "Miramichi",
   "province": "NB"
  },
- "verdict": "drifting",
- "confidence": "medium",
+ "verdict": "unclear",
+ "confidence": "low",
  "noFiresInRange": false,
  "rules": {
   "hoursBack": 24,
@@ -225,27 +225,27 @@
   }
  },
  "closestApproach": {
-  "km": 17,
+  "km": 42,
   "hoursAgo": 0,
-  "time": "2025-08-25T12:00:00Z",
-  "lat": 47.0042,
-  "lon": -65.4667,
+  "time": "2025-08-25T11:55:35Z",
+  "lat": 46.9888,
+  "lon": -65.4749,
   "fire": {
-   "id": "2025_NB_68307",
+   "id": "2025_PC_2025KG13",
    "cwfisIds": [
-    "2025_NB_68307"
+    "2025_PC_2025KG13"
    ],
    "name": null,
    "locality": null,
-   "nearCommunity": "Little Bartibog",
+   "nearCommunity": "Fontaine",
    "province": "NB",
-   "lat": 47.1528,
-   "lon": -65.4325,
-   "km": 17,
-   "compass": "N",
+   "lat": 46.8587,
+   "lon": -64.9585,
+   "km": 42,
+   "compass": "ESE",
    "lastSeen": null,
    "lastSeenHoursAgo": null,
-   "sizeHa": 1403,
+   "sizeHa": 0.2,
    "stage": "BH"
   }
  },
@@ -269,24 +269,24 @@
  },
  "heights": {
   "chosen": "100m",
-  "agree": true,
+  "agree": false,
   "results": {
    "100m": {
-    "verdict": "drifting",
+    "verdict": "unclear",
     "confidence": "medium",
-    "closestApproachKm": 17,
+    "closestApproachKm": 42,
     "steady": true
    },
    "925hPa": {
-    "verdict": "drifting",
+    "verdict": "unexplained",
     "confidence": "medium",
-    "closestApproachKm": 17,
+    "closestApproachKm": 59,
     "steady": true
    },
    "850hPa": {
-    "verdict": "drifting",
+    "verdict": "unexplained",
     "confidence": "medium",
-    "closestApproachKm": 17,
+    "closestApproachKm": 59,
     "steady": true
    }
   },

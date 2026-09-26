@@ -30,3 +30,4 @@ Field names refer to the `/verdict` JSON.
 
 12. **AQHI above 10.** `aqhi.display` is `"10+"` and `aqhi.segments` is 11.
 13. **Rounded distances near a threshold.** Distances are whole km. When rounding would cross a threshold, the number is rounded the other way (25.3 km shows as 26 km), so "farther than the 25 km we need" never sits next to "25 km".
+14. **"0 hours ago".** A fire counts when its closest point on the path is after the start, even by minutes, so `closestApproach.hoursAgo` can round to 0 (Miramichi replay: 0.07 h). "About 0 hours ago" needs wording, e.g. "within the last hour".

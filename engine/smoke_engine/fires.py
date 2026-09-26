@@ -36,22 +36,38 @@ class Approach:
 
 
 def closest_approach(path: Path, fires: list[Fire]) -> Approach | None:
-    """Shortest distance between the path (its hourly segments) and any fire point."""
+    """Shortest distance between the path (its hourly segments) and a fire.
+
+    A fire counts only if its closest point on the path comes after the start
+    (hoursAgo > 0). When that point is the start itself, the fire is near the
+    user but not on the air's route, so it is only ever the nearest fire.
+    """
+    best = None
+    for fire in fires:
+        approach = _fire_closest_point(path, fire)
+        if approach.hours_ago <= 0:
+            continue
+        if best is None or approach.km < best.km:
+            best = approach
+    return best
+
+
+def _fire_closest_point(path: Path, fire: Fire) -> Approach:
+    """Where the path comes closest to any point of this fire."""
     best = None
     points = path.points
     segments = list(zip(points, points[1:])) or [(points[0], points[0])]
-    for fire in fires:
-        for flat, flon in fire.points:
-            for a, b in segments:
-                km, f = closest_point_on_segment(flat, flon, (a.lat, a.lon), (b.lat, b.lon))
-                if best is None or km < best.km:
-                    best = Approach(
-                        km=km,
-                        hours_ago=a.hours_ago + f * (b.hours_ago - a.hours_ago),
-                        lat=a.lat + f * (b.lat - a.lat),
-                        lon=a.lon + f * (b.lon - a.lon),
-                        fire=fire,
-                    )
+    for flat, flon in fire.points:
+        for a, b in segments:
+            km, f = closest_point_on_segment(flat, flon, (a.lat, a.lon), (b.lat, b.lon))
+            if best is None or km < best.km:
+                best = Approach(
+                    km=km,
+                    hours_ago=a.hours_ago + f * (b.hours_ago - a.hours_ago),
+                    lat=a.lat + f * (b.lat - a.lat),
+                    lon=a.lon + f * (b.lon - a.lon),
+                    fire=fire,
+                )
     return best
 
 

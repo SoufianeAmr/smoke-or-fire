@@ -198,6 +198,17 @@ def test_only_fires_out_of_control_or_being_held_count(stage, counted):
     assert body["noFiresInRange"] is not counted
 
 
+def test_fire_15_km_downwind_is_not_drifting_smoke_and_is_reported_as_nearest_fire():
+    # A west wind brings the air from the west; this fire is 15 km EAST of Moncton,
+    # so the closest point of the path to it is the start (the user), not the air's route.
+    downwind = hotspot(lat=46.09, lon=-64.78 + 15 / KM_PER_DEGREE_LON, seen="2025-08-25T06:00:00Z")
+    feeds = FakeFeeds(wind=uniform_wind(from_deg=270, speed_ms=5), hotspots=[downwind])
+
+    body = get_verdict(feeds).json()
+
+    assert (body["verdict"], body["closestApproach"], body["nearestFire"]["km"]) == ("unexplained", None, 15)
+
+
 def test_heights_that_disagree_lower_confidence_by_one_level():
     # At 100 m the air passes the fire (drifting, high); higher up it comes from
     # the east and never nears it (unexplained). The closest height gives the verdict.

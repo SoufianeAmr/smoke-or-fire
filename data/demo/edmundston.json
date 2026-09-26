@@ -286,13 +286,13 @@
    "925hPa": {
     "verdict": "unexplained",
     "confidence": "medium",
-    "closestApproachKm": 112,
+    "closestApproachKm": 130,
     "steady": true
    },
    "850hPa": {
     "verdict": "unexplained",
     "confidence": "medium",
-    "closestApproachKm": 112,
+    "closestApproachKm": 347,
     "steady": true
    }
   },

@@ -190,7 +190,7 @@
    "100m": {
     "verdict": "unexplained",
     "confidence": "medium",
-    "closestApproachKm": 122,
+    "closestApproachKm": null,
     "steady": true
    },
    "925hPa": {

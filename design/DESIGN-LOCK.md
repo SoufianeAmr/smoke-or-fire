@@ -52,6 +52,7 @@
 | 25–50 km | Unclear, Medium | Unclear, Low |
 | > 50 km or no fire | Unexplained, Medium | Unexplained, Low |
 
+- "Closest approach" = the shortest distance between the traced path and a fire, counting only fires whose closest point on the path comes after the start (hoursAgo > 0). A fire whose closest point is the start itself (the user's position) is near the user but not on the air's path: it does not count for the verdict and is reported only as the nearest fire.
 - "Unsteady" = the circular standard deviation of hourly wind direction along the path is above 45°.
 - No active fire within 500 km → screen 7d.
 
