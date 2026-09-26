@@ -259,6 +259,15 @@ class LiveFeeds:
                 raise FeedUnavailable("no FIRMS detections fetched in the last 30 minutes")
             return self._firms
 
+    def checked_at(self, source, at):
+        """When the answer used for a check at `at` was fetched: FIRMS's last refresh, or the older
+        of the two cached CWFIS answers (active fires and hotspots)."""
+        with self._lock:
+            if source == "firms":
+                return self._firms_fetched_at
+            entries = [self._cache.get((name, _bucket(at))) for name in ("active_fires", "hotspots")]
+            return min(e[2] for e in entries) if all(entries) else None
+
     def active_fires(self, at):
         slot = _bucket(at)
         params = sources.active_fires_params(slot, slot + CACHE_FOR)
@@ -284,6 +293,7 @@ class LiveFeeds:
             self._cache = {k: v for k, v in self._cache.items() if v[0] > now}
             if key in self._cache:
                 return self._cache[key][1]
+        fetched_at = self._now()
         try:
             response = self._client.get(url, params=params)
             response.raise_for_status()
@@ -291,5 +301,5 @@ class LiveFeeds:
         except (httpx.HTTPError, ValueError) as error:
             raise FeedUnavailable(f"{url}: {type(error).__name__}: {error}") from error
         with self._lock:
-            self._cache[key] = (now + CACHE_FOR.total_seconds(), answer)
+            self._cache[key] = (now + CACHE_FOR.total_seconds(), answer, fetched_at)
         return answer

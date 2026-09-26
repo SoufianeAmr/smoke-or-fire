@@ -1,6 +1,6 @@
 """GET /verdict, tested over HTTP with fake outside data sources."""
 
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 import pytest
 from fastapi.testclient import TestClient
@@ -302,3 +302,36 @@ def test_a_fires_last_sighting_names_the_satellite_and_how_fast_its_data_came_in
         "instrument": "VIIRS",
         "latencyClass": "URT",
     }
+
+
+def test_a_merged_observation_keeps_the_firms_satellite_instrument_and_latency():
+    # CWFIS names no satellite for its 06:00 hotspot; FIRMS saw the same spot at 06:10 from NOAA-21 (ultra real-time).
+    lat, lon = FIRE_WEST_OF_MONCTON["lat"], FIRE_WEST_OF_MONCTON["lon"]
+    feeds = FakeFeeds(
+        wind=uniform_wind(from_deg=270, speed_ms=5),
+        hotspots=[FIRE_WEST_OF_MONCTON],
+        firms=[firms_detection(lat, lon + 0.5 * KM_EAST, seen="2025-08-25T06:10:00Z", satellite="N21", version="2.0URT")],
+    )
+
+    fire = get_verdict(feeds).json()["closestApproach"]["fire"]
+
+    assert (fire["detections"]["bySource"]["both"], fire["lastSeen"]["satellite"], fire["lastSeen"]["instrument"], fire["lastSeen"]["latencyClass"]) == (
+        1, "NOAA-21", "VIIRS", "URT"
+    )
+
+
+def test_with_no_fire_in_range_sources_say_when_the_data_was_checked_and_the_newest_detection_in_the_region():
+    # CWFIS answered 3 minutes ago and FIRMS 6 min 20 s ago. FIRMS's only detection is 26 hours old,
+    # outside the 24-hour window, so no fire is in range; it is still the newest detection in the region.
+    noon = datetime(2025, 8, 25, 12, tzinfo=timezone.utc)
+    feeds = FakeFeeds(
+        wind=uniform_wind(from_deg=270, speed_ms=5),
+        firms=[firms_detection(48.19, -64.92, seen="2025-08-24T10:00:00Z")],
+        checked_at={"cwfis": noon - timedelta(minutes=3), "firms": noon - timedelta(minutes=6, seconds=20)},
+    )
+    client = TestClient(create_app({"live": feeds}, now=lambda: noon))
+
+    body = client.get("/verdict", params={**MONCTON, "mode": "live"}).json()
+
+    shown = (body["noFiresInRange"], body["sources"]["checkedMinutesAgo"], body["sources"]["newestDetection"])
+    assert shown == (True, 7, {"time": "2025-08-24T10:00:00Z", "hoursAgo": 26, "minutesAgo": 1560})

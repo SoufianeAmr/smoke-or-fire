@@ -32,3 +32,13 @@ def test_the_moncton_replay_uses_the_saved_firms_archive_detections_of_the_long_
     firms = body["sources"]["firms"]
     seen_by = body["closestApproach"]["fire"]["detections"]["bySource"]
     assert (firms["ok"], firms["countsByLatencyClass"]["SP"] > 0, seen_by["FIRMS"] + seen_by["both"] > 0) == (True, True, True)
+
+
+def test_recorded_replay_data_has_no_check_age():
+    client = TestClient(create_app({"replay": ReplayFeeds()}))
+
+    body = client.get(
+        "/verdict", params={"lat": 46.09, "lon": -64.78, "time": "2025-08-25T12:00:00Z", "mode": "replay"}
+    ).json()
+
+    assert body["sources"]["checkedMinutesAgo"] is None

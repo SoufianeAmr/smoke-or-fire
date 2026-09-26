@@ -102,7 +102,11 @@ export interface VerdictJson {
     station: { id: string; nameEn: string; nameFr: string; km: number };
   } | null;
   sources: {
-    cwfis: { ok: boolean; newestDetection: string | null };
-    firms: { ok: boolean; newestDetection: string | null; satellitesUsed: string[]; countsByLatencyClass: Record<LatencyClass, number> };
+    cwfis: { ok: boolean; checkedAt: string | null; newestDetection: string | null };
+    firms: { ok: boolean; checkedAt: string | null; newestDetection: string | null; satellitesUsed: string[]; countsByLatencyClass: Record<LatencyClass, number> };
+    /** Minutes since the older fire source answer was fetched (rounded up). Null for recorded replay data. */
+    checkedMinutesAgo: number | null;
+    /** The newest detection from either source, at or before the check, even if older than 24 hours. */
+    newestDetection: { time: string; hoursAgo: number; minutesAgo: number } | null;
   };
 }

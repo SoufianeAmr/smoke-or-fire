@@ -26,6 +26,11 @@ describe("strings", () => {
     expect(straight).toEqual([]);
   });
 
+  test("no emoji in any string", () => {
+    const emoji = [...Object.entries(en), ...Object.entries(fr)].filter(([, text]) => /\p{Extended_Pictographic}/u.test(text)).map(([key]) => key);
+    expect(emoji).toEqual([]);
+  });
+
   test("missing French falls back to English, and values are filled in", () => {
     expect([translate("fr", "q1.title"), translate("fr", "banner.replayTown", { town: "Dieppe" })]).toEqual([
       "Do you see flames?",

@@ -747,10 +747,12 @@
  "sources": {
   "cwfis": {
    "ok": true,
+   "checkedAt": null,
    "newestDetection": "2025-08-25T07:00:00Z"
   },
   "firms": {
    "ok": true,
+   "checkedAt": null,
    "newestDetection": "2025-08-25T06:31:00Z",
    "satellitesUsed": [
     "Aqua",
@@ -764,6 +766,12 @@
     "NRT": 0,
     "SP": 312
    }
+  },
+  "checkedMinutesAgo": null,
+  "newestDetection": {
+   "time": "2025-08-25T07:00:00Z",
+   "hoursAgo": 5,
+   "minutesAgo": 300
   }
  }
 }

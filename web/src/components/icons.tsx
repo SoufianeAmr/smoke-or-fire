@@ -31,6 +31,20 @@ export const DarkSmokeIcon = ({ size, style }: IconProps) =>
 export const PhoneIcon = ({ size, style }: IconProps) =>
   svg(size, <path d="M5.5 3.5h3l1.8 4.6-2.2 1.4a11 11 0 0 0 6.4 6.4l1.4-2.2 4.6 1.8v3a2 2 0 0 1-2.2 2A16.5 16.5 0 0 1 3.5 5.7a2 2 0 0 1 2-2.2z" />, style);
 
+// Path data from Lucide “satellite” (ISC licence).
+export const SatelliteIcon = ({ size, style }: IconProps) =>
+  svg(
+    size,
+    <>
+      <path d="M13 7 9 3 5 7l4 4" />
+      <path d="m17 11 4 4-4 4-4-4" />
+      <path d="m8 12 4 4 6-6-4-4Z" />
+      <path d="m16 8 3-3" />
+      <path d="M9 21a6 6 0 0 0-6-6" />
+    </>,
+    style,
+  );
+
 export const CloseIcon = ({ size, style }: IconProps) => svg(size, <path d="M6 6l12 12M18 6L6 18" />, style);
 
 export const BackIcon = ({ size, style }: IconProps) => svg(size, <path d="M15 5l-7 7 7 7" />, style);

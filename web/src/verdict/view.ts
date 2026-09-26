@@ -15,14 +15,14 @@ export interface VerdictView {
   fireRow:
     | { kind: "fire"; title: string; subtitle: string; km: string; side: string }
     | { kind: "nearest"; label: string; title: string; km: string; side: string }
-    | { kind: "none"; label: string; title: string };
+    | { kind: "none"; label: string; title: string; checked: string | null };
   map: {
     aria: string;
     you: string;
     fireLabel: string | null;
     approachLabel: string | null;
     approachKm: string | null;
-    /** The fire's last NASA FIRMS detection: satellite, latency and age. Null when it was not FIRMS. */
+    /** The satellite that made the fire's newest detection, and when. Null when no satellite is named. */
     badge: string | null;
     edgeLabel: (hoursAgo: number, area: string | null) => string;
     legend: { path: string; hour: string; corridor: string | null; closest: string | null; fire: string | null; you: string; otherHeights: string };
@@ -82,12 +82,11 @@ export function verdictView(json: VerdictJson, lang: Lang): VerdictView {
     f.name ? t("fire.title.named", { name: lang === "fr" ? f.name.replace(/ /g, NBSP) : f.name }) : f.nearCommunity ? t("fire.title.near", { community: f.nearCommunity }) : t("fire.title.in", { where: area(f.province, "in") ?? "" });
   const hours = (h: number, one: StringKey, many: StringKey, under: StringKey) => (h <= 0 ? t(under) : h === 1 ? t(one) : t(many, { h }));
   // How long ago a satellite saw the fire: minutes under an hour, otherwise hours.
-  const ago = (s: LastSeen) => {
+  const ago = (s: Pick<LastSeen, "hoursAgo" | "minutesAgo">) => {
     const minutes = Math.max(1, s.minutesAgo);
     return minutes < 60 ? t(minutes === 1 ? "time.minutes.one" : "time.minutes", { n: minutes }) : t(s.hoursAgo === 1 ? "time.hours.one" : "time.hours", { n: s.hoursAgo });
   };
-  const agoShort = (s: LastSeen) => (s.minutesAgo < 60 ? t("time.short.minutes", { n: Math.max(1, s.minutesAgo) }) : t("time.short.hours", { n: s.hoursAgo }));
-  const firmsSighting = fire?.lastSeen?.latencyClass ? fire.lastSeen : null;
+  const newest = fire?.lastSeen?.satellite ? fire.lastSeen : null; // the fire's newest detection, if its satellite is known
 
   // Band
   const band =
@@ -120,10 +119,16 @@ export function verdictView(json: VerdictJson, lang: Lang): VerdictView {
           ? t("confidence.text.unclearSteady", { km: approach!.km })
           : t("confidence.text.unexplained");
 
-  // Fire row
+  // Fire row. On 7d, a line says when both fire sources were checked (live data only).
+  const dataChecked = () => {
+    const s = json.sources;
+    if (!s || !s.cwfis.ok || !s.firms.ok || s.checkedMinutesAgo === null) return null;
+    const checked = t("fire.none.checked", { n: s.checkedMinutesAgo });
+    return s.newestDetection ? `${checked} ${t("fire.none.newest", { time: ago(s.newestDetection) })}` : checked;
+  };
   const fireRow: VerdictView["fireRow"] =
     variant === "7d"
-      ? { kind: "none", label: t("fire.none.label"), title: t("fire.none.title", { km: json.rules.fireRadiusKm }) }
+      ? { kind: "none", label: t("fire.none.label"), title: t("fire.none.title", { km: json.rules.fireRadiusKm }), checked: dataChecked() }
       : variant === "7b"
         ? { kind: "nearest", label: t("fire.nearest.label"), title: t("fire.nearest.title", { fire: fireTitle(fire!), province: area(fire!.province, "short") ?? "" }), km: t("unit.km", { km: fire!.km }), side: t("fire.offPath") }
         : {
@@ -150,13 +155,7 @@ export function verdictView(json: VerdictJson, lang: Lang): VerdictView {
     fireLabel: fire ? fireTitle(fire) : null,
     approachLabel: variant === "7a" && approach ? hours(approach.hoursAgo, "map.hoursAgo.one", "map.hoursAgo", "map.hoursAgo.under") : null,
     approachKm: variant === "7c" && approach ? t("unit.km", { km: approach.km }) : null,
-    badge: firmsSighting
-      ? t("map.badge", {
-          satellite: [firmsSighting.instrument, firmsSighting.satellite].filter(Boolean).join(" "),
-          latency: t(`latency.${firmsSighting.latencyClass}` as StringKey),
-          time: agoShort(firmsSighting),
-        })
-      : null,
+    badge: newest ? t(newest.latencyClass === "URT" ? "badge.seenBy.urt" : "badge.seenBy", { satellite: newest.satellite!, time: ago(newest) }) : null,
     edgeLabel: (h, code) => {
       const ago = hours(h, "map.hoursAgo.one", "map.hoursAgo", "map.hoursAgo.under");
       const where = area(code, "short");

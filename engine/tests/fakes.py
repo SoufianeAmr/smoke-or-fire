@@ -131,11 +131,14 @@ def _feature_collection(properties: list[dict]) -> dict:
 class FakeFeeds:
     """`down` names feeds that fail, the way a live feed fails when its service is down."""
 
-    def __init__(self, *, wind, active_fires=(), hotspots=(), firms=(), aqhi_stations=(), aqhi_readings=(), down=()):
+    def __init__(
+        self, *, wind, active_fires=(), hotspots=(), firms=(), aqhi_stations=(), aqhi_readings=(), down=(), checked_at=None
+    ):
         self._wind = wind
         self._active_fires = list(active_fires)
         self._hotspots = list(hotspots)
         self._firms = list(firms)
+        self._checked_at = dict(checked_at or {})
         self._aqhi_stations = list(aqhi_stations)
         self._aqhi_readings = list(aqhi_readings)
         self._down = set(down)
@@ -160,6 +163,10 @@ class FakeFeeds:
         """FIRMS answers by source, as CSV text."""
         self._check("firms")
         return {"VIIRS_NOAA20_NRT": "\n".join([FIRMS_HEADER, *self._firms]) + "\n"}
+
+    def checked_at(self, source, at):
+        """When the "cwfis" or "firms" answer was fetched (None: never said)."""
+        return self._checked_at.get(source)
 
     def aqhi_stations(self):
         self._check("aqhi")

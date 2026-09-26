@@ -1,7 +1,7 @@
 // Map card of screens 7a–7d: map, legend and fire row (design/screens/07*.html).
 import type { CSSProperties, ReactNode } from "react";
 import { useApp } from "../app/state";
-import { FlameIcon } from "../components/icons";
+import { FlameIcon, SatelliteIcon } from "../components/icons";
 import { Basemap, frameProjection, round } from "../map/basemap";
 import { circleBox, placeLabel, textBox, type Box } from "../map/labels";
 import type { Height, PathPoint, VerdictJson } from "./types";
@@ -127,10 +127,14 @@ export function VerdictMap({ json, view }: { json: VerdictJson; view: VerdictVie
       <FireRow view={view} />
       {view.map.badge && (
         <p style={{ margin: "0", padding: "0 20px 16px" }}>
-          <span style={{ display: "inline-block", padding: "4px 10px", borderRadius: "8px", background: "#F3EEE6", color: "#4F5561", fontSize: "16px", lineHeight: "1.35", fontVariantNumeric: "tabular-nums" }}>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: "8px", padding: "4px 10px", borderRadius: "8px", background: "#F3EEE6", color: "#4F5561", fontSize: "16px", lineHeight: "1.35" }}>
+            <SatelliteIcon size={18} />
             {view.map.badge}
           </span>
         </p>
+      )}
+      {view.fireRow.kind === "none" && view.fireRow.checked && (
+        <p style={{ margin: "0", padding: "0 20px 16px", fontSize: "16px", lineHeight: "1.45", color: "#4F5561" }}>{view.fireRow.checked}</p>
       )}
     </section>
   );

@@ -9,4 +9,5 @@
 - Git converts line endings on Windows checkouts: `.gitattributes` keeps the raw FIRMS CSVs byte for byte.
 - `lastSeen` was already a time string on each fire: it became the object with the time, satellite and latency class, and `lastSeen.time` holds the old value.
 - FIRMS points moved the Long Lake fire's centre about 150 m, so two shown distances changed by 1 km (Moncton 159 → 158 km, Halifax 127 → 128 km): the view tests use the rebuilt demo values; no verdict changed.
-- The Long Lake fire's newest detection in the replay is a CWFIS hotspot with no satellite name: Why item 2 keeps the “Satellites saw it burning in the last 5 hours” sentence there.
+- The Long Lake fire's newest detection in the replay is a CWFIS hotspot with no satellite name: Why item 2 keeps the “Satellites saw it burning in the last 5 hours” sentence there, and the map card shows no satellite badge.
+- The region's newest FIRMS detection in the replay (NOAA-20, 06:31 UTC) is in Massachusetts, not at Long Lake: the badge only ever uses the fire's own newest detection, never a region-wide one.

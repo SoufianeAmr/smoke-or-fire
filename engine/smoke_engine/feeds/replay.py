@@ -32,6 +32,10 @@ class ReplayFeeds:
     def firms(self, start, end):
         return self._firms()
 
+    def checked_at(self, source, at):
+        """Recorded data: nothing was checked at the time of the request."""
+        return None
+
     @cache
     def _firms(self):
         """The saved FIRMS archive answers (firms/<SOURCE>.csv), by source."""

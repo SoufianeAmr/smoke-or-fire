@@ -110,3 +110,23 @@ def test_the_replay_manifest_masks_the_firms_key():
     real_key = firms_key()
     if real_key:  # a configured key must not be in any replay file
         assert not [f.name for f in REPLAY_DIR.rglob("*") if f.is_file() and real_key in f.read_text(encoding="utf-8")]
+
+
+def test_live_verdicts_say_how_long_ago_the_fire_data_was_checked(tmp_path):
+    # FIRMS was refreshed 4 minutes before the request; CWFIS is fetched during it.
+    clock = [NOW - timedelta(minutes=4)]
+    feeds = LiveFeeds(
+        client=services({"up": True}),
+        wind_file=tmp_path / "live-wind.json",
+        firms_file=tmp_path / "live-firms.json",
+        firms_key=KEY,
+        now=lambda: clock[0],
+        sleep=lambda s: None,
+    )
+    feeds.refresh_wind()
+    feeds.refresh_firms()
+    clock[0] = NOW
+
+    body = TestClient(create_app({"live": feeds}, now=lambda: clock[0])).get("/verdict", params=MONCTON_LIVE).json()
+
+    assert body["sources"]["checkedMinutesAgo"] == 4

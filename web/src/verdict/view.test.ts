@@ -7,6 +7,7 @@ import type { Fire, VerdictJson } from "./types";
 import { verdictView } from "./view";
 
 const json = (data: unknown) => data as VerdictJson;
+const NBSP = String.fromCharCode(0xa0);
 
 describe("Moncton replay (drifting, low: the three heights disagree)", () => {
   const view = verdictView(json(moncton), "en");
@@ -95,6 +96,7 @@ describe("the last satellite sighting of the fire (Why item 2, map badge)", () =
   };
   const sighted40MinutesAgo = withLastSeen({ hoursAgo: 1, minutesAgo: 40, satellite: "NOAA-21", latencyClass: "URT" });
   const sighted5HoursAgo = withLastSeen({ hoursAgo: 5, minutesAgo: 300, satellite: "NOAA-20", latencyClass: "NRT" });
+  const archiveSighting = withLastSeen({ hoursAgo: 10, minutesAgo: 617, satellite: "Terra", instrument: "MODIS", latencyClass: "SP" });
 
   test("names the satellite, in minutes under an hour", () => {
     expect([verdictView(sighted40MinutesAgo, "en").why.items[1].body, verdictView(sighted40MinutesAgo, "fr").why.items[1].body]).toEqual([
@@ -116,14 +118,45 @@ describe("the last satellite sighting of the fire (Why item 2, map badge)", () =
     );
   });
 
-  test("shows a FIRMS badge on the map card", () => {
-    expect([verdictView(sighted40MinutesAgo, "en").map.badge, verdictView(sighted5HoursAgo, "fr").map.badge]).toEqual([
-      "📡 VIIRS NOAA-21 • Ultra Real-Time (detected 40 min ago)",
-      "📡 VIIRS NOAA-20 • Quasi temps réel (détecté il y a 5 h)",
+  test("the map badge names the satellite of the fire’s newest detection", () => {
+    expect([verdictView(sighted5HoursAgo, "en").map.badge, verdictView(sighted5HoursAgo, "fr").map.badge]).toEqual([
+      `Seen by satellite NOAA-20${NBSP}· 5 hours ago`,
+      `Vu par le satellite NOAA-20${NBSP}· il y a 5 heures`,
     ]);
   });
 
-  test("shows no badge when the last sighting is not from FIRMS (Moncton replay)", () => {
+  test("the map badge says ultra real-time only for ultra real-time data", () => {
+    expect([verdictView(sighted40MinutesAgo, "en").map.badge, verdictView(sighted40MinutesAgo, "fr").map.badge]).toEqual([
+      `Seen by satellite NOAA-21${NBSP}· 40 minutes ago${NBSP}· ultra real-time`,
+      `Vu par le satellite NOAA-21${NBSP}· il y a 40 minutes${NBSP}· ultra temps réel`,
+    ]);
+  });
+
+  test("archive (SP) detections get no latency label", () => {
+    expect(verdictView(archiveSighting, "en").map.badge).toBe(`Seen by satellite Terra${NBSP}· 10 hours ago`);
+  });
+
+  test("no map badge when the newest detection names no satellite (Moncton replay)", () => {
     expect(verdictView(json(moncton), "en").map.badge).toBeNull();
+  });
+});
+
+describe("screen 7d: when the fire data was checked", () => {
+  const noFires = (sources: Partial<VerdictJson["sources"]>) =>
+    ({ ...json(halifax), noFiresInRange: true, nearestFire: null, closestApproach: null, sources: { ...json(halifax).sources, ...sources } }) as VerdictJson;
+  const live = noFires({ checkedMinutesAgo: 4, newestDetection: { time: "2026-09-25T17:17:00Z", hoursAgo: 29, minutesAgo: 1757 } });
+
+  test("says how long ago NASA and NRCan data was checked, and the newest satellite detection in the region", () => {
+    const [en, fr] = [verdictView(live, "en").fireRow, verdictView(live, "fr").fireRow];
+    expect([en.kind === "none" && en.checked, fr.kind === "none" && fr.checked]).toEqual([
+      "Checked NASA and NRCan fire data 4 min ago. Newest satellite detection in the region: 29 hours ago.",
+      `Données de feux de la NASA et de RNCan vérifiées il y a 4 min. Détection satellite la plus récente dans la région${NBSP}: il y a 29 heures.`,
+    ]);
+  });
+
+  test("says nothing about checking when the data is recorded (replay) or a fire source is down", () => {
+    const firmsDown = noFires({ checkedMinutesAgo: 4, firms: { ...json(halifax).sources.firms, ok: false } });
+    const rows = [verdictView(noFires({}), "en").fireRow, verdictView(firmsDown, "en").fireRow];
+    expect(rows.map((row) => row.kind === "none" && row.checked)).toEqual([null, null]);
   });
 });
