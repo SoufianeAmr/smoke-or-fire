@@ -4,6 +4,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Literal
 
 from fastapi import FastAPI, HTTPException, Query
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from smoke_engine.aqhi import Reading, nearest_reading
@@ -158,6 +159,8 @@ def _utc_now() -> datetime:
 def create_app(feeds_by_mode: dict, now=_utc_now, lifespan=None) -> FastAPI:
     """The API. feeds_by_mode maps "live" and/or "replay" to a feed; `now` is the UTC clock."""
     app = FastAPI(title="Smoke or Fire? engine", lifespan=lifespan)
+    # The web app is served from another origin; the API is public and read-only.
+    app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["GET"])
 
     @app.get("/health")
     def health():

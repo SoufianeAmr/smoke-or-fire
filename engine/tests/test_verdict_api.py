@@ -36,6 +36,14 @@ def test_health_answers_ok():
     assert (response.status_code, response.json()["status"]) == (200, "ok")
 
 
+def test_a_web_page_on_another_origin_may_call_the_engine():
+    client = TestClient(create_app({"live": FakeFeeds(wind=uniform_wind(270, 5))}))
+
+    response = client.get("/health", headers={"Origin": "https://smoke-or-fire.example"})
+
+    assert response.headers.get("access-control-allow-origin") == "*"
+
+
 @pytest.mark.parametrize(
     ("mode", "expected_time"),
     [("replay", "2025-08-25T12:00:00Z"), ("live", "2026-09-26T19:30:00Z")],
