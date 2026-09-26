@@ -1,0 +1,185 @@
+"""GET /verdict, tested over HTTP with fake outside data sources."""
+
+import pytest
+from fastapi.testclient import TestClient
+
+from smoke_engine.app import create_app
+from tests.fakes import (
+    MONCTON_STATION,
+    SUMMERSIDE_STATION,
+    FakeFeeds,
+    active_fire,
+    aqhi_reading,
+    hotspot,
+    uniform_wind,
+    wind_by_height,
+    wind_shift,
+)
+
+MONCTON = {"lat": 46.09, "lon": -64.78}
+NOON_UTC = "2025-08-25T12:00:00Z"
+
+
+def get_verdict(feeds, **params):
+    client = TestClient(create_app({"live": feeds, "replay": feeds}))
+    query = {**MONCTON, "time": NOON_UTC, "mode": "live", **params}
+    return client.get("/verdict", params=query)
+
+
+def test_wind_from_the_west_traces_the_air_back_to_the_west():
+    feeds = FakeFeeds(wind=uniform_wind(from_deg=270, speed_ms=5))
+
+    body = get_verdict(feeds).json()
+
+    for path in body["heights"]["paths"].values():
+        earlier_points = path["points"][1:]
+        assert earlier_points and all(p["lon"] < MONCTON["lon"] for p in earlier_points)
+
+
+def test_no_fires_in_range_gives_unexplained_smoke():
+    feeds = FakeFeeds(wind=uniform_wind(from_deg=270, speed_ms=5), active_fires=[], hotspots=[])
+
+    body = get_verdict(feeds).json()
+
+    assert (body["verdict"], body["noFiresInRange"]) == ("unexplained", True)
+
+
+def test_the_place_and_where_the_air_came_from_are_described():
+    # 2 m/s from the west for 24 h = 172.8 km due west of Moncton, still in N.B.
+    feeds = FakeFeeds(wind=uniform_wind(from_deg=270, speed_ms=2))
+
+    body = get_verdict(feeds).json()
+
+    described = (body["location"]["name"], body["path"]["hoursTraced"], body["path"]["origin"])
+    assert described == ("Moncton", 24, {"hoursAgo": 24, "area": "NB", "km": 173, "compass": "W"})
+
+
+def test_the_biggest_wind_shift_is_timed():
+    # The wind turns from 270° to 200° at 03:00 UTC, 9 hours before the noon check.
+    feeds = FakeFeeds(wind=wind_shift(before=270, after=200, at="2025-08-25T03:00:00Z", speed_ms=3))
+
+    shift = get_verdict(feeds).json()["wind"]["biggestShift"]
+
+    assert shift == {"time": "2025-08-25T03:00:00Z", "hoursAgo": 9, "fromDeg": 270, "toDeg": 200}
+
+
+def test_fire_data_down_is_an_error_not_no_fires():
+    feeds = FakeFeeds(wind=uniform_wind(from_deg=270, speed_ms=5), down={"hotspots"})
+
+    response = get_verdict(feeds)
+
+    assert (response.status_code, response.json()["error"]) == (503, "fire_data_unavailable")
+
+
+# A 5 m/s west wind carries the air 18 km an hour along 46.09°N. A hotspot
+# 90 km west of Moncton and 5 km north of that line is passed 5 hours back.
+KM_PER_DEGREE_LON = 111.32 * 0.6934  # cos(46.09°)
+FIRE_WEST_OF_MONCTON = hotspot(lat=46.09 + 5 / 111.2, lon=-64.78 - 90 / KM_PER_DEGREE_LON, seen="2025-08-25T06:00:00Z")
+
+
+def test_fire_5_km_from_the_path_is_drifting_smoke_with_high_confidence():
+    feeds = FakeFeeds(wind=uniform_wind(from_deg=270, speed_ms=5), hotspots=[FIRE_WEST_OF_MONCTON])
+
+    body = get_verdict(feeds).json()
+
+    approach = body["closestApproach"]
+    assert (body["verdict"], body["confidence"], approach["km"], approach["hoursAgo"]) == ("drifting", "high", 5, 5)
+
+
+def test_unnamed_fire_is_described_by_its_nearest_community():
+    # Two hotspots 1 km either side of Salisbury, N.B. (NRCan: 46.02885, -65.04329),
+    # 21.42 km from the Moncton check point at a bearing of 251.6° (WSW). Newest seen 3 h before noon.
+    one_km_lon = 0.01295
+    feeds = FakeFeeds(
+        wind=uniform_wind(from_deg=270, speed_ms=5),
+        hotspots=[
+            hotspot(lat=46.02885, lon=-65.04329 - one_km_lon, seen="2025-08-25T06:00:00Z"),
+            hotspot(lat=46.02885, lon=-65.04329 + one_km_lon, seen="2025-08-25T09:00:00Z"),
+        ],
+    )
+
+    fire = get_verdict(feeds).json()["closestApproach"]["fire"]
+
+    described = {k: fire[k] for k in ("name", "nearCommunity", "province", "km", "compass", "lastSeenHoursAgo")}
+    assert described == {"name": None, "nearCommunity": "Salisbury", "province": "NB", "km": 21, "compass": "WSW", "lastSeenHoursAgo": 3}
+
+
+def test_fire_listed_in_fire_names_takes_its_public_name():
+    at_long_lake = hotspot(lat=44.694, lon=-65.206, seen="2025-08-25T07:00:00Z")
+    feeds = FakeFeeds(wind=uniform_wind(from_deg=270, speed_ms=5), hotspots=[at_long_lake])
+
+    fire = get_verdict(feeds).json()["nearestFire"]
+
+    assert (fire["name"], fire["locality"]) == ("Long Lake", "West Dalhousie")
+
+
+def test_aqhi_is_the_nearest_stations_newest_reading_at_or_before_the_time():
+    feeds = FakeFeeds(
+        wind=uniform_wind(from_deg=270, speed_ms=5),
+        aqhi_stations=[SUMMERSIDE_STATION, MONCTON_STATION],
+        aqhi_readings=[
+            aqhi_reading("DADHJ", "2025-08-25T10:00:00Z", 3.2),
+            aqhi_reading("DADHJ", "2025-08-25T11:00:00Z", 6.6),
+            aqhi_reading("DADHJ", "2025-08-25T13:00:00Z", 2.0),  # after the check time
+            aqhi_reading("BADSZ", "2025-08-25T12:00:00Z", 1.0),  # farther station
+        ],
+    )
+
+    aqhi = get_verdict(feeds).json()["aqhi"]
+
+    shown = (aqhi["station"]["id"], aqhi["observedAt"], aqhi["display"], aqhi["segments"], aqhi["category"])
+    assert shown == ("DADHJ", "2025-08-25T11:00:00Z", "7", 7, "high")
+
+
+def test_aqhi_above_10_shows_as_10_plus():
+    feeds = FakeFeeds(
+        wind=uniform_wind(from_deg=270, speed_ms=5),
+        aqhi_stations=[MONCTON_STATION],
+        aqhi_readings=[aqhi_reading("DADHJ", "2025-08-25T12:00:00Z", 11.0)],
+    )
+
+    aqhi = get_verdict(feeds).json()["aqhi"]
+
+    assert (aqhi["display"], aqhi["segments"], aqhi["category"]) == ("10+", 11, "very_high")
+
+
+@pytest.mark.parametrize(
+    ("readings", "down"),
+    [
+        ([aqhi_reading("DADHJ", "2025-08-25T09:59:00Z", 4.0)], ()),  # just over 2 h old
+        ([aqhi_reading("DADHJ", "2025-08-25T12:00:00Z", 4.0)], ("aqhi",)),  # service down
+    ],
+    ids=["stale", "down"],
+)
+def test_aqhi_is_null_without_a_reading_from_the_last_2_hours(readings, down):
+    feeds = FakeFeeds(
+        wind=uniform_wind(from_deg=270, speed_ms=5),
+        aqhi_stations=[MONCTON_STATION],
+        aqhi_readings=readings,
+        down=down,
+    )
+
+    response = get_verdict(feeds)
+
+    assert (response.status_code, response.json()["aqhi"]) == (200, None)
+
+
+@pytest.mark.parametrize(("stage", "counted"), [("OC", True), ("BH", True), ("UC", False)])
+def test_only_fires_out_of_control_or_being_held_count(stage, counted):
+    beside_moncton = active_fire(lat=46.14, lon=-64.85, stage=stage)
+    feeds = FakeFeeds(wind=uniform_wind(from_deg=270, speed_ms=5), active_fires=[beside_moncton])
+
+    body = get_verdict(feeds).json()
+
+    assert body["noFiresInRange"] is not counted
+
+
+def test_heights_that_disagree_lower_confidence_by_one_level():
+    # At 100 m the air passes the fire (drifting, high); higher up it comes from
+    # the east and never nears it (unexplained). The closest height gives the verdict.
+    winds = wind_by_height({"100m": (270, 5), "925hPa": (90, 5), "850hPa": (90, 5)})
+    feeds = FakeFeeds(wind=winds, hotspots=[FIRE_WEST_OF_MONCTON])
+
+    body = get_verdict(feeds).json()
+
+    assert (body["verdict"], body["confidence"], body["heights"]["agree"]) == ("drifting", "medium", False)

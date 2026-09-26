@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<!-- Reference markup for one screen. <sc-if value="{{x}}"> = conditional block; {{x}} = value computed in the component logic at the bottom. Numbers and place names are sample data. -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+<meta charset="utf-8">
+<title>Question 2 — What best describes it?</title>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:#FAF6F0}
+*{box-sizing:border-box}
+a{color:#1B2A4A}a:hover{color:#0F1A33}
+a:focus-visible,button:focus-visible{outline:3px solid #1B2A4A;outline-offset:3px}
+.ic{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+.press{transition:transform .08s ease}
+.press:active{transform:scale(0.97)}
+.tile:active{background-color:#E6DDCF !important}
+.opt{transition:transform .08s ease, background-color .08s ease, box-shadow .08s ease}
+.opt:active{transform:scale(0.98);background-color:#F1EADF !important;box-shadow:0 0 0 3px #1B2A4A !important}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; position: relative; overflow: hidden; background: #FAF6F0; color: #1A1D21; font-family: Inter, 'Helvetica Neue', Arial, sans-serif; display: flex; flex-direction: column">
+<sc-if value="{{replay}}" hint-placeholder-val="{{ true }}">
+<div style="min-height: 44px; background: #1B2A4A; color: #FFFFFF; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; column-gap: 6px; padding: 0 12px; font-size: 16px; font-weight: 600; line-height: 1.3">
+<span>Replay&nbsp;· Moncton&nbsp;· Aug 25, 2025&nbsp;·</span>
+<a href="Main.dc.html" style="position: relative; z-index: 2; height: 56px; margin: -6px 0; display: flex; align-items: center; padding: 0 8px; color: #FFFFFF; font-weight: 700; text-decoration: underline">Exit</a>
+</div>
+</sc-if>
+<div style="display: flex; align-items: center; justify-content: space-between; padding: 4px 12px 0 4px; height: 64px">
+<a href="Q1Flames.dc.html" aria-label="Back" style="width: 56px; height: 56px; display: flex; align-items: center; justify-content: center; color: #1A1D21; border-radius: 14px"><svg class="ic" width="28" height="28" sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"></path></svg></a>
+<div role="group" aria-label="Language / Langue" style="display: flex; align-items: center; height: 44px; padding: 3px; border-radius: 999px; background: #FFFFFF; border: 1.5px solid #D6CDBF">
+<a href="Q2Describe.dc.html" aria-current="true" lang="en" style="height: 56px; margin: -10px 0; display: flex; align-items: center; text-decoration: none"><span style="display: flex; align-items: center; justify-content: center; width: 56px; height: 35px; border-radius: 999px; background: #1B2A4A; color: #FFFFFF; font-size: 18px; font-weight: 700">EN</span></a>
+<a href="Q2DescribeFR.dc.html" lang="fr" aria-label="Français" style="height: 56px; margin: -10px 0; display: flex; align-items: center; text-decoration: none"><span style="display: flex; align-items: center; justify-content: center; width: 56px; height: 35px; border-radius: 999px; color: #1A1D21; font-size: 18px; font-weight: 700">FR</span></a>
+</div>
+</div>
+<main style="flex-grow: 1; display: flex; flex-direction: column; gap: 16px; padding: 4px 16px 152px">
+<div style="display: flex; flex-direction: column; gap: 10px; padding: 0 4px">
+<p style="margin: 0; font-size: 18px; font-weight: 600; color: #4F5561">Question 2 of 2</p>
+<h1 style="margin: 0; font-size: 34px; font-weight: 800; line-height: 1.12; letter-spacing: -0.02em; text-wrap: balance">What best describes it?</h1>
+</div>
+<div style="display: flex; flex-direction: column; gap: 10px">
+<a href="Location.dc.html" class="opt" style="display: flex; align-items: center; gap: 16px; min-height: 112px; padding: 18px; border-radius: 18px; background: #FFFFFF; color: #1A1D21; text-decoration: none; box-shadow: 0 1px 2px rgba(26, 29, 33, 0.06), 0 8px 24px rgba(26, 29, 33, 0.07)">
+<span style="flex-shrink: 0; width: 64px; height: 64px; border-radius: 16px; background: #F3EEE6; display: flex; align-items: center; justify-content: center"><svg class="ic" width="36" height="36" sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="M3 7c2-1.5 4-1.5 6 0s4 1.5 6 0 4-1.5 6 0"></path><path d="M3 12c2-1.5 4-1.5 6 0s4 1.5 6 0 4-1.5 6 0"></path><path d="M3 17c2-1.5 4-1.5 6 0s4 1.5 6 0 4-1.5 6 0"></path></svg></span>
+<span style="flex-grow: 1; display: flex; flex-direction: column; gap: 4px">
+<span style="font-size: 22px; font-weight: 700; line-height: 1.25">Haze everywhere</span>
+<span style="font-size: 18px; line-height: 1.4; color: #4F5561">The air looks hazy in every direction.</span>
+</span>
+</a>
+<a href="Location.dc.html" class="opt" style="display: flex; align-items: center; gap: 16px; min-height: 112px; padding: 18px; border-radius: 18px; background: #FFFFFF; color: #1A1D21; text-decoration: none; box-shadow: 0 1px 2px rgba(26, 29, 33, 0.06), 0 8px 24px rgba(26, 29, 33, 0.07)">
+<span style="flex-shrink: 0; width: 64px; height: 64px; border-radius: 16px; background: #F3EEE6; display: flex; align-items: center; justify-content: center"><svg class="ic" width="36" height="36" sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="M7 20c-1.6-2.2 1.6-4 0-6.2s1.6-4 0-6.3"></path><path d="M12 18c-1.6-2.2 1.6-4 0-6.2s1.6-4 0-6.3"></path><path d="M17 20c-1.6-2.2 1.6-4 0-6.2s1.6-4 0-6.3"></path></svg></span>
+<span style="flex-grow: 1; display: flex; flex-direction: column; gap: 4px">
+<span style="font-size: 22px; font-weight: 700; line-height: 1.25">Strong smell, no visible source</span>
+<span style="font-size: 18px; line-height: 1.4; color: #4F5561">You smell smoke but can’t see where it comes from.</span>
+</span>
+</a>
+<a href="Emergency.dc.html" class="opt" style="display: flex; align-items: center; gap: 16px; min-height: 112px; padding: 16px; border-radius: 18px; background: #FFFFFF; border: 2px solid #D92D20; color: #1A1D21; text-decoration: none; box-shadow: 0 1px 2px rgba(26, 29, 33, 0.06), 0 8px 24px rgba(26, 29, 33, 0.07)">
+<span style="flex-shrink: 0; width: 64px; height: 64px; border-radius: 16px; background: #F3EEE6; color: #D92D20; display: flex; align-items: center; justify-content: center"><svg class="ic" width="36" height="36" sc-camel-view-box="0 0 24 24" aria-hidden="true" style="stroke-width: 2.3"><path d="M6.5 21h11"></path><path d="M10 20.5a1.8 1.8 0 0 1-1-3.7a2.3 2.3 0 0 1-.4-4.2a2.6 2.6 0 0 1 1.2-4.6a2.8 2.8 0 0 1 3.7-3.8a2.6 2.6 0 0 1 4.7 1a2.6 2.6 0 0 1 .2 4.8a2.4 2.4 0 0 1-3.6 2.6a2.3 2.3 0 0 1-2.2 3.9a1.9 1.9 0 0 1-.8 4"></path></svg></span>
+<span style="flex-grow: 1; display: flex; flex-direction: column; gap: 4px">
+<span style="font-size: 22px; font-weight: 700; line-height: 1.25">Dark column rising from one spot</span>
+<span style="font-size: 18px; line-height: 1.4; color: #4F5561">A plume of smoke going up from one place.</span>
+</span>
+</a>
+</div>
+</main>
+<sc-if value="{{tipFlames}}" hint-placeholder-val="{{ false }}">
+<div role="dialog" aria-label="Flames" style="position: absolute; left: 12px; right: 12px; bottom: 144px; z-index: 6; background: #FFFFFF; border-radius: 18px; box-shadow: 0 16px 40px rgba(26, 29, 33, 0.22), 0 2px 6px rgba(26, 29, 33, 0.08); padding: 14px 6px 18px 18px; display: flex; flex-direction: column; gap: 4px">
+<div style="display: flex; align-items: center; gap: 12px">
+<svg class="ic" width="26" height="26" sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="M12 21.5c3.9 0 6.5-2.6 6.5-6.3 0-3-1.8-5.3-3.4-7-.4 1.6-1.2 2.6-2.3 3.2.4-3.2-1-6.3-3.8-8.9.2 3.4-1.5 5.4-3 7.3-1.2 1.6-2 3.2-2 5.4 0 3.7 2.6 6.3 6.5 6.3z"></path></svg>
+<p style="flex-grow: 1; margin: 0; font-size: 20px; font-weight: 700">Flames</p>
+<button type="button" sc-camel-on-click="{{closeTip}}" aria-label="Close" style="width: 56px; height: 56px; margin: -10px 0; border: 0; background: transparent; color: #1A1D21; display: flex; align-items: center; justify-content: center; cursor: pointer"><svg class="ic" width="24" height="24" sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button>
+</div>
+<p style="margin: 0; padding-right: 12px; font-size: 18px; line-height: 1.45">Fire you can see outdoors, other than a campfire or fire pit someone is watching.</p>
+</div>
+</sc-if>
+<sc-if value="{{tipColumn}}" hint-placeholder-val="{{ false }}">
+<div role="dialog" aria-label="Smoke column" style="position: absolute; left: 12px; right: 12px; bottom: 144px; z-index: 6; background: #FFFFFF; border-radius: 18px; box-shadow: 0 16px 40px rgba(26, 29, 33, 0.22), 0 2px 6px rgba(26, 29, 33, 0.08); padding: 14px 6px 18px 18px; display: flex; flex-direction: column; gap: 4px">
+<div style="display: flex; align-items: center; gap: 12px">
+<svg class="ic" width="26" height="26" sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="M6.5 21h11"></path><path d="M10 20.5a1.8 1.8 0 0 1-1-3.7a2.3 2.3 0 0 1-.4-4.2a2.6 2.6 0 0 1 1.2-4.6a2.8 2.8 0 0 1 3.7-3.8a2.6 2.6 0 0 1 4.7 1a2.6 2.6 0 0 1 .2 4.8a2.4 2.4 0 0 1-3.6 2.6a2.3 2.3 0 0 1-2.2 3.9a1.9 1.9 0 0 1-.8 4"></path></svg>
+<p style="flex-grow: 1; margin: 0; font-size: 20px; font-weight: 700">Smoke column</p>
+<button type="button" sc-camel-on-click="{{closeTip}}" aria-label="Close" style="width: 56px; height: 56px; margin: -10px 0; border: 0; background: transparent; color: #1A1D21; display: flex; align-items: center; justify-content: center; cursor: pointer"><svg class="ic" width="24" height="24" sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button>
+</div>
+<p style="margin: 0; padding-right: 12px; font-size: 18px; line-height: 1.45">Smoke rising from one spot. Smoke from far away spreads out as haze; a column means the fire is close.</p>
+</div>
+</sc-if>
+<sc-if value="{{tipDark}}" hint-placeholder-val="{{ false }}">
+<div role="dialog" aria-label="Dark smoke" style="position: absolute; left: 12px; right: 12px; bottom: 144px; z-index: 6; background: #FFFFFF; border-radius: 18px; box-shadow: 0 16px 40px rgba(26, 29, 33, 0.22), 0 2px 6px rgba(26, 29, 33, 0.08); padding: 14px 6px 18px 18px; display: flex; flex-direction: column; gap: 4px">
+<div style="display: flex; align-items: center; gap: 12px">
+<svg class="ic" width="26" height="26" sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="M5.5 18.5a3.5 3.5 0 0 1-.4-6.98A5 5 0 0 1 14.5 9a4 4 0 0 1 6 3.4 3.1 3.1 0 0 1-1.5 6.1z" style="fill:#2D2926"></path></svg>
+<p style="flex-grow: 1; margin: 0; font-size: 20px; font-weight: 700">Dark smoke</p>
+<button type="button" sc-camel-on-click="{{closeTip}}" aria-label="Close" style="width: 56px; height: 56px; margin: -10px 0; border: 0; background: transparent; color: #1A1D21; display: flex; align-items: center; justify-content: center; cursor: pointer"><svg class="ic" width="24" height="24" sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button>
+</div>
+<p style="margin: 0; padding-right: 12px; font-size: 18px; line-height: 1.45">Thick black or brown smoke. It often means a building, vehicle or dense brush is burning nearby.</p>
+</div>
+</sc-if>
+<div style="position: absolute; left: 0; right: 0; bottom: 0; z-index: 5; background: #FFFFFF; border-top: 1px solid #E6DFD3; box-shadow: 0 -8px 24px rgba(26, 29, 33, 0.08); padding: 10px 16px 14px; display: flex; align-items: stretch; gap: 10px">
+<div style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px">
+<p style="margin: 0; font-size: 18px; font-weight: 700; line-height: 1.2">Call 911 if you see:</p>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px">
+<button type="button" class="tile" sc-camel-on-click="{{toggleFlames}}" aria-expanded="{{flamesExp}}" style="position: relative; min-height: 78px; padding: 6px 2px; border: 0; border-radius: 12px; background: #F3EEE6; color: #1A1D21; font-family: inherit; display: flex; flex-direction: column; align-items: center; gap: 3px; cursor: pointer"><svg class="ic" width="28" height="28" sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="M12 21.5c3.9 0 6.5-2.6 6.5-6.3 0-3-1.8-5.3-3.4-7-.4 1.6-1.2 2.6-2.3 3.2.4-3.2-1-6.3-3.8-8.9.2 3.4-1.5 5.4-3 7.3-1.2 1.6-2 3.2-2 5.4 0 3.7 2.6 6.3 6.5 6.3z"></path></svg><span style="font-size: 16px; font-weight: 600; line-height: 1.15; text-align: center">Flames</span><sc-if value="{{tipFlames}}" hint-placeholder-val="{{ false }}"><span aria-hidden="true" style="position: absolute; inset: 0; border: 2.5px solid #1B2A4A; border-radius: 12px"></span></sc-if></button>
+<button type="button" class="tile" sc-camel-on-click="{{toggleColumn}}" aria-expanded="{{columnExp}}" style="position: relative; min-height: 78px; padding: 6px 2px; border: 0; border-radius: 12px; background: #F3EEE6; color: #1A1D21; font-family: inherit; display: flex; flex-direction: column; align-items: center; gap: 3px; cursor: pointer"><svg class="ic" width="28" height="28" sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="M6.5 21h11"></path><path d="M10 20.5a1.8 1.8 0 0 1-1-3.7a2.3 2.3 0 0 1-.4-4.2a2.6 2.6 0 0 1 1.2-4.6a2.8 2.8 0 0 1 3.7-3.8a2.6 2.6 0 0 1 4.7 1a2.6 2.6 0 0 1 .2 4.8a2.4 2.4 0 0 1-3.6 2.6a2.3 2.3 0 0 1-2.2 3.9a1.9 1.9 0 0 1-.8 4"></path></svg><span style="font-size: 16px; font-weight: 600; line-height: 1.15; text-align: center">Smoke column</span><sc-if value="{{tipColumn}}" hint-placeholder-val="{{ false }}"><span aria-hidden="true" style="position: absolute; inset: 0; border: 2.5px solid #1B2A4A; border-radius: 12px"></span></sc-if></button>
+<button type="button" class="tile" sc-camel-on-click="{{toggleDark}}" aria-expanded="{{darkExp}}" style="position: relative; min-height: 78px; padding: 6px 2px; border: 0; border-radius: 12px; background: #F3EEE6; color: #1A1D21; font-family: inherit; display: flex; flex-direction: column; align-items: center; gap: 3px; cursor: pointer"><svg class="ic" width="28" height="28" sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="M5.5 18.5a3.5 3.5 0 0 1-.4-6.98A5 5 0 0 1 14.5 9a4 4 0 0 1 6 3.4 3.1 3.1 0 0 1-1.5 6.1z" style="fill:#2D2926"></path></svg><span style="font-size: 16px; font-weight: 600; line-height: 1.15; text-align: center">Dark smoke</span><sc-if value="{{tipDark}}" hint-placeholder-val="{{ false }}"><span aria-hidden="true" style="position: absolute; inset: 0; border: 2.5px solid #1B2A4A; border-radius: 12px"></span></sc-if></button>
+</div>
+</div>
+<a href="tel:911" class="press" style="flex-shrink: 0; width: 104px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; border-radius: 18px; background: #D92D20; color: #FFFFFF; text-decoration: none; font-size: 20px; font-weight: 800; line-height: 1.1; text-align: center"><svg class="ic" width="28" height="28" sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="M5.5 3.5h3l1.8 4.6-2.2 1.4a11 11 0 0 0 6.4 6.4l1.4-2.2 4.6 1.8v3a2 2 0 0 1-2.2 2A16.5 16.5 0 0 1 3.5 5.7a2 2 0 0 1 2-2.2z"></path></svg>Call 911</a>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script="" data-props="{&quot;replay&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true},&quot;tip&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;none&quot;,&quot;flames&quot;,&quot;column&quot;,&quot;dark&quot;],&quot;default&quot;:&quot;none&quot;},&quot;$preview&quot;:{&quot;width&quot;:390,&quot;height&quot;:844}}">
+class Component extends DCLogic {
+  renderVals() {
+    const s = this.state || {};
+    const tip = s.tip !== undefined ? s.tip : (this.props.tip ?? 'none');
+    const pick = (name) => () => this.setState({ tip: tip === name ? 'none' : name });
+    return {
+      replay: this.props.replay ?? true,
+      tipFlames: tip === 'flames',
+      tipColumn: tip === 'column',
+      tipDark: tip === 'dark',
+      flamesExp: tip === 'flames' ? 'true' : 'false',
+      columnExp: tip === 'column' ? 'true' : 'false',
+      darkExp: tip === 'dark' ? 'true' : 'false',
+      toggleFlames: pick('flames'),
+      toggleColumn: pick('column'),
+      toggleDark: pick('dark'),
+      closeTip: () => this.setState({ tip: 'none' })
+    };
+  }
+}
+</script>
+
+
+</body></html>

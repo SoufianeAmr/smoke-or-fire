@@ -1,0 +1,19 @@
+{
+  "about": "Public names for fires. CWFIS has no fire names, only IDs. A fire takes a name from this list when it lies within 10 km of an entry in the same year. Every entry needs a public source.",
+  "fires": [
+    {
+      "name": "Long Lake",
+      "locality": "West Dalhousie",
+      "province": "NS",
+      "year": 2025,
+      "lat": 44.6642,
+      "lon": -65.2162,
+      "ids": ["NS-2025-06-007-2025"],
+      "location_source": "CWFIS National Fire Database point for NS agency fire 06-007-2025",
+      "sources": [
+        "https://news.novascotia.ca/en/2025/08/25/homes-damaged-long-lake-wildfires",
+        "https://www.ctvnews.ca/atlantic/nova-scotia/article/long-lake-wildfire-in-west-dalhousie-ns-grows-to-8026-hectares/"
+      ]
+    }
+  ]
+}

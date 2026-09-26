@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<!-- Reference markup for one screen. <sc-if value="{{x}}"> = conditional block; {{x}} = value computed in the component logic at the bottom. Numbers and place names are sample data. -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+<meta charset="utf-8">
+<title>Smoke or Fire? — Check</title>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:#FAF6F0}
+*{box-sizing:border-box}
+a{color:#1B2A4A}a:hover{color:#0F1A33}
+.ic{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+a:focus-visible,button:focus-visible{outline:3px solid #1B2A4A;outline-offset:3px}
+.press{transition:transform .08s ease}
+.press:active{transform:scale(0.97)}
+.haze{position:absolute;border-radius:50%;filter:blur(46px);animation:drift 22s ease-in-out infinite alternate}
+.haze2{animation-duration:28s;animation-delay:-9s}
+.haze3{animation-duration:34s;animation-delay:-4s}
+@keyframes drift{0%{transform:translate(-30px,0) scale(1)}100%{transform:translate(40px,-18px) scale(1.08)}}
+@media (prefers-reduced-motion: reduce){.haze{animation:none}}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; position: relative; overflow: hidden; background: #FAF6F0; color: #1A1D21; font-family: Inter, 'Helvetica Neue', Arial, sans-serif; display: flex; flex-direction: column">
+<div aria-hidden="true" style="position: absolute; inset: 0; z-index: 0; pointer-events: none">
+<div class="haze" style="width: 460px; height: 300px; left: -120px; top: 150px; background: #E6DDD0; opacity: 0.85"></div>
+<div class="haze haze2" style="width: 380px; height: 260px; left: 120px; top: 360px; background: #DDD6CC; opacity: 0.7"></div>
+<div class="haze haze3" style="width: 420px; height: 240px; left: -60px; top: 560px; background: #E9E1D5; opacity: 0.8"></div>
+</div>
+<div style="position: relative; z-index: 1; display: flex; align-items: center; justify-content: flex-end; padding: 8px 12px 0 4px; height: 68px">
+<div role="group" aria-label="Language / Langue" style="display: flex; align-items: center; height: 44px; padding: 3px; border-radius: 999px; background: #FFFFFF; border: 1.5px solid #D6CDBF">
+<button type="button" aria-pressed="true" lang="en" style="height: 56px; margin: -10px 0; padding: 0; border: 0; background: transparent; display: flex; align-items: center; font: inherit; cursor: pointer"><span style="display: flex; align-items: center; justify-content: center; width: 56px; height: 35px; border-radius: 999px; background: #1B2A4A; color: #FFFFFF; font-size: 18px; font-weight: 700">EN</span></button>
+<button type="button" aria-pressed="false" lang="fr" style="height: 56px; margin: -10px 0; padding: 0; border: 0; background: transparent; display: flex; align-items: center; font: inherit; cursor: pointer"><span style="display: flex; align-items: center; justify-content: center; width: 56px; height: 35px; border-radius: 999px; color: #1A1D21; font-size: 18px; font-weight: 700">FR</span></button>
+</div>
+</div>
+<main style="position: relative; z-index: 1; flex-grow: 1; display: flex; flex-direction: column; padding: 8px 20px 20px">
+<div style="display: flex; flex-direction: column; gap: 14px; margin-top: 12px">
+<svg width="64" height="64" sc-camel-view-box="0 0 64 64" aria-hidden="true"><rect x="0" y="0" width="64" height="64" rx="18" style="fill:#1B2A4A"></rect><path d="M25 50c-5-5 5-9 0-15s5-9 0-15" style="fill:none;stroke:#FFFFFF;stroke-width:3.5;stroke-linecap:round"></path><path d="M38 50c-5-5 5-9 0-15s5-9 0-15" style="fill:none;stroke:#FFFFFF;stroke-width:3.5;stroke-linecap:round;opacity:0.6"></path></svg>
+<div style="display: flex; flex-direction: column; gap: 2px">
+<h1 style="margin: 0; font-size: 34px; font-weight: 800; line-height: 1.1; letter-spacing: -0.02em">Smoke or Fire?</h1>
+<p lang="fr" style="margin: 0; font-size: 22px; font-weight: 600; line-height: 1.3; color: #4F5561">Fumée ou feu&nbsp;?</p>
+</div>
+</div>
+<p style="margin: 28px 0 0; font-size: 22px; font-weight: 500; line-height: 1.4; text-wrap: pretty">Find out where the smoke is coming from, in 60 seconds.</p>
+<div style="flex-grow: 1"></div>
+<a href="Q1Flames.dc.html" class="press" style="display: flex; align-items: center; justify-content: center; gap: 14px; min-height: 104px; border-radius: 18px; background: #1B2A4A; color: #FFFFFF; text-decoration: none; font-size: 28px; font-weight: 800; letter-spacing: -0.01em; box-shadow: 0 12px 28px rgba(27, 42, 74, 0.28)">
+<svg class="ic" width="34" height="34" sc-camel-view-box="0 0 24 24" aria-hidden="true" style="stroke-width: 2.2"><path d="M8 21c-2-2.5 2-4.5 0-7.5s2-5 0-8"></path><path d="M13 21c-2-2.5 2-4.5 0-7.5s2-5 0-8"></path><path d="M18 21c-2-2.5 2-4.5 0-7.5s2-5 0-8"></path></svg>
+I smell smoke</a>
+<div role="group" aria-label="Data mode" style="margin-top: 20px; display: flex; gap: 4px; padding: 4px; border-radius: 18px; background: #EDE6DA">
+<sc-if value="{{isLive}}" hint-placeholder-val="{{ false }}">
+<button type="button" aria-pressed="true" style="flex: 1 1 0; min-height: 56px; border: 0; border-radius: 14px; background: #FFFFFF; color: #1B2A4A; box-shadow: inset 0 0 0 2px #1B2A4A; font: inherit; font-size: 18px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer"><svg width="12" height="12" sc-camel-view-box="0 0 12 12" aria-hidden="true"><circle cx="6" cy="6" r="5" style="fill:#1B2A4A"></circle></svg>Live</button>
+</sc-if>
+<sc-if value="{{isReplay}}" hint-placeholder-val="{{ true }}">
+<button type="button" aria-pressed="false" sc-camel-on-click="{{setLive}}" style="flex: 1 1 0; min-height: 56px; border: 0; border-radius: 14px; background: transparent; color: #1A1D21; font: inherit; font-size: 18px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer"><svg width="12" height="12" sc-camel-view-box="0 0 12 12" aria-hidden="true"><circle cx="6" cy="6" r="4.5" style="fill:none;stroke:#1A1D21;stroke-width:2"></circle></svg>Live</button>
+</sc-if>
+<sc-if value="{{isReplay}}" hint-placeholder-val="{{ true }}">
+<button type="button" aria-pressed="true" style="flex: 1.7 1 0; min-height: 56px; border: 0; border-radius: 14px; background: #FFFFFF; color: #1B2A4A; box-shadow: inset 0 0 0 2px #1B2A4A; font: inherit; font-size: 18px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer"><svg class="ic" width="20" height="20" sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="M3.5 12a8.5 8.5 0 1 0 2.6-6.1"></path><path d="M3.5 4.5v4.5H8"></path></svg>Replay: Aug 2025</button>
+</sc-if>
+<sc-if value="{{isLive}}" hint-placeholder-val="{{ false }}">
+<button type="button" aria-pressed="false" sc-camel-on-click="{{setReplay}}" style="flex: 1.7 1 0; min-height: 56px; border: 0; border-radius: 14px; background: transparent; color: #1A1D21; font: inherit; font-size: 18px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer"><svg class="ic" width="20" height="20" sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="M3.5 12a8.5 8.5 0 1 0 2.6-6.1"></path><path d="M3.5 4.5v4.5H8"></path></svg>Replay: Aug 2025</button>
+</sc-if>
+</div>
+<sc-if value="{{isReplay}}" hint-placeholder-val="{{ true }}">
+<p style="margin: 12px 4px 0; font-size: 18px; line-height: 1.45; color: #4F5561; text-wrap: pretty">Replays Moncton on Aug 25, 2025, during the Long Lake fire in Nova Scotia.</p>
+</sc-if>
+<sc-if value="{{isLive}}" hint-placeholder-val="{{ false }}">
+<p style="margin: 12px 4px 0; font-size: 18px; line-height: 1.45; color: #4F5561; text-wrap: pretty">Uses today’s fire, wind and air quality data.</p>
+</sc-if>
+<a href="HowItWorks.dc.html" style="align-self: center; margin-top: 8px; min-height: 56px; display: flex; align-items: center; gap: 6px; padding: 0 12px; font-size: 18px; font-weight: 700; color: #1B2A4A">How it works<svg class="ic" width="20" height="20" sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"></path></svg></a>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script="" data-props="{&quot;replay&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true},&quot;$preview&quot;:{&quot;width&quot;:390,&quot;height&quot;:844}}">
+class Component extends DCLogic {
+  renderVals() {
+    const mode = this.state && this.state.mode ? this.state.mode : ((this.props.replay ?? true) ? 'replay' : 'live');
+    const isReplay = mode === 'replay';
+    return {
+      isReplay: isReplay,
+      isLive: !isReplay,
+      setLive: () => this.setState({ mode: 'live' }),
+      setReplay: () => this.setState({ mode: 'replay' })
+    };
+  }
+}
+</script>
+
+
+</body></html>

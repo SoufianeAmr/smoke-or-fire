@@ -1,0 +1,22 @@
+[project]
+name = "smoke-engine"
+version = "0.1.0"
+description = "Smoke or Fire? verdict engine: is the smoke here from a known fire?"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115",
+    "httpx>=0.27",
+    "uvicorn>=0.30",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8",
+]
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]

@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="fr"><head>
+<!-- Reference markup for one screen. <sc-if value="{{x}}"> = conditional block; {{x}} = value computed in the component logic at the bottom. Numbers and place names are sample data. -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+<meta charset="utf-8">
+<title>Verdict — Fumée qui dérive</title>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:#FAF6F0}
+*{box-sizing:border-box}
+a{color:#1B2A4A}a:hover{color:#0F1A33}
+a:focus-visible,button:focus-visible{outline:3px solid #1B2A4A;outline-offset:3px}
+.ic{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+.press{transition:transform .08s ease}
+.press:active{transform:scale(0.97)}
+.tile:active{background-color:#E6DDCF !important}
+.water{fill:#D8E3EE;stroke:#BCCADA;stroke-width:1}
+.land{fill:#EFE7DA;stroke:#BCCADA;stroke-width:1}
+.border{fill:none;stroke:#C4B6A0;stroke-width:1.5}
+.lbl{font-family:Inter,sans-serif;font-size:16px;font-weight:700;fill:#1A1D21;paint-order:stroke;stroke:#FFFFFF;stroke-width:4px;stroke-linejoin:round}
+.lbl-m{font-family:Inter,sans-serif;font-size:16px;font-weight:600;fill:#5A5347}
+.trail{fill:none;stroke:#1B2A4A;stroke-width:3.5;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:9 7}
+.arr{fill:#1B2A4A;stroke:#FFFFFF;stroke-width:1.5;stroke-linejoin:round}
+.flow{animation:flow 1.1s linear infinite}
+@keyframes flow{to{stroke-dashoffset:-16}}
+@media (prefers-reduced-motion: reduce){.flow{animation:none}}
+</style>
+</helmet>
+<div style="width: 390px; height: 1800px; position: relative; overflow: hidden; background: #FAF6F0; color: #1A1D21; font-family: Inter, 'Helvetica Neue', Arial, sans-serif; display: flex; flex-direction: column">
+<sc-if value="{{replay}}" hint-placeholder-val="{{ true }}">
+<div style="min-height: 44px; background: #1B2A4A; color: #FFFFFF; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; column-gap: 4px; padding: 0 8px; font-size: 16px; font-weight: 600; line-height: 1.3">
+<span>Reprise&nbsp;· Moncton&nbsp;· 25 août 2025&nbsp;·</span>
+<a href="Main.dc.html" style="position: relative; z-index: 2; height: 56px; margin: -6px 0; display: flex; align-items: center; padding: 0 6px; color: #FFFFFF; font-weight: 700; text-decoration: underline">Quitter</a>
+</div>
+</sc-if>
+<section aria-labelledby="verdict-h" style="background: #E8590C; color: #1A1D21; padding: 4px 20px 28px; display: flex; flex-direction: column">
+<div style="display: flex; align-items: center; justify-content: space-between; margin: 0 -8px 0 -16px; height: 64px">
+<a href="Main.dc.html" style="min-height: 56px; display: flex; align-items: center; gap: 4px; padding: 0 10px 0 6px; color: #1A1D21; font-size: 18px; font-weight: 700; text-decoration: none"><svg class="ic" width="26" height="26" sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"></path></svg>Recommencer</a>
+<div role="group" aria-label="Langue / Language" style="display: flex; align-items: center; height: 44px; padding: 3px; border-radius: 999px; background: #FFFFFF">
+<a href="VerdictDrifting.dc.html" lang="en" aria-label="English" style="height: 56px; margin: -10px 0; display: flex; align-items: center; text-decoration: none"><span style="display: flex; align-items: center; justify-content: center; width: 56px; height: 38px; border-radius: 999px; color: #1A1D21; font-size: 18px; font-weight: 700">EN</span></a>
+<a href="VerdictDriftingFR.dc.html" aria-current="true" lang="fr" style="height: 56px; margin: -10px 0; display: flex; align-items: center; text-decoration: none"><span style="display: flex; align-items: center; justify-content: center; width: 56px; height: 38px; border-radius: 999px; background: #1B2A4A; color: #FFFFFF; font-size: 18px; font-weight: 700">FR</span></a>
+</div>
+</div>
+<div style="display: flex; align-items: center; gap: 14px; margin-top: 8px">
+<span style="flex-shrink: 0; width: 56px; height: 56px; border-radius: 50%; background: #FFFFFF; color: #1A1D21; display: flex; align-items: center; justify-content: center"><svg class="ic" width="30" height="30" sc-camel-view-box="0 0 24 24" aria-hidden="true" style="stroke-width: 2.3"><path d="M3 8h10a3 3 0 1 0-3-3"></path><path d="M3 12h15a3 3 0 1 1-3 3"></path><path d="M3 16h7"></path></svg></span>
+<p style="margin: 0; font-size: 22px; font-weight: 700; letter-spacing: 0.06em; line-height: 1.2">FUMÉE QUI DÉRIVE</p>
+</div>
+<h1 id="verdict-h" style="margin: 16px 0 0; font-size: 34px; font-weight: 800; line-height: 1.12; letter-spacing: -0.02em; text-wrap: balance">Elle vient probablement du feu de Long Lake</h1>
+<p style="margin: 10px 0 0; font-size: 20px; font-weight: 500; line-height: 1.4; text-wrap: pretty">Fumée venue de la Nouvelle-Écosse, à environ 155 km au sud-sud-ouest de chez vous.</p>
+</section>
+<main style="display: flex; flex-direction: column; gap: 16px; padding: 16px 16px 160px">
+<section aria-labelledby="fire-h" style="background: #FFFFFF; border-radius: 18px; overflow: hidden; box-shadow: 0 1px 2px rgba(26, 29, 33, 0.06), 0 8px 24px rgba(26, 29, 33, 0.07)">
+<svg sc-camel-view-box="0 0 358 220" width="358" height="220" role="img" aria-label="Carte&nbsp;: en environ 8 heures, l’air est venu du feu de Long Lake, en Nouvelle-Écosse, jusqu’à Moncton" style="display: block">
+<rect x="0" y="0" width="358" height="220" style="fill:#EFE7DA"></rect>
+<path class="water" d="M0 220 L0 204 L24 173 L18 155 L52 152 L63 147 L92 134 L126 120 L159 105 L174 99 L192 86 L190 63 L186 52 L189 51 L194 62 L203 73 L219 75 L223 84 L214 100 L188 115 L174 128 L196 123 L219 120 L251 123 L277 124 L294 125 L277 131 L247 136 L234 157 L218 152 L217 135 L207 128 L197 141 L165 157 L140 178 L114 196 L96 210 L81 220 Z"></path>
+<path class="water" d="M186 0 L190 8 L203 34 L229 37 L260 44 L240 58 L234 61 L247 63 L269 73 L288 79 L295 88 L321 84 L339 91 L358 89 L358 0 Z"></path>
+<path class="land" d="M228 0 L236 5 L259 17 L269 33 L288 37 L308 34 L329 52 L337 63 L353 58 L358 47 L358 0 Z"></path>
+<path class="water" d="M244 220 L250 216 L273 200 L282 204 L299 192 L306 184 L332 178 L358 170 L358 220 Z"></path>
+<path class="border" d="M221 80 L237 59"></path>
+<text class="lbl-m" x="62" y="96">N.-B.</text>
+<text class="lbl-m" x="286" y="26">Î.-P.-É.</text>
+<text class="lbl-m" x="256" y="178">N.-É.</text>
+<polyline class="trail" points="136,236 142,219 149,202 156,187" style="opacity:0.35"></polyline>
+<polyline class="trail flow" points="156,187 160,170 164,152 168,134 172,116 176,98 179,81 182,64 186,48"></polyline>
+<path class="arr" d="M-5 -4.5L5 0L-5 4.5Z" transform="translate(160 170) rotate(-77)"></path><path class="arr" d="M-5 -4.5L5 0L-5 4.5Z" transform="translate(164 152) rotate(-77)"></path><path class="arr" d="M-5 -4.5L5 0L-5 4.5Z" transform="translate(168 134) rotate(-77)"></path><path class="arr" d="M-5 -4.5L5 0L-5 4.5Z" transform="translate(172 116) rotate(-77)"></path><path class="arr" d="M-5 -4.5L5 0L-5 4.5Z" transform="translate(176 98) rotate(-79)"></path><path class="arr" d="M-5 -4.5L5 0L-5 4.5Z" transform="translate(179 81) rotate(-80)"></path><path class="arr" d="M-5 -4.5L5 0L-5 4.5Z" transform="translate(182 64) rotate(-78)"></path>
+<circle cx="153" cy="192" r="14" style="fill:#1A1D21;stroke:#FFFFFF;stroke-width:2.5"></circle>
+<svg x="143" y="182" width="20" height="20" sc-camel-view-box="0 0 24 24"><path d="M12 21.5c3.9 0 6.5-2.6 6.5-6.3 0-3-1.8-5.3-3.4-7-.4 1.6-1.2 2.6-2.3 3.2.4-3.2-1-6.3-3.8-8.9.2 3.4-1.5 5.4-3 7.3-1.2 1.6-2 3.2-2 5.4 0 3.7 2.6 6.3 6.5 6.3z" style="fill:#FFFFFF"></path></svg>
+<text class="lbl" x="60" y="186">il y a 8 h</text>
+<text class="lbl" x="172" y="212">Feu de Long Lake</text>
+<circle cx="186" cy="48" r="18" style="fill:#1B2A4A;opacity:0.14"></circle>
+<circle cx="186" cy="48" r="9" style="fill:#1B2A4A;stroke:#FFFFFF;stroke-width:3"></circle>
+<text class="lbl" x="202" y="53">Vous&nbsp;· maintenant</text>
+</svg>
+<div style="display: flex; flex-wrap: wrap; gap: 8px 16px; padding: 12px 20px 14px; font-size: 16px">
+<span style="display: flex; align-items: center; gap: 8px"><svg width="30" height="10" sc-camel-view-box="0 0 30 10" aria-hidden="true"><line x1="2" y1="5" x2="28" y2="5" style="stroke:#1B2A4A;stroke-width:3.5;stroke-linecap:round;stroke-dasharray:9 7"></line></svg>Trajet de l’air</span>
+<span style="display: flex; align-items: center; gap: 8px"><svg width="14" height="14" sc-camel-view-box="-7 -7 14 14" aria-hidden="true"><path d="M-5 -4.5L5 0L-5 4.5Z" style="fill:#1B2A4A"></path></svg>1 heure de trajet</span>
+<span style="display: flex; align-items: center; gap: 8px"><svg width="20" height="20" sc-camel-view-box="0 0 22 22" aria-hidden="true"><circle cx="11" cy="11" r="10" style="fill:#1A1D21"></circle><svg x="4" y="4" width="14" height="14" sc-camel-view-box="0 0 24 24"><path d="M12 21.5c3.9 0 6.5-2.6 6.5-6.3 0-3-1.8-5.3-3.4-7-.4 1.6-1.2 2.6-2.3 3.2.4-3.2-1-6.3-3.8-8.9.2 3.4-1.5 5.4-3 7.3-1.2 1.6-2 3.2-2 5.4 0 3.7 2.6 6.3 6.5 6.3z" style="fill:#FFFFFF"></path></svg></svg>Feu actif</span>
+<span style="display: flex; align-items: center; gap: 8px"><svg width="18" height="18" sc-camel-view-box="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="7.5" style="fill:#1B2A4A;stroke:#FFFFFF;stroke-width:2.5"></circle></svg>Vous (Moncton)</span>
+</div>
+<div style="display: flex; align-items: center; gap: 14px; padding: 14px 20px 18px; border-top: 1px solid #EEE7DC">
+<span style="flex-shrink: 0; width: 48px; height: 48px; border-radius: 50%; background: #1A1D21; color: #FFFFFF; display: flex; align-items: center; justify-content: center"><svg class="ic" width="26" height="26" sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="M12 21.5c3.9 0 6.5-2.6 6.5-6.3 0-3-1.8-5.3-3.4-7-.4 1.6-1.2 2.6-2.3 3.2.4-3.2-1-6.3-3.8-8.9.2 3.4-1.5 5.4-3 7.3-1.2 1.6-2 3.2-2 5.4 0 3.7 2.6 6.3 6.5 6.3z"></path></svg></span>
+<span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px">
+<span id="fire-h" style="font-size: 22px; font-weight: 700; line-height: 1.25">Feu de Long&nbsp;Lake</span>
+<span style="font-size: 16px; color: #4F5561">West Dalhousie&nbsp;(N.‑É.)</span>
+</span>
+<span style="flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 2px">
+<span style="font-size: 22px; font-weight: 800; line-height: 1.25">155 km</span>
+<span style="font-size: 16px; color: #4F5561">SSO</span>
+</span>
+</div>
+</section>
+<section aria-label="Niveau de confiance" style="background: #FFFFFF; border-radius: 18px; padding: 20px; display: flex; flex-direction: column; align-items: flex-start; gap: 12px; box-shadow: 0 1px 2px rgba(26, 29, 33, 0.06), 0 8px 24px rgba(26, 29, 33, 0.07)">
+<span style="display: flex; align-items: center; gap: 8px; height: 40px; padding: 0 16px 0 12px; border-radius: 999px; background: #E9EDF5; color: #1B2A4A; font-size: 18px; font-weight: 700"><svg width="22" height="22" sc-camel-view-box="0 0 24 24" aria-hidden="true"><rect x="3" y="14" width="4.5" height="7" rx="1" style="fill:currentColor"></rect><rect x="9.75" y="9" width="4.5" height="12" rx="1" style="fill:currentColor"></rect><rect x="16.5" y="4" width="4.5" height="17" rx="1" style="fill:currentColor"></rect></svg>Confiance élevée</span>
+<p style="margin: 0; font-size: 18px; line-height: 1.45; text-wrap: pretty">L’air est passé à moins de 4 km du feu, et les vents sont restés stables toute la journée.</p>
+</section>
+<section aria-labelledby="todo-h" style="background: #FFFFFF; border-radius: 18px; padding: 20px 20px 0; display: flex; flex-direction: column; gap: 8px; box-shadow: 0 1px 2px rgba(26, 29, 33, 0.06), 0 8px 24px rgba(26, 29, 33, 0.07); overflow: hidden">
+<h2 id="todo-h" style="margin: 0; font-size: 22px; font-weight: 700">Que faire</h2>
+<p style="margin: 0; font-size: 18px; line-height: 1.45">Envisagez de réduire ou de réorganiser les activités exténuantes en plein air si vous éprouvez des symptômes comme la toux et une irritation de la gorge.</p>
+<p style="margin: 0; font-size: 16px; line-height: 1.4; color: #4F5561">Conseil officiel pour une cote de 7 (risque élevé).</p>
+<a href="tel:811" style="align-self: flex-start; min-height: 56px; display: flex; align-items: center; gap: 10px; font-size: 18px; font-weight: 700; line-height: 1.3; color: #1B2A4A"><svg class="ic" width="22" height="22" sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="M5.5 3.5h3l1.8 4.6-2.2 1.4a11 11 0 0 0 6.4 6.4l1.4-2.2 4.6 1.8v3a2 2 0 0 1-2.2 2A16.5 16.5 0 0 1 3.5 5.7a2 2 0 0 1 2-2.2z"></path></svg><span>Pas une urgence, mais vous vous sentez mal&nbsp;? Composez le 811 pour parler à du personnel infirmier</span></a>
+<button type="button" sc-camel-on-click="{{toggleGroups}}" aria-expanded="{{groupsExpanded}}" aria-controls="groups" style="margin: 8px -20px 0; width: calc(100% + 40px); min-height: 60px; padding: 8px 20px; border: 0; border-top: 1px solid #EEE7DC; background: transparent; display: flex; align-items: center; justify-content: space-between; gap: 12px; font-family: inherit; font-size: 18px; font-weight: 700; color: #1B2A4A; text-align: left; cursor: pointer"><span style="text-wrap: balance">Conseils pour les personnes plus à risque</span><sc-if value="{{groupsOpen}}" hint-placeholder-val="{{ false }}"><svg class="ic" width="24" height="24" sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="M6 15l6-6 6 6"></path></svg></sc-if><sc-if value="{{groupsClosed}}" hint-placeholder-val="{{ true }}"><svg class="ic" width="24" height="24" sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></sc-if></button>
+<sc-if value="{{groupsOpen}}" hint-placeholder-val="{{ false }}">
+<div id="groups" style="padding: 4px 0 20px; display: flex; flex-direction: column; gap: 12px">
+<p style="margin: 0; font-size: 18px; line-height: 1.45">Réduisez ou réorganisez les activités exténuantes en plein air. Les enfants et les personnes âgées devraient également modérer leurs activités.</p>
+<p style="margin: 0; font-size: 18px; line-height: 1.45"><strong>Plus à risque&nbsp;:</strong> personnes âgées, enfants, personnes enceintes, personnes ayant des problèmes cardiaques ou respiratoires, et personnes qui travaillent ou font du sport intensément à l’extérieur.</p>
+<p style="margin: 0; font-size: 16px; line-height: 1.45; color: #4F5561">Personnes ayant une maladie cardiaque ou respiratoire&nbsp;: suivez les conseils de votre médecin sur l’activité physique et la gestion de votre maladie. Source&nbsp;: Environnement et Changement climatique Canada.</p>
+</div>
+</sc-if>
+</section>
+<section aria-labelledby="aqhi-h" style="background: #FFFFFF; border-radius: 18px; padding: 20px; display: flex; flex-direction: column; gap: 16px; box-shadow: 0 1px 2px rgba(26, 29, 33, 0.06), 0 8px 24px rgba(26, 29, 33, 0.07)">
+<div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px">
+<h2 id="aqhi-h" style="margin: 0; font-size: 22px; font-weight: 700">Qualité de l’air</h2>
+<span style="font-size: 16px; color: #4F5561">CAS&nbsp;· Moncton</span>
+</div>
+<div style="display: flex; align-items: center; gap: 16px">
+<span style="flex-shrink: 0; width: 72px; height: 72px; border-radius: 18px; background: #1B2A4A; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 42px; font-weight: 800">7</span>
+<span style="display: flex; flex-direction: column; gap: 4px">
+<span style="display: flex; align-items: center; gap: 8px; font-size: 22px; font-weight: 700"><svg class="ic" width="26" height="26" sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="M4 18a8 8 0 1 1 16 0"></path><path d="M12 18l4.5-5"></path></svg>Risque élevé</span>
+<span style="font-size: 16px; color: #4F5561">Sur une échelle de 1 à 10+</span>
+</span>
+</div>
+<div style="display: flex; flex-direction: column; gap: 6px">
+<div aria-hidden="true" style="display: grid; grid-template-columns: repeat(11, minmax(0, 1fr)); gap: 4px">
+<span style="height: 12px; border-radius: 4px; background: #1B2A4A"></span><span style="height: 12px; border-radius: 4px; background: #1B2A4A"></span><span style="height: 12px; border-radius: 4px; background: #1B2A4A"></span><span style="height: 12px; border-radius: 4px; background: #1B2A4A"></span><span style="height: 12px; border-radius: 4px; background: #1B2A4A"></span><span style="height: 12px; border-radius: 4px; background: #1B2A4A"></span><span style="height: 12px; border-radius: 4px; background: #1B2A4A"></span><span style="height: 12px; border-radius: 4px; background: #E6E0D6"></span><span style="height: 12px; border-radius: 4px; background: #E6E0D6"></span><span style="height: 12px; border-radius: 4px; background: #E6E0D6"></span><span style="height: 12px; border-radius: 4px; background: #E6E0D6"></span>
+</div>
+<div style="display: flex; justify-content: space-between; font-size: 16px; color: #4F5561"><span>1 Faible</span><span>10+ Très élevé</span></div>
+</div>
+<p style="margin: 0; font-size: 16px; color: #4F5561">Source&nbsp;: Environnement et Changement climatique Canada</p>
+</section>
+<section style="background: #FFFFFF; border-radius: 18px; overflow: hidden; box-shadow: 0 1px 2px rgba(26, 29, 33, 0.06), 0 8px 24px rgba(26, 29, 33, 0.07)">
+<button type="button" sc-camel-on-click="{{toggleWhy}}" aria-expanded="{{whyExpanded}}" aria-controls="why-body" style="width: 100%; min-height: 72px; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 0 20px; border: 0; background: transparent; font-family: inherit; font-size: 22px; font-weight: 700; color: #1A1D21; cursor: pointer; text-align: left">Pourquoi nous le pensons<sc-if value="{{whyOpen}}" hint-placeholder-val="{{ false }}"><svg class="ic" width="26" height="26" sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="M6 15l6-6 6 6"></path></svg></sc-if><sc-if value="{{whyClosed}}" hint-placeholder-val="{{ true }}"><svg class="ic" width="26" height="26" sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></sc-if></button>
+<sc-if value="{{whyOpen}}" hint-placeholder-val="{{ false }}">
+<div id="why-body" style="padding: 0 20px 12px; display: flex; flex-direction: column; gap: 8px">
+<ol style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 18px">
+<li style="display: flex; gap: 14px; align-items: flex-start"><span style="flex-shrink: 0; width: 32px; height: 32px; border-radius: 50%; background: #1B2A4A; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 700">1</span><span style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 18px; font-weight: 700">Nous avons retracé l’air sur 24 heures</span><span style="font-size: 18px; line-height: 1.45">Grâce aux vents horaires, nous avons suivi à rebours l’air qui arrive à Moncton, une heure à la fois.</span></span></li>
+<li style="display: flex; gap: 14px; align-items: flex-start"><span style="flex-shrink: 0; width: 32px; height: 32px; border-radius: 50%; background: #1B2A4A; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 700">2</span><span style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 18px; font-weight: 700">Il est passé à 4 km d’un feu actif</span><span style="font-size: 18px; line-height: 1.45">Il y a environ 8 heures, cet air se trouvait au-dessus du feu de Long Lake. Les satellites l’ont vu brûler au cours des 12 dernières heures.</span></span></li>
+<li style="display: flex; gap: 14px; align-items: flex-start"><span style="flex-shrink: 0; width: 32px; height: 32px; border-radius: 50%; background: #1B2A4A; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 700">3</span><span style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 18px; font-weight: 700">Le vent est resté stable</span><span style="font-size: 18px; line-height: 1.45">La direction du vent a peu changé en chemin, donc le trajet retracé est plus fiable.</span></span></li>
+</ol>
+<a href="HowItWorks.dc.html" style="align-self: flex-start; min-height: 56px; display: flex; align-items: center; gap: 6px; font-size: 18px; font-weight: 700; color: #1B2A4A">Comment ça marche<svg class="ic" width="20" height="20" sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"></path></svg></a>
+</div>
+</sc-if>
+</section>
+</main>
+<sc-if value="{{tipFlames}}" hint-placeholder-val="{{ false }}">
+<div role="dialog" aria-label="Flammes" style="position: absolute; left: 12px; right: 12px; bottom: 144px; z-index: 6; background: #FFFFFF; border-radius: 18px; box-shadow: 0 16px 40px rgba(26, 29, 33, 0.22), 0 2px 6px rgba(26, 29, 33, 0.08); padding: 14px 6px 18px 18px; display: flex; flex-direction: column; gap: 4px">
+<div style="display: flex; align-items: center; gap: 12px">
+<svg class="ic" width="26" height="26" sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="M12 21.5c3.9 0 6.5-2.6 6.5-6.3 0-3-1.8-5.3-3.4-7-.4 1.6-1.2 2.6-2.3 3.2.4-3.2-1-6.3-3.8-8.9.2 3.4-1.5 5.4-3 7.3-1.2 1.6-2 3.2-2 5.4 0 3.7 2.6 6.3 6.5 6.3z"></path></svg>
+<p style="flex-grow: 1; margin: 0; font-size: 20px; font-weight: 700">Flammes</p>
+<button type="button" sc-camel-on-click="{{closeTip}}" aria-label="Fermer" style="width: 56px; height: 56px; margin: -10px 0; border: 0; background: transparent; color: #1A1D21; display: flex; align-items: center; justify-content: center; cursor: pointer"><svg class="ic" width="24" height="24" sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button>
+</div>
+<p style="margin: 0; padding-right: 12px; font-size: 18px; line-height: 1.45">Un feu visible à l’extérieur, autre qu’un feu de camp ou un foyer surveillé.</p>
+</div>
+</sc-if>
+<sc-if value="{{tipColumn}}" hint-placeholder-val="{{ false }}">
+<div role="dialog" aria-label="Panache de fumée" style="position: absolute; left: 12px; right: 12px; bottom: 144px; z-index: 6; background: #FFFFFF; border-radius: 18px; box-shadow: 0 16px 40px rgba(26, 29, 33, 0.22), 0 2px 6px rgba(26, 29, 33, 0.08); padding: 14px 6px 18px 18px; display: flex; flex-direction: column; gap: 4px">
+<div style="display: flex; align-items: center; gap: 12px">
+<svg class="ic" width="26" height="26" sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="M6.5 21h11"></path><path d="M10 20.5a1.8 1.8 0 0 1-1-3.7a2.3 2.3 0 0 1-.4-4.2a2.6 2.6 0 0 1 1.2-4.6a2.8 2.8 0 0 1 3.7-3.8a2.6 2.6 0 0 1 4.7 1a2.6 2.6 0 0 1 .2 4.8a2.4 2.4 0 0 1-3.6 2.6a2.3 2.3 0 0 1-2.2 3.9a1.9 1.9 0 0 1-.8 4"></path></svg>
+<p style="flex-grow: 1; margin: 0; font-size: 20px; font-weight: 700">Panache de fumée</p>
+<button type="button" sc-camel-on-click="{{closeTip}}" aria-label="Fermer" style="width: 56px; height: 56px; margin: -10px 0; border: 0; background: transparent; color: #1A1D21; display: flex; align-items: center; justify-content: center; cursor: pointer"><svg class="ic" width="24" height="24" sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button>
+</div>
+<p style="margin: 0; padding-right: 12px; font-size: 18px; line-height: 1.45">De la fumée qui monte d’un seul endroit. La fumée lointaine forme un voile&nbsp;; un panache veut dire que le feu est proche.</p>
+</div>
+</sc-if>
+<sc-if value="{{tipDark}}" hint-placeholder-val="{{ false }}">
+<div role="dialog" aria-label="Fumée noire" style="position: absolute; left: 12px; right: 12px; bottom: 144px; z-index: 6; background: #FFFFFF; border-radius: 18px; box-shadow: 0 16px 40px rgba(26, 29, 33, 0.22), 0 2px 6px rgba(26, 29, 33, 0.08); padding: 14px 6px 18px 18px; display: flex; flex-direction: column; gap: 4px">
+<div style="display: flex; align-items: center; gap: 12px">
+<svg class="ic" width="26" height="26" sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="M5.5 18.5a3.5 3.5 0 0 1-.4-6.98A5 5 0 0 1 14.5 9a4 4 0 0 1 6 3.4 3.1 3.1 0 0 1-1.5 6.1z" style="fill:#2D2926"></path></svg>
+<p style="flex-grow: 1; margin: 0; font-size: 20px; font-weight: 700">Fumée noire</p>
+<button type="button" sc-camel-on-click="{{closeTip}}" aria-label="Fermer" style="width: 56px; height: 56px; margin: -10px 0; border: 0; background: transparent; color: #1A1D21; display: flex; align-items: center; justify-content: center; cursor: pointer"><svg class="ic" width="24" height="24" sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button>
+</div>
+<p style="margin: 0; padding-right: 12px; font-size: 18px; line-height: 1.45">Une fumée épaisse, noire ou brune. Souvent, un bâtiment, un véhicule ou des broussailles denses brûlent tout près.</p>
+</div>
+</sc-if>
+<div style="position: absolute; left: 0; right: 0; bottom: 0; z-index: 5; background: #FFFFFF; border-top: 1px solid #E6DFD3; box-shadow: 0 -8px 24px rgba(26, 29, 33, 0.08); padding: 10px 16px 14px; display: flex; align-items: stretch; gap: 10px">
+<div style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px">
+<p style="margin: 0; font-size: 18px; font-weight: 700; line-height: 1.2">Appelez le 911 si&nbsp;:</p>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px">
+<button type="button" class="tile" sc-camel-on-click="{{toggleFlames}}" aria-expanded="{{flamesExp}}" style="position: relative; min-height: 78px; padding: 6px 2px; border: 0; border-radius: 12px; background: #F3EEE6; color: #1A1D21; font-family: inherit; display: flex; flex-direction: column; align-items: center; gap: 3px; cursor: pointer"><svg class="ic" width="28" height="28" sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="M12 21.5c3.9 0 6.5-2.6 6.5-6.3 0-3-1.8-5.3-3.4-7-.4 1.6-1.2 2.6-2.3 3.2.4-3.2-1-6.3-3.8-8.9.2 3.4-1.5 5.4-3 7.3-1.2 1.6-2 3.2-2 5.4 0 3.7 2.6 6.3 6.5 6.3z"></path></svg><span style="font-size: 16px; font-weight: 600; line-height: 1.15; text-align: center">Flammes</span><sc-if value="{{tipFlames}}" hint-placeholder-val="{{ false }}"><span aria-hidden="true" style="position: absolute; inset: 0; border: 2.5px solid #1B2A4A; border-radius: 12px"></span></sc-if></button>
+<button type="button" class="tile" sc-camel-on-click="{{toggleColumn}}" aria-expanded="{{columnExp}}" style="position: relative; min-height: 78px; padding: 6px 2px; border: 0; border-radius: 12px; background: #F3EEE6; color: #1A1D21; font-family: inherit; display: flex; flex-direction: column; align-items: center; gap: 3px; cursor: pointer"><svg class="ic" width="28" height="28" sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="M6.5 21h11"></path><path d="M10 20.5a1.8 1.8 0 0 1-1-3.7a2.3 2.3 0 0 1-.4-4.2a2.6 2.6 0 0 1 1.2-4.6a2.8 2.8 0 0 1 3.7-3.8a2.6 2.6 0 0 1 4.7 1a2.6 2.6 0 0 1 .2 4.8a2.4 2.4 0 0 1-3.6 2.6a2.3 2.3 0 0 1-2.2 3.9a1.9 1.9 0 0 1-.8 4"></path></svg><span style="font-size: 16px; font-weight: 600; line-height: 1.15; text-align: center">Panache</span><sc-if value="{{tipColumn}}" hint-placeholder-val="{{ false }}"><span aria-hidden="true" style="position: absolute; inset: 0; border: 2.5px solid #1B2A4A; border-radius: 12px"></span></sc-if></button>
+<button type="button" class="tile" sc-camel-on-click="{{toggleDark}}" aria-expanded="{{darkExp}}" style="position: relative; min-height: 78px; padding: 6px 2px; border: 0; border-radius: 12px; background: #F3EEE6; color: #1A1D21; font-family: inherit; display: flex; flex-direction: column; align-items: center; gap: 3px; cursor: pointer"><svg class="ic" width="28" height="28" sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="M5.5 18.5a3.5 3.5 0 0 1-.4-6.98A5 5 0 0 1 14.5 9a4 4 0 0 1 6 3.4 3.1 3.1 0 0 1-1.5 6.1z" style="fill:#2D2926"></path></svg><span style="font-size: 16px; font-weight: 600; line-height: 1.15; text-align: center">Fumée noire</span><sc-if value="{{tipDark}}" hint-placeholder-val="{{ false }}"><span aria-hidden="true" style="position: absolute; inset: 0; border: 2.5px solid #1B2A4A; border-radius: 12px"></span></sc-if></button>
+</div>
+</div>
+<a href="tel:911" class="press" style="flex-shrink: 0; width: 104px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; border-radius: 18px; background: #D92D20; color: #FFFFFF; text-decoration: none; font-size: 20px; font-weight: 800; line-height: 1.1; text-align: center"><svg class="ic" width="28" height="28" sc-camel-view-box="0 0 24 24" aria-hidden="true"><path d="M5.5 3.5h3l1.8 4.6-2.2 1.4a11 11 0 0 0 6.4 6.4l1.4-2.2 4.6 1.8v3a2 2 0 0 1-2.2 2A16.5 16.5 0 0 1 3.5 5.7a2 2 0 0 1 2-2.2z"></path></svg>Appeler le&nbsp;911</a>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script="" data-props="{&quot;replay&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true},&quot;tip&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;none&quot;,&quot;flames&quot;,&quot;column&quot;,&quot;dark&quot;],&quot;default&quot;:&quot;none&quot;},&quot;$preview&quot;:{&quot;width&quot;:390,&quot;height&quot;:1800}}">
+class Component extends DCLogic {
+  renderVals() {
+    const s = this.state || {};
+    const tip = s.tip !== undefined ? s.tip : (this.props.tip ?? 'none');
+    const pick = (name) => () => this.setState({ tip: tip === name ? 'none' : name });
+    const whyOpen = !!s.whyOpen;
+    const groupsOpen = !!s.groupsOpen;
+    return {
+      replay: this.props.replay ?? true,
+      whyOpen: whyOpen,
+      whyClosed: !whyOpen,
+      whyExpanded: whyOpen ? 'true' : 'false',
+      toggleWhy: () => this.setState({ whyOpen: !whyOpen }),
+      groupsOpen: groupsOpen,
+      groupsClosed: !groupsOpen,
+      groupsExpanded: groupsOpen ? 'true' : 'false',
+      toggleGroups: () => this.setState({ groupsOpen: !groupsOpen }),
+      tipFlames: tip === 'flames',
+      tipColumn: tip === 'column',
+      tipDark: tip === 'dark',
+      flamesExp: tip === 'flames' ? 'true' : 'false',
+      columnExp: tip === 'column' ? 'true' : 'false',
+      darkExp: tip === 'dark' ? 'true' : 'false',
+      toggleFlames: pick('flames'),
+      toggleColumn: pick('column'),
+      toggleDark: pick('dark'),
+      closeTip: () => this.setState({ tip: 'none' })
+    };
+  }
+}
+</script>
+
+
+</body></html>
