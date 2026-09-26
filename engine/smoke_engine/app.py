@@ -104,7 +104,9 @@ def _detections_json(detections: list[Detection]) -> dict:
     by_source = {"FIRMS": 0, "CWFIS": 0, "both": 0}
     for d in detections:
         by_source[d.by] += 1
-    return {"total": len(detections), "bySource": by_source}
+    # The named satellites that saw the fire in the last 24 hours (a record may name none).
+    satellites = sorted({name for d in detections for name in d.satellites})
+    return {"total": len(detections), "bySource": by_source, "satellites": satellites}
 
 
 def _sources_json(

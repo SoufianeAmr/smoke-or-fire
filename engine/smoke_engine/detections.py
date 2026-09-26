@@ -33,6 +33,7 @@ class Detection:
     latency_class: str | None  # URT | RT | NRT | SP, FIRMS only
     source: str  # "FIRMS" or "CWFIS": where this record comes from
     sources: tuple[str, ...]  # every source that saw it: ("FIRMS", "CWFIS") after fuse()
+    satellites: tuple[str, ...]  # every named satellite of the records merged into it
 
     @property
     def by(self) -> str:
@@ -68,12 +69,13 @@ def parse_firms_csv(text: str) -> list[Detection]:
     for row in csv.DictReader(io.StringIO(text)):
         if not _confident(row["instrument"], row["confidence"]):
             continue
+        satellite = SATELLITE_NAMES.get(row["satellite"], row["satellite"])
         detections.append(
             Detection(
                 lat=float(row["latitude"]),
                 lon=float(row["longitude"]),
                 time=_acquired(row["acq_date"], row["acq_time"]),
-                satellite=SATELLITE_NAMES.get(row["satellite"], row["satellite"]),
+                satellite=satellite,
                 instrument=row["instrument"],
                 confidence=row["confidence"],
                 frp=float(row["frp"]) if row.get("frp") else None,
@@ -81,6 +83,7 @@ def parse_firms_csv(text: str) -> list[Detection]:
                 latency_class=_latency_class(row["version"]),
                 source="FIRMS",
                 sources=("FIRMS",),
+                satellites=(satellite,),
             )
         )
     return detections
@@ -98,12 +101,13 @@ def cwfis_detections(hotspots: dict) -> list[Detection]:
         p = feature["properties"]
         if not p.get("rep_date"):
             continue
+        satellite = SATELLITE_NAMES.get(p.get("satellite"), p.get("satellite"))
         detections.append(
             Detection(
                 lat=p["lat"],
                 lon=p["lon"],
                 time=datetime.fromisoformat(p["rep_date"].replace("Z", "+00:00")),
-                satellite=SATELLITE_NAMES.get(p.get("satellite"), p.get("satellite")),
+                satellite=satellite,
                 instrument=p.get("sensor"),
                 confidence=None,
                 frp=p.get("frp"),
@@ -111,6 +115,7 @@ def cwfis_detections(hotspots: dict) -> list[Detection]:
                 latency_class=None,
                 source="CWFIS",
                 sources=("CWFIS",),
+                satellites=(satellite,) if satellite else (),
             )
         )
     return detections
@@ -123,7 +128,8 @@ def within(detections: list[Detection], since: datetime, at: datetime) -> list[D
 
 def fuse(firms: list[Detection], cwfis: list[Detection]) -> list[Detection]:
     """One list, with each CWFIS hotspot that matches a FIRMS detection within FUSE_KM
-    and FUSE_MINUTES merged into it: the FIRMS record is kept and both sources recorded.
+    and FUSE_MINUTES merged into it: the FIRMS record is kept, and both sources and
+    both satellites are recorded (the two can name different satellites).
 
     Each detection matches at most one other; a hotspot takes the nearest free match.
     """
@@ -144,5 +150,8 @@ def fuse(firms: list[Detection], cwfis: list[Detection]) -> list[Detection]:
             unmatched.append(hotspot)
             continue
         taken.add(best[1])
-        fused[best[1]] = replace(firms[best[1]], sources=("FIRMS", "CWFIS"))
+        kept = firms[best[1]]
+        fused[best[1]] = replace(
+            kept, sources=("FIRMS", "CWFIS"), satellites=tuple(sorted({*kept.satellites, *hotspot.satellites}))
+        )
     return fused + unmatched

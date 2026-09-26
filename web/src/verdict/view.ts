@@ -32,7 +32,7 @@ export interface VerdictView {
     | { kind: "advice"; title: string; general: string; official: string; nurse: string; groupsLabel: string; atRisk: string; higherRiskLead: string; higherRisk: string; doctor: string }
     | { kind: "noReading"; title: string; general: string; linkText: string; linkHost: string; linkUrl: string; nurse: string };
   aqhi: { title: string; station: string; display: string; risk: string; scale: string; scaleLow: string; scaleHigh: string; segments: number; category: AqhiCategory | null; needle: string | null; areaWide: { lead: string; text: string } | null; source: string };
-  why: { title: string; items: { title: string; body: string }[]; howLink: string };
+  why: { title: string; items: { title: string; body: string; detail?: string | null }[]; howLink: string };
 }
 
 const AREA_KEYS = ["NB", "NS", "PE", "QC", "ME", "BAY_OF_FUNDY", "GULF_OF_ST_LAWRENCE", "GULF_OF_MAINE"] as const;
@@ -234,7 +234,14 @@ export function verdictView(json: VerdictJson, lang: Lang): VerdictView {
     const h = approach!.hoursAgo;
     return t(h <= 0 ? "why.over.under" : h === 1 ? "why.over.one" : "why.over", { h, fire: fireThe(fire!) }) + " " + seen(fire!);
   };
-  const passed = { title: t("why.passed", { km: approach?.km ?? 0 }), body: "" };
+  // When FIRMS saw the fire in the last 24 hours: every satellite that saw it, from either source.
+  const satellitesLine = (f: Fire) => {
+    const { bySource, satellites } = f.detections;
+    if (bySource.FIRMS + bySource.both === 0 || satellites.length === 0) return null;
+    const list = new Intl.ListFormat(lang, { style: "long", type: "conjunction" }).format(satellites);
+    return t(satellites.length === 1 ? "why.satellites.one" : "why.satellites", { n: satellites.length, list });
+  };
+  const passed = { title: t("why.passed", { km: approach?.km ?? 0 }), body: "", detail: variant === "7a" || variant === "7c" ? satellitesLine(fire!) : null };
   const second =
     variant === "7a"
       ? { ...passed, body: overFire() }

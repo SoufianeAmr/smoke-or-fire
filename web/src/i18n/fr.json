@@ -276,6 +276,8 @@
   "time.minutes.one": "1 minute",
   "time.hours": "{n} heures",
   "time.hours.one": "1 heure",
+  "why.satellites": "Détecté par {n} satellites au cours des 24 dernières heures\u00a0: {list}.",
+  "why.satellites.one": "Détecté par 1 satellite au cours des 24 dernières heures\u00a0: {list}.",
   "why.onList": "Il figure sur la liste officielle des feux actifs du Canada.",
   "why.closeButFar": "TODO",
   "why.noneNear": "TODO",

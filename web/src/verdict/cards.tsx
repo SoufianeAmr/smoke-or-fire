@@ -178,6 +178,7 @@ export function WhyCard({ view }: { view: VerdictView }) {
                 <span style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
                   <span style={{ fontSize: "18px", fontWeight: "700" }}>{item.title}</span>
                   <span style={{ fontSize: "18px", lineHeight: "1.45" }}>{item.body}</span>
+                  {item.detail && <span style={{ fontSize: "18px", lineHeight: "1.45", marginTop: "4px" }}>{item.detail}</span>}
                 </span>
               </li>
             ))}

@@ -6,6 +6,7 @@
 - httpx logs every request URL at INFO, and the FIRMS MAP_KEY sits in the URL: a log filter masks it as `***`, and every error is masked before it is logged, stored or raised.
 - FIRMS answers a bad key or an exceeded limit with HTTP 200 and plain text: an answer counts only if it starts with the CSV header.
 - Many CWFIS hotspots are the same NASA VIIRS and MODIS detections: a FIRMS detection and a CWFIS hotspot within 1 km and 30 minutes are merged (225 duplicates in the replay's 24 hours).
+- The 1 km / 30 minute merge also joins passes of different satellites: 101 of the replay's 225 merges pair two satellites (e.g. NOAA-21 with Suomi NPP). A merged detection keeps both satellite names, so the satellites line never drops one.
 - Git converts line endings on Windows checkouts: `.gitattributes` keeps the raw FIRMS CSVs byte for byte.
 - `lastSeen` was already a time string on each fire: it became the object with the time, satellite and latency class, and `lastSeen.time` holds the old value.
 - FIRMS points moved the Long Lake fire's centre about 150 m, so two shown distances changed by 1 km (Moncton 159 → 158 km, Halifax 127 → 128 km): the view tests use the rebuilt demo values; no verdict changed.

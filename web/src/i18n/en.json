@@ -276,6 +276,8 @@
   "time.minutes.one": "1 minute",
   "time.hours": "{n} hours",
   "time.hours.one": "1 hour",
+  "why.satellites": "Detected by {n} satellites in the last 24 hours: {list}.",
+  "why.satellites.one": "Detected by 1 satellite in the last 24 hours: {list}.",
   "why.onList": "It’s on Canada’s official active fire list.",
   "why.closeButFar": "Close, but farther than the {km} km we need to call it drifting smoke.",
   "why.noneNear": "No active fire near its path",

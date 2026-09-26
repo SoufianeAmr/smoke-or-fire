@@ -221,7 +221,8 @@
      "FIRMS": 0,
      "CWFIS": 0,
      "both": 0
-    }
+    },
+    "satellites": []
    }
   }
  },
@@ -255,7 +256,12 @@
     "FIRMS": 1,
     "CWFIS": 5,
     "both": 1
-   }
+   },
+   "satellites": [
+    "NOAA-20",
+    "NOAA-21",
+    "Sentinel-3A"
+   ]
   }
  },
  "heights": {

@@ -63,9 +63,9 @@ def wind_over_time(wind_at):
     return answer
 
 
-def hotspot(lat: float, lon: float, seen: str) -> dict:
+def hotspot(lat: float, lon: float, seen: str, satellite: str | None = None) -> dict:
     """Properties of one CWFIS `public:hotspots` feature."""
-    return {"lat": lat, "lon": lon, "rep_date": seen, "source": "NASA", "sensor": "VIIRS-I", "agency": "NB"}
+    return {"lat": lat, "lon": lon, "rep_date": seen, "source": "NASA", "sensor": "VIIRS-I", "satellite": satellite, "agency": "NB"}
 
 
 FIRMS_HEADER = "latitude,longitude,bright_ti4,scan,track,acq_date,acq_time,satellite,instrument,confidence,version,bright_ti5,frp,daynight"

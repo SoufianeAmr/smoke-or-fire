@@ -160,3 +160,26 @@ describe("screen 7d: when the fire data was checked", () => {
     expect(rows.map((row) => row.kind === "none" && row.checked)).toEqual([null, null]);
   });
 });
+
+describe("Why item 2: the satellites that saw the fire", () => {
+  test("lists them when the fire has FIRMS detections (Moncton replay)", () => {
+    expect([verdictView(json(moncton), "en").why.items[1].detail, verdictView(json(moncton), "fr").why.items[1].detail]).toEqual([
+      "Detected by 6 satellites in the last 24 hours: Aqua, NOAA-20, NOAA-21, Sentinel-3A, Suomi NPP, and Terra.",
+      `Détecté par 6 satellites au cours des 24 dernières heures${NBSP}: Aqua, NOAA-20, NOAA-21, Sentinel-3A, Suomi NPP et Terra.`,
+    ]);
+  });
+
+  test("says 1 satellite, not 1 satellites", () => {
+    const data = json(moncton);
+    const detections = { total: 2, bySource: { FIRMS: 2, CWFIS: 0, both: 0 }, satellites: ["NOAA-20"] };
+    const one = { ...data, closestApproach: { ...data.closestApproach!, fire: { ...data.closestApproach!.fire, detections } } };
+    expect([verdictView(one, "en").why.items[1].detail, verdictView(one, "fr").why.items[1].detail]).toEqual([
+      "Detected by 1 satellite in the last 24 hours: NOAA-20.",
+      `Détecté par 1 satellite au cours des 24 dernières heures${NBSP}: NOAA-20.`,
+    ]);
+  });
+
+  test("adds nothing when FIRMS never saw the fire (Miramichi replay)", () => {
+    expect(verdictView(json(miramichi), "en").why.items[1].detail ?? null).toBeNull();
+  });
+});

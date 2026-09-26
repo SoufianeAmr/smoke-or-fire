@@ -48,7 +48,8 @@ export interface Fire {
   lastSeenHoursAgo: number | null;
   sizeHa: number | null;
   stage: string | null;
-  detections: { total: number; bySource: { FIRMS: number; CWFIS: number; both: number } };
+  /** Detections in the last 24 hours; satellites names each satellite that saw the fire, from either source. */
+  detections: { total: number; bySource: { FIRMS: number; CWFIS: number; both: number }; satellites: string[] };
 }
 
 export interface ClosestApproach {

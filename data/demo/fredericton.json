@@ -210,7 +210,15 @@
      "FIRMS": 81,
      "CWFIS": 92,
      "both": 210
-    }
+    },
+    "satellites": [
+     "Aqua",
+     "NOAA-20",
+     "NOAA-21",
+     "Sentinel-3A",
+     "Suomi NPP",
+     "Terra"
+    ]
    }
   }
  },
@@ -244,7 +252,13 @@
     "FIRMS": 2,
     "CWFIS": 14,
     "both": 12
-   }
+   },
+   "satellites": [
+    "NOAA-20",
+    "NOAA-21",
+    "Sentinel-3A",
+    "Terra"
+   ]
   }
  },
  "heights": {

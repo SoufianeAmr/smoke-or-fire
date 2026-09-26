@@ -253,7 +253,8 @@
      "FIRMS": 0,
      "CWFIS": 0,
      "both": 0
-    }
+    },
+    "satellites": []
    }
   }
  },
@@ -280,7 +281,8 @@
     "FIRMS": 0,
     "CWFIS": 0,
     "both": 0
-   }
+   },
+   "satellites": []
   }
  },
  "heights": {
