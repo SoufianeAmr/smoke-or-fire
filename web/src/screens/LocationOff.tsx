@@ -2,22 +2,24 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
 import { useApp, useT } from "../app/state";
-import { REPLAY_TOWNS, searchPlaces } from "../data/replay";
+import { searchPlaces } from "../data/replay";
+import { usePlaces } from "../data/places";
 import { ReplayBanner } from "../components/ReplayBanner";
 import { Screen } from "../components/Screen";
 import { Sticky911 } from "../components/Sticky911";
 import { TopBar } from "../components/TopBar";
 
 export function LocationOff() {
-  const { setPlace } = useApp();
+  const { mode, setPlace } = useApp();
   const t = useT();
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
+  const places = usePlaces(mode);
 
   // "Check this place" checks the first town matching what was typed (replay: the 12 replay towns).
   const check = (event: React.MouseEvent) => {
     event.preventDefault();
-    const place = searchPlaces(REPLAY_TOWNS, query)[0];
+    const place = searchPlaces(places, query)[0];
     if (!place) return;
     setPlace(place);
     navigate("/loading");

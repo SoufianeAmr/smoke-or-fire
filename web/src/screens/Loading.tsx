@@ -2,6 +2,7 @@
 import { useEffect } from "react";
 import { Navigate, useNavigate } from "react-router";
 import { useApp, useT } from "../app/state";
+import { loadLiveVerdict } from "../data/live";
 import { loadReplayVerdict } from "../data/replay";
 import { ReplayBanner } from "../components/ReplayBanner";
 import { Screen } from "../components/Screen";
@@ -34,7 +35,7 @@ export function Loading() {
     let cancelled = false;
     const started = Date.now();
     setResult(null);
-    const load = mode === "replay" ? loadReplayVerdict(place) : Promise.reject(new Error("live mode not built yet"));
+    const load = mode === "replay" ? loadReplayVerdict(place) : loadLiveVerdict(place);
     load
       .then((json) => {
         if (cancelled) return;

@@ -14,6 +14,11 @@ const SAFARI_SE_SCREENS = ["01 Check", "02 Q1", "04 Emergency"];
 
 type Check = { name: string; open: (page: Page) => Promise<void>; main: (page: Page) => Locator[]; bar: boolean };
 
+/** Wait until the app has saved the mode, so the next page.goto() opens in that mode. */
+async function modeStored(page: Page, mode: "live" | "replay") {
+  await page.waitForFunction((m) => sessionStorage.getItem("smoke-or-fire")?.includes(`"mode":"${m}"`), mode);
+}
+
 async function searchTown(page: Page, town: string) {
   await page.goto("/location");
   await page.locator("input[type=search]").fill(town);
@@ -77,6 +82,7 @@ for (const { viewport, screens } of RUNS) {
       for (const check of screens) {
         test(check.name, async ({ page }) => {
           await page.goto("/?mode=replay");
+          await modeStored(page, "replay");
           if (lang === "fr") await page.getByRole("button", { name: "Français" }).click();
           await check.open(page);
           for (const group of check.main(page)) await expect(group.first()).toBeVisible();

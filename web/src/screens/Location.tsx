@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router";
 import { useApp, useT, type Place } from "../app/state";
 import { REPLAY_TOWNS, nearestReplayTown, searchPlaces } from "../data/replay";
+import { loadCommunities, placeAt, usePlaces } from "../data/places";
 import { ReplayBanner } from "../components/ReplayBanner";
 import { Screen } from "../components/Screen";
 import { Sticky911 } from "../components/Sticky911";
@@ -12,10 +13,10 @@ import { circleBox, textBox } from "../map/labels";
 import { Basemap, USER_XY, frameProjection } from "../map/basemap";
 import type { StringKey } from "../i18n";
 
-export function PlaceSearch({ id, query, setQuery, choose }: { id: string; query: string; setQuery: (q: string) => void; choose: (p: Place) => void }) {
+export function PlaceSearch({ id, places, query, setQuery, choose }: { id: string; places: Place[]; query: string; setQuery: (q: string) => void; choose: (p: Place) => void }) {
   const t = useT();
-  // Replay searches only the 12 replay towns. (Live mode will search all Maritimes communities.)
-  const results = searchPlaces(REPLAY_TOWNS, query);
+  // Replay searches only the 12 replay towns; live mode searches every Maritimes community.
+  const results = searchPlaces(places, query);
   return (
     <>
       <div style={{ position: "relative" }}>
@@ -51,6 +52,7 @@ export function Location() {
   const t = useT();
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
+  const places = usePlaces(mode);
 
   const choose = (chosen: Place) => {
     setPlace(chosen);
@@ -62,14 +64,15 @@ export function Location() {
     if (!("geolocation" in navigator)) return navigate("/location-off");
     navigator.geolocation.getCurrentPosition(
       ({ coords }) => {
-        if (mode === "replay") choose(nearestReplayTown(coords.latitude, coords.longitude));
+        if (mode === "replay") return choose(nearestReplayTown(coords.latitude, coords.longitude));
+        loadCommunities().then((list) => choose(placeAt(list, coords.latitude, coords.longitude)));
       },
       () => navigate("/location-off"),
       { enableHighAccuracy: false, timeout: 15000, maximumAge: 600000 },
     );
   };
 
-  const pin = searchPlaces(REPLAY_TOWNS, query)[0] ?? place ?? REPLAY_TOWNS[0];
+  const pin = searchPlaces(places, query)[0] ?? place ?? REPLAY_TOWNS[0];
   const projection = frameProjection(pin, 358, 140);
 
   return (
@@ -96,7 +99,7 @@ export function Location() {
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
           <label htmlFor="loc-search" style={{ fontSize: "18px", fontWeight: "700", padding: "0 4px" }}>{t("location.label")}</label>
-          <PlaceSearch id="loc-search" query={query} setQuery={setQuery} choose={choose} />
+          <PlaceSearch id="loc-search" places={places} query={query} setQuery={setQuery} choose={choose} />
         </div>
         <div style={{ background: "#FFFFFF", borderRadius: "18px", overflow: "hidden", boxShadow: "0 1px 2px rgba(26, 29, 33, 0.06), 0 8px 24px rgba(26, 29, 33, 0.07)" }}>
           <svg viewBox="0 0 358 140" width="100%" role="img" aria-label={t("location.mapAria", { town: pin.name })} style={{ display: "block" }}>
