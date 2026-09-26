@@ -56,3 +56,12 @@ body.emergency{background:#D92D20}
 
 /* 08 How it works */
 .how .arr{fill:#1B2A4A;stroke:#F3EEE6;stroke-width:1.5;stroke-linejoin:round}
+
+/* Short phones (375 × 667): tighter spacing so the main action clears the 911 bar.
+   Emergency: the Call 911 button is sticky, so it stays on screen when the page is taller than the phone. */
+@media (max-height: 740px){
+  .q1-main{gap:16px !important}
+  .nodata-main{gap:8px !important}
+  .nodata-head{gap:6px !important}
+  .nodata-callout{padding:12px 20px !important}
+}

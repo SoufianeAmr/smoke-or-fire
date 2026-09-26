@@ -10,7 +10,7 @@
     "prebuild": "node scripts/build-data.mjs",
     "preview": "vite preview",
     "test": "vitest run",
-    "e2e": "playwright test --project=flow",
+    "e2e": "playwright test --project=flow --project=small-screens",
     "strings:todo": "node scripts/strings-todo.mjs",
     "strings:format": "node scripts/format-strings.mjs",
     "data:build": "node scripts/build-data.mjs",

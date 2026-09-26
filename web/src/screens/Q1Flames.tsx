@@ -13,7 +13,7 @@ export function Q1Flames() {
     <Screen>
       <ReplayBanner />
       <TopBar back="/" />
-      <main style={{ flexGrow: "1", display: "flex", flexDirection: "column", gap: "28px", padding: "12px 16px 152px" }}>
+      <main className="q1-main" style={{ flexGrow: "1", display: "flex", flexDirection: "column", gap: "28px", padding: "12px 16px 152px" }}>
         <div style={{ display: "flex", flexDirection: "column", gap: "10px", padding: "0 4px" }}>
           <p style={{ margin: "0", fontSize: "18px", fontWeight: "600", color: "#4F5561" }}>{t("q1.step")}</p>
           <h1 style={{ margin: "0", fontSize: "34px", fontWeight: "800", lineHeight: "1.12", letterSpacing: "-0.02em" }}>{t("q1.title")}</h1>

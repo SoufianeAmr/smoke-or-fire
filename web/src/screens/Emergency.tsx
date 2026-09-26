@@ -26,7 +26,7 @@ export function Emergency() {
 
   return (
     <div className="emergency" style={{ display: "contents" }}>
-      <Screen style={{ background: "#D92D20", color: "#FFFFFF" }}>
+      <Screen style={{ background: "#D92D20", color: "#FFFFFF", overflow: "visible" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 12px 0 4px", height: "68px" }}>
           <Link to="/q1" aria-label={t("nav.back")} style={{ width: "56px", height: "56px", display: "flex", alignItems: "center", justifyContent: "center", color: "#FFFFFF", borderRadius: "14px" }}>
             <BackIcon size={28} />
@@ -56,7 +56,7 @@ export function Emergency() {
             </ol>
           </section>
           <div style={{ flexGrow: "1" }} />
-          <a href="tel:911" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "14px", minHeight: "104px", borderRadius: "18px", background: "#FFFFFF", color: "#D92D20", textDecoration: "none", fontSize: "34px", fontWeight: "800", letterSpacing: "-0.01em", boxShadow: "0 12px 30px rgba(80, 10, 5, 0.3)" }}>
+          <a href="tel:911" style={{ position: "sticky", bottom: "calc(12px + env(safe-area-inset-bottom))", zIndex: "1", display: "flex", alignItems: "center", justifyContent: "center", gap: "14px", minHeight: "104px", borderRadius: "18px", background: "#FFFFFF", color: "#D92D20", textDecoration: "none", fontSize: "34px", fontWeight: "800", letterSpacing: "-0.01em", boxShadow: "0 12px 30px rgba(80, 10, 5, 0.3)" }}>
             <svg className="ic" width="36" height="36" viewBox="0 0 24 24" aria-hidden="true" style={{ strokeWidth: "2.4" }}><path d={PHONE} /></svg>
             {t("emergency.call")}
           </a>

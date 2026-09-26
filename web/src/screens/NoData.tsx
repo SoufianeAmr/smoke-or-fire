@@ -13,8 +13,8 @@ export function NoData() {
     <Screen>
       <ReplayBanner />
       <TopBar back="/location" />
-      <main style={{ flexGrow: "1", display: "flex", flexDirection: "column", gap: "16px", padding: "4px 16px 152px" }}>
-        <div style={{ display: "flex", flexDirection: "column", gap: "10px", padding: "0 4px" }}>
+      <main className="nodata-main" style={{ flexGrow: "1", display: "flex", flexDirection: "column", gap: "16px", padding: "4px 16px 152px" }}>
+        <div className="nodata-head" style={{ display: "flex", flexDirection: "column", gap: "10px", padding: "0 4px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
             <span style={{ flexShrink: "0", width: "52px", height: "52px", borderRadius: "16px", background: "#E9EDF5", color: "#1B2A4A", display: "flex", alignItems: "center", justifyContent: "center" }}>
               <svg className="ic" width="30" height="30" viewBox="0 0 24 24" aria-hidden="true">
@@ -28,7 +28,7 @@ export function NoData() {
           <h1 style={{ margin: "0", fontSize: "34px", fontWeight: "800", lineHeight: "1.12", letterSpacing: "-0.02em", textWrap: "balance" }}>{t("noData.title")}</h1>
           <p style={{ margin: "0", fontSize: "18px", lineHeight: "1.45" }}>{t("noData.sub")}</p>
         </div>
-        <div style={{ padding: "18px 20px", borderRadius: "18px", background: "#FFFFFF", border: "2px solid #1A1D21", display: "flex", flexDirection: "column", gap: "6px" }}>
+        <div className="nodata-callout" style={{ padding: "18px 20px", borderRadius: "18px", background: "#FFFFFF", border: "2px solid #1A1D21", display: "flex", flexDirection: "column", gap: "6px" }}>
           <p style={{ margin: "0", fontSize: "22px", fontWeight: "700", lineHeight: "1.3" }}>{t("noData.notNoFire")}</p>
           <p style={{ margin: "0", fontSize: "18px", lineHeight: "1.45" }}>{t("noData.lookOutside")}</p>
         </div>
