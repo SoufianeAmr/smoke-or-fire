@@ -1,5 +1,7 @@
 """GET /verdict, tested over HTTP with fake outside data sources."""
 
+from datetime import datetime, timezone
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -24,6 +26,28 @@ def get_verdict(feeds, **params):
     client = TestClient(create_app({"live": feeds, "replay": feeds}))
     query = {**MONCTON, "time": NOON_UTC, "mode": "live", **params}
     return client.get("/verdict", params=query)
+
+
+def test_health_answers_ok():
+    client = TestClient(create_app({"live": FakeFeeds(wind=uniform_wind(270, 5))}))
+
+    response = client.get("/health")
+
+    assert (response.status_code, response.json()["status"]) == (200, "ok")
+
+
+@pytest.mark.parametrize(
+    ("mode", "expected_time"),
+    [("replay", "2025-08-25T12:00:00Z"), ("live", "2026-09-26T19:30:00Z")],
+)
+def test_time_defaults_to_the_replay_moment_or_now(mode, expected_time):
+    feeds = FakeFeeds(wind=uniform_wind(from_deg=270, speed_ms=5))
+    now = lambda: datetime(2026, 9, 26, 19, 30, tzinfo=timezone.utc)  # noqa: E731
+    client = TestClient(create_app({"live": feeds, "replay": feeds}, now=now))
+
+    body = client.get("/verdict", params={**MONCTON, "mode": mode}).json()
+
+    assert body["time"] == expected_time
 
 
 def test_wind_from_the_west_traces_the_air_back_to_the_west():

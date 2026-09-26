@@ -24,6 +24,7 @@ from smoke_engine.verdict import (
 from smoke_engine.wind import GRID_POINTS, HEIGHTS, WIND_MODEL, hours_needed, inside_grid, parse_open_meteo
 
 HOURS_BACK = 24
+REPLAY_TIME = datetime(2025, 8, 25, 12, tzinfo=timezone.utc)  # Moncton replay: Aug 25, 2025, 12:00 UTC
 
 RULES = {
     "hoursBack": HOURS_BACK,
@@ -150,19 +151,31 @@ def _approach_json(approach: Approach | None, lat: float, lon: float, arrival: d
     }
 
 
-def create_app(feeds_by_mode: dict) -> FastAPI:
-    app = FastAPI(title="Smoke or Fire? engine")
+def _utc_now() -> datetime:
+    return datetime.now(timezone.utc)
+
+
+def create_app(feeds_by_mode: dict, now=_utc_now, lifespan=None) -> FastAPI:
+    """The API. feeds_by_mode maps "live" and/or "replay" to a feed; `now` is the UTC clock."""
+    app = FastAPI(title="Smoke or Fire? engine", lifespan=lifespan)
+
+    @app.get("/health")
+    def health():
+        feeds = {mode: f.status() for mode, f in feeds_by_mode.items() if hasattr(f, "status")}
+        return {"status": "ok", "modes": sorted(feeds_by_mode), "time": _iso(now()), "feeds": feeds}
 
     @app.get("/verdict")
     def verdict(
         lat: float = Query(...),
         lon: float = Query(...),
         mode: Literal["live", "replay"] = Query("live"),
-        time: str = Query(...),
+        time: str | None = Query(None),
     ):
+        if mode not in feeds_by_mode:
+            raise HTTPException(422, f"{mode} mode is not available")
         if not inside_grid(lat, lon):
             raise HTTPException(422, "lat/lon is outside the area the engine covers")
-        arrival = _utc(time)
+        arrival = _utc(time) if time else (REPLAY_TIME if mode == "replay" else now())
         feeds = feeds_by_mode[mode]
 
         start, end = hours_needed(arrival, HOURS_BACK)
