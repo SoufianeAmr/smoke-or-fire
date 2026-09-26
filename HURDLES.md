@@ -10,4 +10,5 @@
 - `lastSeen` was already a time string on each fire: it became the object with the time, satellite and latency class, and `lastSeen.time` holds the old value.
 - FIRMS points moved the Long Lake fire's centre about 150 m, so two shown distances changed by 1 km (Moncton 159 → 158 km, Halifax 127 → 128 km): the view tests use the rebuilt demo values; no verdict changed.
 - The Long Lake fire's newest detection in the replay is a CWFIS hotspot with no satellite name: Why item 2 keeps the “Satellites saw it burning in the last 5 hours” sentence there, and the map card shows no satellite badge.
+- CWFIS `NASA_w` hotspots name no satellite (sensor MODIS only), and their `rep_date` is a report time: the 9 at Long Lake dated 07:00 UTC are FIRMS's Terra detections from 00:06 UTC (same spots within 7 m, same FRP). The badge does not use them, so Moncton shows no badge.
 - The region's newest FIRMS detection in the replay (NOAA-20, 06:31 UTC) is in Massachusetts, not at Long Lake: the badge only ever uses the fire's own newest detection, never a region-wide one.
