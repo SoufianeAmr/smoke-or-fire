@@ -1,0 +1,669 @@
+{
+ "mode": "replay",
+ "time": "2025-08-25T12:00:00Z",
+ "location": {
+  "lat": 45.25917,
+  "lon": -66.03889,
+  "name": "Saint John",
+  "province": "BAY_OF_FUNDY"
+ },
+ "verdict": "unclear",
+ "confidence": "low",
+ "noFiresInRange": false,
+ "rules": {
+  "hoursBack": 24,
+  "highConfidenceKm": 10.0,
+  "driftingKm": 25.0,
+  "searchKm": 50.0,
+  "fireRadiusKm": 500.0,
+  "unsteadyDeg": 45.0,
+  "hotspotHours": 24,
+  "heights": [
+   "100m",
+   "925hPa",
+   "850hPa"
+  ]
+ },
+ "path": {
+  "hoursTraced": 16,
+  "stoppedAtGridEdge": true,
+  "points": [
+   {
+    "hoursAgo": 0,
+    "time": "2025-08-25T12:00:00Z",
+    "lat": 45.2592,
+    "lon": -66.0389,
+    "area": "BAY_OF_FUNDY",
+    "windFromDeg": 165
+   },
+   {
+    "hoursAgo": 1,
+    "time": "2025-08-25T11:00:00Z",
+    "lat": 45.0047,
+    "lon": -65.9355,
+    "area": "BAY_OF_FUNDY",
+    "windFromDeg": 163
+   },
+   {
+    "hoursAgo": 2,
+    "time": "2025-08-25T10:00:00Z",
+    "lat": 44.7299,
+    "lon": -65.8185,
+    "area": "BAY_OF_FUNDY",
+    "windFromDeg": 163
+   },
+   {
+    "hoursAgo": 3,
+    "time": "2025-08-25T09:00:00Z",
+    "lat": 44.4773,
+    "lon": -65.7023,
+    "area": "NS",
+    "windFromDeg": 161
+   },
+   {
+    "hoursAgo": 4,
+    "time": "2025-08-25T08:00:00Z",
+    "lat": 44.2624,
+    "lon": -65.5991,
+    "area": "NS",
+    "windFromDeg": 162
+   },
+   {
+    "hoursAgo": 5,
+    "time": "2025-08-25T07:00:00Z",
+    "lat": 44.0576,
+    "lon": -65.5218,
+    "area": "NS",
+    "windFromDeg": 168
+   },
+   {
+    "hoursAgo": 6,
+    "time": "2025-08-25T06:00:00Z",
+    "lat": 43.8294,
+    "lon": -65.4683,
+    "area": "NS",
+    "windFromDeg": 173
+   },
+   {
+    "hoursAgo": 7,
+    "time": "2025-08-25T05:00:00Z",
+    "lat": 43.5562,
+    "lon": -65.4521,
+    "area": "NS",
+    "windFromDeg": 182
+   },
+   {
+    "hoursAgo": 8,
+    "time": "2025-08-25T04:00:00Z",
+    "lat": 43.2462,
+    "lon": -65.4561,
+    "area": null,
+    "windFromDeg": 179
+   },
+   {
+    "hoursAgo": 9,
+    "time": "2025-08-25T03:00:00Z",
+    "lat": 42.9279,
+    "lon": -65.4292,
+    "area": null,
+    "windFromDeg": 174
+   },
+   {
+    "hoursAgo": 10,
+    "time": "2025-08-25T02:00:00Z",
+    "lat": 42.6313,
+    "lon": -65.3888,
+    "area": null,
+    "windFromDeg": 175
+   },
+   {
+    "hoursAgo": 11,
+    "time": "2025-08-25T01:00:00Z",
+    "lat": 42.3651,
+    "lon": -65.3603,
+    "area": null,
+    "windFromDeg": 176
+   },
+   {
+    "hoursAgo": 12,
+    "time": "2025-08-25T00:00:00Z",
+    "lat": 42.1154,
+    "lon": -65.3396,
+    "area": null,
+    "windFromDeg": 177
+   },
+   {
+    "hoursAgo": 13,
+    "time": "2025-08-24T23:00:00Z",
+    "lat": 41.8752,
+    "lon": -65.3281,
+    "area": null,
+    "windFromDeg": 179
+   },
+   {
+    "hoursAgo": 14,
+    "time": "2025-08-24T22:00:00Z",
+    "lat": 41.6458,
+    "lon": -65.3161,
+    "area": null,
+    "windFromDeg": 177
+   },
+   {
+    "hoursAgo": 15,
+    "time": "2025-08-24T21:00:00Z",
+    "lat": 41.4205,
+    "lon": -65.291,
+    "area": null,
+    "windFromDeg": 174
+   },
+   {
+    "hoursAgo": 16,
+    "time": "2025-08-24T20:00:00Z",
+    "lat": 41.1951,
+    "lon": -65.2503,
+    "area": null,
+    "windFromDeg": 171
+   }
+  ],
+  "origin": {
+   "hoursAgo": 16,
+   "area": null,
+   "km": 456,
+   "compass": "S"
+  }
+ },
+ "wind": {
+  "level": "100m",
+  "model": "gfs025",
+  "steady": true,
+  "spreadDeg": 6.5,
+  "biggestShift": {
+   "time": "2025-08-25T06:00:00Z",
+   "hoursAgo": 6,
+   "fromDeg": 182,
+   "toDeg": 173
+  }
+ },
+ "closestApproach": {
+  "km": 40,
+  "hoursAgo": 3,
+  "time": "2025-08-25T09:17:26Z",
+  "lat": 44.5508,
+  "lon": -65.7361,
+  "fire": {
+   "id": "hotspots:44.701,-65.201",
+   "cwfisIds": [],
+   "name": "Long Lake",
+   "locality": "West Dalhousie",
+   "nearCommunity": "Hannamville",
+   "province": "NS",
+   "lat": 44.7015,
+   "lon": -65.2008,
+   "km": 91,
+   "compass": "SE",
+   "lastSeen": "2025-08-25T07:00:00Z",
+   "lastSeenHoursAgo": 5,
+   "sizeHa": null,
+   "stage": null
+  }
+ },
+ "nearestFire": {
+  "id": "hotspots:44.701,-65.201",
+  "cwfisIds": [],
+  "name": "Long Lake",
+  "locality": "West Dalhousie",
+  "nearCommunity": "Hannamville",
+  "province": "NS",
+  "lat": 44.7015,
+  "lon": -65.2008,
+  "km": 91,
+  "compass": "SE",
+  "lastSeen": "2025-08-25T07:00:00Z",
+  "lastSeenHoursAgo": 5,
+  "sizeHa": null,
+  "stage": null
+ },
+ "heights": {
+  "chosen": "100m",
+  "agree": false,
+  "results": {
+   "100m": {
+    "verdict": "unclear",
+    "confidence": "medium",
+    "closestApproachKm": 40,
+    "steady": true
+   },
+   "925hPa": {
+    "verdict": "unexplained",
+    "confidence": "medium",
+    "closestApproachKm": 71,
+    "steady": true
+   },
+   "850hPa": {
+    "verdict": "unexplained",
+    "confidence": "medium",
+    "closestApproachKm": 73,
+    "steady": true
+   }
+  },
+  "paths": {
+   "100m": {
+    "hoursTraced": 16,
+    "stoppedAtGridEdge": true,
+    "points": [
+     {
+      "hoursAgo": 0,
+      "time": "2025-08-25T12:00:00Z",
+      "lat": 45.2592,
+      "lon": -66.0389,
+      "area": "BAY_OF_FUNDY",
+      "windFromDeg": 165
+     },
+     {
+      "hoursAgo": 1,
+      "time": "2025-08-25T11:00:00Z",
+      "lat": 45.0047,
+      "lon": -65.9355,
+      "area": "BAY_OF_FUNDY",
+      "windFromDeg": 163
+     },
+     {
+      "hoursAgo": 2,
+      "time": "2025-08-25T10:00:00Z",
+      "lat": 44.7299,
+      "lon": -65.8185,
+      "area": "BAY_OF_FUNDY",
+      "windFromDeg": 163
+     },
+     {
+      "hoursAgo": 3,
+      "time": "2025-08-25T09:00:00Z",
+      "lat": 44.4773,
+      "lon": -65.7023,
+      "area": "NS",
+      "windFromDeg": 161
+     },
+     {
+      "hoursAgo": 4,
+      "time": "2025-08-25T08:00:00Z",
+      "lat": 44.2624,
+      "lon": -65.5991,
+      "area": "NS",
+      "windFromDeg": 162
+     },
+     {
+      "hoursAgo": 5,
+      "time": "2025-08-25T07:00:00Z",
+      "lat": 44.0576,
+      "lon": -65.5218,
+      "area": "NS",
+      "windFromDeg": 168
+     },
+     {
+      "hoursAgo": 6,
+      "time": "2025-08-25T06:00:00Z",
+      "lat": 43.8294,
+      "lon": -65.4683,
+      "area": "NS",
+      "windFromDeg": 173
+     },
+     {
+      "hoursAgo": 7,
+      "time": "2025-08-25T05:00:00Z",
+      "lat": 43.5562,
+      "lon": -65.4521,
+      "area": "NS",
+      "windFromDeg": 182
+     },
+     {
+      "hoursAgo": 8,
+      "time": "2025-08-25T04:00:00Z",
+      "lat": 43.2462,
+      "lon": -65.4561,
+      "area": null,
+      "windFromDeg": 179
+     },
+     {
+      "hoursAgo": 9,
+      "time": "2025-08-25T03:00:00Z",
+      "lat": 42.9279,
+      "lon": -65.4292,
+      "area": null,
+      "windFromDeg": 174
+     },
+     {
+      "hoursAgo": 10,
+      "time": "2025-08-25T02:00:00Z",
+      "lat": 42.6313,
+      "lon": -65.3888,
+      "area": null,
+      "windFromDeg": 175
+     },
+     {
+      "hoursAgo": 11,
+      "time": "2025-08-25T01:00:00Z",
+      "lat": 42.3651,
+      "lon": -65.3603,
+      "area": null,
+      "windFromDeg": 176
+     },
+     {
+      "hoursAgo": 12,
+      "time": "2025-08-25T00:00:00Z",
+      "lat": 42.1154,
+      "lon": -65.3396,
+      "area": null,
+      "windFromDeg": 177
+     },
+     {
+      "hoursAgo": 13,
+      "time": "2025-08-24T23:00:00Z",
+      "lat": 41.8752,
+      "lon": -65.3281,
+      "area": null,
+      "windFromDeg": 179
+     },
+     {
+      "hoursAgo": 14,
+      "time": "2025-08-24T22:00:00Z",
+      "lat": 41.6458,
+      "lon": -65.3161,
+      "area": null,
+      "windFromDeg": 177
+     },
+     {
+      "hoursAgo": 15,
+      "time": "2025-08-24T21:00:00Z",
+      "lat": 41.4205,
+      "lon": -65.291,
+      "area": null,
+      "windFromDeg": 174
+     },
+     {
+      "hoursAgo": 16,
+      "time": "2025-08-24T20:00:00Z",
+      "lat": 41.1951,
+      "lon": -65.2503,
+      "area": null,
+      "windFromDeg": 171
+     }
+    ],
+    "origin": {
+     "hoursAgo": 16,
+     "area": null,
+     "km": 456,
+     "compass": "S"
+    }
+   },
+   "925hPa": {
+    "hoursTraced": 11,
+    "stoppedAtGridEdge": true,
+    "points": [
+     {
+      "hoursAgo": 0,
+      "time": "2025-08-25T12:00:00Z",
+      "lat": 45.2592,
+      "lon": -66.0389,
+      "area": "BAY_OF_FUNDY",
+      "windFromDeg": 192
+     },
+     {
+      "hoursAgo": 1,
+      "time": "2025-08-25T11:00:00Z",
+      "lat": 44.8461,
+      "lon": -66.1518,
+      "area": "BAY_OF_FUNDY",
+      "windFromDeg": 190
+     },
+     {
+      "hoursAgo": 2,
+      "time": "2025-08-25T10:00:00Z",
+      "lat": 44.4465,
+      "lon": -66.2402,
+      "area": "BAY_OF_FUNDY",
+      "windFromDeg": 187
+     },
+     {
+      "hoursAgo": 3,
+      "time": "2025-08-25T09:00:00Z",
+      "lat": 44.0439,
+      "lon": -66.3078,
+      "area": "GULF_OF_MAINE",
+      "windFromDeg": 186
+     },
+     {
+      "hoursAgo": 4,
+      "time": "2025-08-25T08:00:00Z",
+      "lat": 43.6534,
+      "lon": -66.3736,
+      "area": "GULF_OF_MAINE",
+      "windFromDeg": 187
+     },
+     {
+      "hoursAgo": 5,
+      "time": "2025-08-25T07:00:00Z",
+      "lat": 43.2794,
+      "lon": -66.4369,
+      "area": "GULF_OF_MAINE",
+      "windFromDeg": 187
+     },
+     {
+      "hoursAgo": 6,
+      "time": "2025-08-25T06:00:00Z",
+      "lat": 42.9159,
+      "lon": -66.4939,
+      "area": null,
+      "windFromDeg": 187
+     },
+     {
+      "hoursAgo": 7,
+      "time": "2025-08-25T05:00:00Z",
+      "lat": 42.5425,
+      "lon": -66.5536,
+      "area": null,
+      "windFromDeg": 187
+     },
+     {
+      "hoursAgo": 8,
+      "time": "2025-08-25T04:00:00Z",
+      "lat": 42.1637,
+      "lon": -66.6074,
+      "area": null,
+      "windFromDeg": 185
+     },
+     {
+      "hoursAgo": 9,
+      "time": "2025-08-25T03:00:00Z",
+      "lat": 41.7986,
+      "lon": -66.6538,
+      "area": null,
+      "windFromDeg": 186
+     },
+     {
+      "hoursAgo": 10,
+      "time": "2025-08-25T02:00:00Z",
+      "lat": 41.4443,
+      "lon": -66.6951,
+      "area": null,
+      "windFromDeg": 184
+     },
+     {
+      "hoursAgo": 11,
+      "time": "2025-08-25T01:00:00Z",
+      "lat": 41.1001,
+      "lon": -66.7232,
+      "area": null,
+      "windFromDeg": 183
+     }
+    ],
+    "origin": {
+     "hoursAgo": 11,
+     "area": null,
+     "km": 466,
+     "compass": "S"
+    }
+   },
+   "850hPa": {
+    "hoursTraced": 16,
+    "stoppedAtGridEdge": true,
+    "points": [
+     {
+      "hoursAgo": 0,
+      "time": "2025-08-25T12:00:00Z",
+      "lat": 45.2592,
+      "lon": -66.0389,
+      "area": "BAY_OF_FUNDY",
+      "windFromDeg": 192
+     },
+     {
+      "hoursAgo": 1,
+      "time": "2025-08-25T11:00:00Z",
+      "lat": 44.9078,
+      "lon": -66.1548,
+      "area": "BAY_OF_FUNDY",
+      "windFromDeg": 194
+     },
+     {
+      "hoursAgo": 2,
+      "time": "2025-08-25T10:00:00Z",
+      "lat": 44.5995,
+      "lon": -66.2765,
+      "area": "BAY_OF_FUNDY",
+      "windFromDeg": 197
+     },
+     {
+      "hoursAgo": 3,
+      "time": "2025-08-25T09:00:00Z",
+      "lat": 44.3014,
+      "lon": -66.4102,
+      "area": "BAY_OF_FUNDY",
+      "windFromDeg": 198
+     },
+     {
+      "hoursAgo": 4,
+      "time": "2025-08-25T08:00:00Z",
+      "lat": 44.0188,
+      "lon": -66.5383,
+      "area": "GULF_OF_MAINE",
+      "windFromDeg": 198
+     },
+     {
+      "hoursAgo": 5,
+      "time": "2025-08-25T07:00:00Z",
+      "lat": 43.7479,
+      "lon": -66.6665,
+      "area": "GULF_OF_MAINE",
+      "windFromDeg": 200
+     },
+     {
+      "hoursAgo": 6,
+      "time": "2025-08-25T06:00:00Z",
+      "lat": 43.484,
+      "lon": -66.7905,
+      "area": "GULF_OF_MAINE",
+      "windFromDeg": 197
+     },
+     {
+      "hoursAgo": 7,
+      "time": "2025-08-25T05:00:00Z",
+      "lat": 43.2217,
+      "lon": -66.9006,
+      "area": "GULF_OF_MAINE",
+      "windFromDeg": 196
+     },
+     {
+      "hoursAgo": 8,
+      "time": "2025-08-25T04:00:00Z",
+      "lat": 42.9693,
+      "lon": -67.0004,
+      "area": null,
+      "windFromDeg": 196
+     },
+     {
+      "hoursAgo": 9,
+      "time": "2025-08-25T03:00:00Z",
+      "lat": 42.7251,
+      "lon": -67.107,
+      "area": null,
+      "windFromDeg": 199
+     },
+     {
+      "hoursAgo": 10,
+      "time": "2025-08-25T02:00:00Z",
+      "lat": 42.4781,
+      "lon": -67.2295,
+      "area": null,
+      "windFromDeg": 201
+     },
+     {
+      "hoursAgo": 11,
+      "time": "2025-08-25T01:00:00Z",
+      "lat": 42.2511,
+      "lon": -67.3508,
+      "area": null,
+      "windFromDeg": 203
+     },
+     {
+      "hoursAgo": 12,
+      "time": "2025-08-25T00:00:00Z",
+      "lat": 42.0496,
+      "lon": -67.4764,
+      "area": null,
+      "windFromDeg": 207
+     },
+     {
+      "hoursAgo": 13,
+      "time": "2025-08-24T23:00:00Z",
+      "lat": 41.8561,
+      "lon": -67.6189,
+      "area": null,
+      "windFromDeg": 210
+     },
+     {
+      "hoursAgo": 14,
+      "time": "2025-08-24T22:00:00Z",
+      "lat": 41.6486,
+      "lon": -67.7815,
+      "area": null,
+      "windFromDeg": 211
+     },
+     {
+      "hoursAgo": 15,
+      "time": "2025-08-24T21:00:00Z",
+      "lat": 41.4445,
+      "lon": -67.9497,
+      "area": null,
+      "windFromDeg": 213
+     },
+     {
+      "hoursAgo": 16,
+      "time": "2025-08-24T20:00:00Z",
+      "lat": 41.2322,
+      "lon": -68.1016,
+      "area": null,
+      "windFromDeg": 204
+     }
+    ],
+    "origin": {
+     "hoursAgo": 16,
+     "area": null,
+     "km": 478,
+     "compass": "SSW"
+    }
+   }
+  }
+ },
+ "aqhi": {
+  "value": 1.57,
+  "display": "2",
+  "segments": 2,
+  "category": "low",
+  "observedAt": "2025-08-25T12:00:00Z",
+  "station": {
+   "id": "DAEGW",
+   "nameEn": "Saint John",
+   "nameFr": "Saint John",
+   "km": 0
+  }
+ }
+}

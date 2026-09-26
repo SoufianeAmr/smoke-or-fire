@@ -1,0 +1,663 @@
+{
+ "mode": "replay",
+ "time": "2025-08-25T12:00:00Z",
+ "location": {
+  "lat": 45.94528,
+  "lon": -66.66667,
+  "name": "Fredericton",
+  "province": "NB"
+ },
+ "verdict": "unexplained",
+ "confidence": "medium",
+ "noFiresInRange": false,
+ "rules": {
+  "hoursBack": 24,
+  "highConfidenceKm": 10.0,
+  "driftingKm": 25.0,
+  "searchKm": 50.0,
+  "fireRadiusKm": 500.0,
+  "unsteadyDeg": 45.0,
+  "hotspotHours": 24,
+  "heights": [
+   "100m",
+   "925hPa",
+   "850hPa"
+  ]
+ },
+ "path": {
+  "hoursTraced": 15,
+  "stoppedAtGridEdge": true,
+  "points": [
+   {
+    "hoursAgo": 0,
+    "time": "2025-08-25T12:00:00Z",
+    "lat": 45.9453,
+    "lon": -66.6667,
+    "area": "NB",
+    "windFromDeg": 172
+   },
+   {
+    "hoursAgo": 1,
+    "time": "2025-08-25T11:00:00Z",
+    "lat": 45.7567,
+    "lon": -66.6164,
+    "area": "NB",
+    "windFromDeg": 167
+   },
+   {
+    "hoursAgo": 2,
+    "time": "2025-08-25T10:00:00Z",
+    "lat": 45.568,
+    "lon": -66.5606,
+    "area": "NB",
+    "windFromDeg": 170
+   },
+   {
+    "hoursAgo": 3,
+    "time": "2025-08-25T09:00:00Z",
+    "lat": 45.3561,
+    "lon": -66.5256,
+    "area": "NB",
+    "windFromDeg": 177
+   },
+   {
+    "hoursAgo": 4,
+    "time": "2025-08-25T08:00:00Z",
+    "lat": 45.1046,
+    "lon": -66.5269,
+    "area": "BAY_OF_FUNDY",
+    "windFromDeg": 183
+   },
+   {
+    "hoursAgo": 5,
+    "time": "2025-08-25T07:00:00Z",
+    "lat": 44.7914,
+    "lon": -66.5512,
+    "area": "BAY_OF_FUNDY",
+    "windFromDeg": 183
+   },
+   {
+    "hoursAgo": 6,
+    "time": "2025-08-25T06:00:00Z",
+    "lat": 44.4287,
+    "lon": -66.5642,
+    "area": "BAY_OF_FUNDY",
+    "windFromDeg": 180
+   },
+   {
+    "hoursAgo": 7,
+    "time": "2025-08-25T05:00:00Z",
+    "lat": 44.0504,
+    "lon": -66.5788,
+    "area": "GULF_OF_MAINE",
+    "windFromDeg": 183
+   },
+   {
+    "hoursAgo": 8,
+    "time": "2025-08-25T04:00:00Z",
+    "lat": 43.6696,
+    "lon": -66.6181,
+    "area": "GULF_OF_MAINE",
+    "windFromDeg": 185
+   },
+   {
+    "hoursAgo": 9,
+    "time": "2025-08-25T03:00:00Z",
+    "lat": 43.289,
+    "lon": -66.666,
+    "area": "GULF_OF_MAINE",
+    "windFromDeg": 185
+   },
+   {
+    "hoursAgo": 10,
+    "time": "2025-08-25T02:00:00Z",
+    "lat": 42.916,
+    "lon": -66.6914,
+    "area": null,
+    "windFromDeg": 180
+   },
+   {
+    "hoursAgo": 11,
+    "time": "2025-08-25T01:00:00Z",
+    "lat": 42.55,
+    "lon": -66.6813,
+    "area": null,
+    "windFromDeg": 177
+   },
+   {
+    "hoursAgo": 12,
+    "time": "2025-08-25T00:00:00Z",
+    "lat": 42.1951,
+    "lon": -66.6456,
+    "area": null,
+    "windFromDeg": 174
+   },
+   {
+    "hoursAgo": 13,
+    "time": "2025-08-24T23:00:00Z",
+    "lat": 41.8455,
+    "lon": -66.5982,
+    "area": null,
+    "windFromDeg": 174
+   },
+   {
+    "hoursAgo": 14,
+    "time": "2025-08-24T22:00:00Z",
+    "lat": 41.5043,
+    "lon": -66.5329,
+    "area": null,
+    "windFromDeg": 169
+   },
+   {
+    "hoursAgo": 15,
+    "time": "2025-08-24T21:00:00Z",
+    "lat": 41.1866,
+    "lon": -66.4396,
+    "area": null,
+    "windFromDeg": 166
+   }
+  ],
+  "origin": {
+   "hoursAgo": 15,
+   "area": null,
+   "km": 529,
+   "compass": "S"
+  }
+ },
+ "wind": {
+  "level": "100m",
+  "model": "gfs025",
+  "steady": true,
+  "spreadDeg": 6.3,
+  "biggestShift": {
+   "time": "2025-08-25T10:00:00Z",
+   "hoursAgo": 2,
+   "fromDeg": 177,
+   "toDeg": 170
+  }
+ },
+ "closestApproach": {
+  "km": 101,
+  "hoursAgo": 5,
+  "time": "2025-08-25T06:50:41Z",
+  "lat": 44.7351,
+  "lon": -66.5532,
+  "fire": {
+   "id": "hotspots:44.701,-65.201",
+   "cwfisIds": [],
+   "name": "Long Lake",
+   "locality": "West Dalhousie",
+   "nearCommunity": "Hannamville",
+   "province": "NS",
+   "lat": 44.7015,
+   "lon": -65.2008,
+   "km": 180,
+   "compass": "SE",
+   "lastSeen": "2025-08-25T07:00:00Z",
+   "lastSeenHoursAgo": 5,
+   "sizeHa": null,
+   "stage": null
+  }
+ },
+ "nearestFire": {
+  "id": "2025_NB_68585",
+  "cwfisIds": [
+   "2025_NB_68585"
+  ],
+  "name": null,
+  "locality": null,
+  "nearCommunity": "Ramsay Lodge",
+  "province": "NB",
+  "lat": 46.9912,
+  "lon": -66.4733,
+  "km": 117,
+  "compass": "N",
+  "lastSeen": "2025-08-25T05:40:00Z",
+  "lastSeenHoursAgo": 6,
+  "sizeHa": 238,
+  "stage": "OC"
+ },
+ "heights": {
+  "chosen": "100m",
+  "agree": true,
+  "results": {
+   "100m": {
+    "verdict": "unexplained",
+    "confidence": "medium",
+    "closestApproachKm": 101,
+    "steady": true
+   },
+   "925hPa": {
+    "verdict": "unexplained",
+    "confidence": "medium",
+    "closestApproachKm": 116,
+    "steady": true
+   },
+   "850hPa": {
+    "verdict": "unexplained",
+    "confidence": "medium",
+    "closestApproachKm": 116,
+    "steady": true
+   }
+  },
+  "paths": {
+   "100m": {
+    "hoursTraced": 15,
+    "stoppedAtGridEdge": true,
+    "points": [
+     {
+      "hoursAgo": 0,
+      "time": "2025-08-25T12:00:00Z",
+      "lat": 45.9453,
+      "lon": -66.6667,
+      "area": "NB",
+      "windFromDeg": 172
+     },
+     {
+      "hoursAgo": 1,
+      "time": "2025-08-25T11:00:00Z",
+      "lat": 45.7567,
+      "lon": -66.6164,
+      "area": "NB",
+      "windFromDeg": 167
+     },
+     {
+      "hoursAgo": 2,
+      "time": "2025-08-25T10:00:00Z",
+      "lat": 45.568,
+      "lon": -66.5606,
+      "area": "NB",
+      "windFromDeg": 170
+     },
+     {
+      "hoursAgo": 3,
+      "time": "2025-08-25T09:00:00Z",
+      "lat": 45.3561,
+      "lon": -66.5256,
+      "area": "NB",
+      "windFromDeg": 177
+     },
+     {
+      "hoursAgo": 4,
+      "time": "2025-08-25T08:00:00Z",
+      "lat": 45.1046,
+      "lon": -66.5269,
+      "area": "BAY_OF_FUNDY",
+      "windFromDeg": 183
+     },
+     {
+      "hoursAgo": 5,
+      "time": "2025-08-25T07:00:00Z",
+      "lat": 44.7914,
+      "lon": -66.5512,
+      "area": "BAY_OF_FUNDY",
+      "windFromDeg": 183
+     },
+     {
+      "hoursAgo": 6,
+      "time": "2025-08-25T06:00:00Z",
+      "lat": 44.4287,
+      "lon": -66.5642,
+      "area": "BAY_OF_FUNDY",
+      "windFromDeg": 180
+     },
+     {
+      "hoursAgo": 7,
+      "time": "2025-08-25T05:00:00Z",
+      "lat": 44.0504,
+      "lon": -66.5788,
+      "area": "GULF_OF_MAINE",
+      "windFromDeg": 183
+     },
+     {
+      "hoursAgo": 8,
+      "time": "2025-08-25T04:00:00Z",
+      "lat": 43.6696,
+      "lon": -66.6181,
+      "area": "GULF_OF_MAINE",
+      "windFromDeg": 185
+     },
+     {
+      "hoursAgo": 9,
+      "time": "2025-08-25T03:00:00Z",
+      "lat": 43.289,
+      "lon": -66.666,
+      "area": "GULF_OF_MAINE",
+      "windFromDeg": 185
+     },
+     {
+      "hoursAgo": 10,
+      "time": "2025-08-25T02:00:00Z",
+      "lat": 42.916,
+      "lon": -66.6914,
+      "area": null,
+      "windFromDeg": 180
+     },
+     {
+      "hoursAgo": 11,
+      "time": "2025-08-25T01:00:00Z",
+      "lat": 42.55,
+      "lon": -66.6813,
+      "area": null,
+      "windFromDeg": 177
+     },
+     {
+      "hoursAgo": 12,
+      "time": "2025-08-25T00:00:00Z",
+      "lat": 42.1951,
+      "lon": -66.6456,
+      "area": null,
+      "windFromDeg": 174
+     },
+     {
+      "hoursAgo": 13,
+      "time": "2025-08-24T23:00:00Z",
+      "lat": 41.8455,
+      "lon": -66.5982,
+      "area": null,
+      "windFromDeg": 174
+     },
+     {
+      "hoursAgo": 14,
+      "time": "2025-08-24T22:00:00Z",
+      "lat": 41.5043,
+      "lon": -66.5329,
+      "area": null,
+      "windFromDeg": 169
+     },
+     {
+      "hoursAgo": 15,
+      "time": "2025-08-24T21:00:00Z",
+      "lat": 41.1866,
+      "lon": -66.4396,
+      "area": null,
+      "windFromDeg": 166
+     }
+    ],
+    "origin": {
+     "hoursAgo": 15,
+     "area": null,
+     "km": 529,
+     "compass": "S"
+    }
+   },
+   "925hPa": {
+    "hoursTraced": 14,
+    "stoppedAtGridEdge": true,
+    "points": [
+     {
+      "hoursAgo": 0,
+      "time": "2025-08-25T12:00:00Z",
+      "lat": 45.9453,
+      "lon": -66.6667,
+      "area": "NB",
+      "windFromDeg": 194
+     },
+     {
+      "hoursAgo": 1,
+      "time": "2025-08-25T11:00:00Z",
+      "lat": 45.5314,
+      "lon": -66.8029,
+      "area": "NB",
+      "windFromDeg": 191
+     },
+     {
+      "hoursAgo": 2,
+      "time": "2025-08-25T10:00:00Z",
+      "lat": 45.1468,
+      "lon": -66.922,
+      "area": "BAY_OF_FUNDY",
+      "windFromDeg": 193
+     },
+     {
+      "hoursAgo": 3,
+      "time": "2025-08-25T09:00:00Z",
+      "lat": 44.7952,
+      "lon": -67.0416,
+      "area": "ME",
+      "windFromDeg": 194
+     },
+     {
+      "hoursAgo": 4,
+      "time": "2025-08-25T08:00:00Z",
+      "lat": 44.4566,
+      "lon": -67.1727,
+      "area": "GULF_OF_MAINE",
+      "windFromDeg": 197
+     },
+     {
+      "hoursAgo": 5,
+      "time": "2025-08-25T07:00:00Z",
+      "lat": 44.1123,
+      "lon": -67.3135,
+      "area": "GULF_OF_MAINE",
+      "windFromDeg": 195
+     },
+     {
+      "hoursAgo": 6,
+      "time": "2025-08-25T06:00:00Z",
+      "lat": 43.755,
+      "lon": -67.4441,
+      "area": "GULF_OF_MAINE",
+      "windFromDeg": 194
+     },
+     {
+      "hoursAgo": 7,
+      "time": "2025-08-25T05:00:00Z",
+      "lat": 43.3873,
+      "lon": -67.5734,
+      "area": "GULF_OF_MAINE",
+      "windFromDeg": 195
+     },
+     {
+      "hoursAgo": 8,
+      "time": "2025-08-25T04:00:00Z",
+      "lat": 43.0231,
+      "lon": -67.6983,
+      "area": "GULF_OF_MAINE",
+      "windFromDeg": 193
+     },
+     {
+      "hoursAgo": 9,
+      "time": "2025-08-25T03:00:00Z",
+      "lat": 42.6752,
+      "lon": -67.8117,
+      "area": "GULF_OF_MAINE",
+      "windFromDeg": 193
+     },
+     {
+      "hoursAgo": 10,
+      "time": "2025-08-25T02:00:00Z",
+      "lat": 42.3433,
+      "lon": -67.9154,
+      "area": null,
+      "windFromDeg": 193
+     },
+     {
+      "hoursAgo": 11,
+      "time": "2025-08-25T01:00:00Z",
+      "lat": 42.027,
+      "lon": -68.0024,
+      "area": null,
+      "windFromDeg": 190
+     },
+     {
+      "hoursAgo": 12,
+      "time": "2025-08-25T00:00:00Z",
+      "lat": 41.7257,
+      "lon": -68.0801,
+      "area": null,
+      "windFromDeg": 191
+     },
+     {
+      "hoursAgo": 13,
+      "time": "2025-08-24T23:00:00Z",
+      "lat": 41.4358,
+      "lon": -68.1626,
+      "area": null,
+      "windFromDeg": 193
+     },
+     {
+      "hoursAgo": 14,
+      "time": "2025-08-24T22:00:00Z",
+      "lat": 41.1452,
+      "lon": -68.2538,
+      "area": null,
+      "windFromDeg": 194
+     }
+    ],
+    "origin": {
+     "hoursAgo": 14,
+     "area": null,
+     "km": 549,
+     "compass": "SSW"
+    }
+   },
+   "850hPa": {
+    "hoursTraced": 14,
+    "stoppedAtGridEdge": true,
+    "points": [
+     {
+      "hoursAgo": 0,
+      "time": "2025-08-25T12:00:00Z",
+      "lat": 45.9453,
+      "lon": -66.6667,
+      "area": "NB",
+      "windFromDeg": 204
+     },
+     {
+      "hoursAgo": 1,
+      "time": "2025-08-25T11:00:00Z",
+      "lat": 45.5441,
+      "lon": -66.9271,
+      "area": "NB",
+      "windFromDeg": 205
+     },
+     {
+      "hoursAgo": 2,
+      "time": "2025-08-25T10:00:00Z",
+      "lat": 45.1629,
+      "lon": -67.167,
+      "area": "ME",
+      "windFromDeg": 203
+     },
+     {
+      "hoursAgo": 3,
+      "time": "2025-08-25T09:00:00Z",
+      "lat": 44.8108,
+      "lon": -67.3804,
+      "area": "ME",
+      "windFromDeg": 204
+     },
+     {
+      "hoursAgo": 4,
+      "time": "2025-08-25T08:00:00Z",
+      "lat": 44.4811,
+      "lon": -67.5908,
+      "area": "ME",
+      "windFromDeg": 205
+     },
+     {
+      "hoursAgo": 5,
+      "time": "2025-08-25T07:00:00Z",
+      "lat": 44.1583,
+      "lon": -67.8155,
+      "area": "GULF_OF_MAINE",
+      "windFromDeg": 208
+     },
+     {
+      "hoursAgo": 6,
+      "time": "2025-08-25T06:00:00Z",
+      "lat": 43.835,
+      "lon": -68.0627,
+      "area": "GULF_OF_MAINE",
+      "windFromDeg": 210
+     },
+     {
+      "hoursAgo": 7,
+      "time": "2025-08-25T05:00:00Z",
+      "lat": 43.5032,
+      "lon": -68.3109,
+      "area": "GULF_OF_MAINE",
+      "windFromDeg": 207
+     },
+     {
+      "hoursAgo": 8,
+      "time": "2025-08-25T04:00:00Z",
+      "lat": 43.1722,
+      "lon": -68.5554,
+      "area": "GULF_OF_MAINE",
+      "windFromDeg": 210
+     },
+     {
+      "hoursAgo": 9,
+      "time": "2025-08-25T03:00:00Z",
+      "lat": 42.8553,
+      "lon": -68.7972,
+      "area": "GULF_OF_MAINE",
+      "windFromDeg": 208
+     },
+     {
+      "hoursAgo": 10,
+      "time": "2025-08-25T02:00:00Z",
+      "lat": 42.5342,
+      "lon": -69.0175,
+      "area": "GULF_OF_MAINE",
+      "windFromDeg": 205
+     },
+     {
+      "hoursAgo": 11,
+      "time": "2025-08-25T01:00:00Z",
+      "lat": 42.211,
+      "lon": -69.2247,
+      "area": "GULF_OF_MAINE",
+      "windFromDeg": 206
+     },
+     {
+      "hoursAgo": 12,
+      "time": "2025-08-25T00:00:00Z",
+      "lat": 41.8896,
+      "lon": -69.4163,
+      "area": null,
+      "windFromDeg": 202
+     },
+     {
+      "hoursAgo": 13,
+      "time": "2025-08-24T23:00:00Z",
+      "lat": 41.5567,
+      "lon": -69.5853,
+      "area": null,
+      "windFromDeg": 199
+     },
+     {
+      "hoursAgo": 14,
+      "time": "2025-08-24T22:00:00Z",
+      "lat": 41.2186,
+      "lon": -69.7545,
+      "area": null,
+      "windFromDeg": 202
+     }
+    ],
+    "origin": {
+     "hoursAgo": 14,
+     "area": null,
+     "km": 581,
+     "compass": "SSW"
+    }
+   }
+  }
+ },
+ "aqhi": {
+  "value": 1.49,
+  "display": "1",
+  "segments": 1,
+  "category": "low",
+  "observedAt": "2025-08-25T12:00:00Z",
+  "station": {
+   "id": "DAFMJ",
+   "nameEn": "Fredericton",
+   "nameFr": "Fredericton",
+   "km": 0
+  }
+ }
+}
