@@ -1,0 +1,58 @@
+/* Rules copied from the <style> blocks in design/screens/*.html. Only change: rules that a
+   single screen overrides (Emergency, How it works) are scoped to that screen. */
+
+body{margin:0;background:#FAF6F0}
+*{box-sizing:border-box}
+a{color:#1B2A4A}a:hover{color:#0F1A33}
+.ic{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+a:focus-visible,button:focus-visible{outline:3px solid #1B2A4A;outline-offset:3px}
+.press{transition:transform .08s ease}
+.press:active{transform:scale(0.97)}
+.tile:active{background-color:#E6DDCF !important}
+.opt{transition:transform .08s ease, background-color .08s ease, box-shadow .08s ease}
+.opt:active{transform:scale(0.98);background-color:#F1EADF !important;box-shadow:0 0 0 3px #1B2A4A !important}
+.row:active{background-color:#F3EEE6}
+input::placeholder{color:#6B6F76}
+
+/* 01 Check */
+.haze{position:absolute;border-radius:50%;filter:blur(46px);animation:drift 22s ease-in-out infinite alternate}
+.haze2{animation-duration:28s;animation-delay:-9s}
+.haze3{animation-duration:34s;animation-delay:-4s}
+@keyframes drift{0%{transform:translate(-30px,0) scale(1)}100%{transform:translate(40px,-18px) scale(1.08)}}
+@media (prefers-reduced-motion: reduce){.haze{animation:none}}
+
+/* 04 Emergency */
+body.emergency{background:#D92D20}
+.emergency a{color:#FFFFFF}.emergency a:hover{color:#FFFFFF}
+
+/* Maps (05, 06, 07*) */
+.water{fill:#D8E3EE;stroke:#BCCADA;stroke-width:1}
+.land{fill:#EFE7DA;stroke:#BCCADA;stroke-width:1}
+.border{fill:none;stroke:#C4B6A0;stroke-width:1.5}
+.lbl{font-family:Inter,sans-serif;font-size:16px;font-weight:700;fill:#1A1D21;paint-order:stroke;stroke:#FFFFFF;stroke-width:4px;stroke-linejoin:round}
+.lbl-m{font-family:Inter,sans-serif;font-size:16px;font-weight:600;fill:#5A5347}
+.trail{fill:none;stroke:#1B2A4A;stroke-width:3.5;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:9 7}
+.arr{fill:#1B2A4A;stroke:#FFFFFF;stroke-width:1.5;stroke-linejoin:round}
+.corridor{fill:none;stroke:#1B2A4A;stroke-opacity:0.1;stroke-width:94;stroke-linecap:round;stroke-linejoin:round}
+.near{fill:none;stroke:#1A1D21;stroke-width:1.75;stroke-dasharray:3 4;stroke-linecap:round}
+
+/* 06 Loading */
+.drawmask{fill:none;stroke:#FFFFFF;stroke-width:24;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:200;stroke-dashoffset:200;animation:draw 4.8s linear infinite}
+@keyframes draw{0%{stroke-dashoffset:200}42%{stroke-dashoffset:0}100%{stroke-dashoffset:0}}
+@property --h{syntax:'<integer>';inherits:false;initial-value:1}
+.hours{counter-reset:h var(--h);animation:hours 4.8s linear infinite}
+.hours::before{content:"Hour " counter(h) " of 24"}
+@keyframes hours{0%{--h:1}42%{--h:10}80%{--h:24}100%{--h:24}}
+.spin{animation:spin 1s linear infinite;transform-origin:50% 50%}
+@keyframes spin{to{transform:rotate(360deg)}}
+.pulse{animation:pulse 2s ease-out infinite;transform-origin:186px 48px}
+@keyframes pulse{0%{transform:scale(0.6);opacity:0.5}100%{transform:scale(1.6);opacity:0}}
+@media (prefers-reduced-motion: reduce){.drawmask{animation:none;stroke-dashoffset:0}.hours{animation:none;--h:24}.spin,.pulse{animation:none}}
+
+/* 07 Verdict */
+.flow{animation:flow 1.1s linear infinite}
+@keyframes flow{to{stroke-dashoffset:-16}}
+@media (prefers-reduced-motion: reduce){.flow{animation:none}}
+
+/* 08 How it works */
+.how .arr{fill:#1B2A4A;stroke:#F3EEE6;stroke-width:1.5;stroke-linejoin:round}

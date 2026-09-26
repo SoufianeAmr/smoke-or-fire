@@ -7,3 +7,10 @@
 __pycache__/
 *.pyc
 .pytest_cache/
+
+# Web app
+node_modules/
+web/dist/
+web/test-results/
+web/playwright-report/
+.vercel/
