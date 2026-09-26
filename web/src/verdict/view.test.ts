@@ -23,7 +23,7 @@ describe("Moncton replay (drifting, low: the three heights disagree)", () => {
   test("says the heights disagree as the reason for low confidence", () => {
     expect([view.confidence.chip, view.confidence.text]).toEqual([
       "Low confidence",
-      "We traced the air at three heights above the ground, and they don't agree.",
+      "We traced the air at three heights above the ground, and they don’t agree.",
     ]);
   });
 

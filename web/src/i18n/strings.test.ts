@@ -19,6 +19,13 @@ describe("strings", () => {
     expect(broken).toEqual([]);
   });
 
+  test("apostrophes are curly (’), never straight", () => {
+    const straight = [...Object.entries(en), ...Object.entries(fr)]
+      .filter(([, text]) => text.includes("'"))
+      .map(([key]) => key);
+    expect(straight).toEqual([]);
+  });
+
   test("missing French falls back to English, and values are filled in", () => {
     expect([translate("fr", "q1.title"), translate("fr", "banner.replayTown", { town: "Dieppe" })]).toEqual([
       "Do you see flames?",
