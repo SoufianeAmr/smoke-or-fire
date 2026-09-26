@@ -14,13 +14,13 @@ export function Q1Flames() {
       <ReplayBanner />
       <TopBar back="/" />
       <main className="q1-main" style={{ flexGrow: "1", display: "flex", flexDirection: "column", gap: "28px", padding: "12px 16px 152px" }}>
-        <div style={{ display: "flex", flexDirection: "column", gap: "10px", padding: "0 4px" }}>
+        <div className="q1-head" style={{ display: "flex", flexDirection: "column", gap: "10px", padding: "0 4px" }}>
           <p style={{ margin: "0", fontSize: "18px", fontWeight: "600", color: "#4F5561" }}>{t("q1.step")}</p>
           <h1 style={{ margin: "0", fontSize: "34px", fontWeight: "800", lineHeight: "1.12", letterSpacing: "-0.02em" }}>{t("q1.title")}</h1>
           <p style={{ margin: "0", fontSize: "18px", lineHeight: "1.45", color: "#4F5561" }}>{t("q1.hint")}</p>
         </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-          <Link to="/emergency" className="press" style={{ display: "flex", alignItems: "center", gap: "18px", minHeight: "136px", padding: "20px 24px", borderRadius: "18px", background: "#D92D20", color: "#FFFFFF", textDecoration: "none", boxShadow: "0 10px 24px rgba(217, 45, 32, 0.22)" }}>
+        <div className="q1-answers" style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+          <Link to="/emergency" className="press q1-answer" style={{ display: "flex", alignItems: "center", gap: "18px", minHeight: "136px", padding: "20px 24px", borderRadius: "18px", background: "#D92D20", color: "#FFFFFF", textDecoration: "none", boxShadow: "0 10px 24px rgba(217, 45, 32, 0.22)" }}>
             <span style={{ flexShrink: "0", width: "68px", height: "68px", borderRadius: "50%", background: "#FFFFFF", color: "#D92D20", display: "flex", alignItems: "center", justifyContent: "center" }}>
               <FlameIcon size={36} />
             </span>
@@ -29,7 +29,7 @@ export function Q1Flames() {
               <span style={{ fontSize: "18px", fontWeight: "600", lineHeight: "1.35" }}>{t("q1.yesSub")}</span>
             </span>
           </Link>
-          <Link to="/q2" className="press" style={{ display: "flex", alignItems: "center", gap: "18px", minHeight: "136px", padding: "20px 24px", borderRadius: "18px", background: "#FFFFFF", border: "3px solid #1B2A4A", color: "#1B2A4A", textDecoration: "none" }}>
+          <Link to="/q2" className="press q1-answer" style={{ display: "flex", alignItems: "center", gap: "18px", minHeight: "136px", padding: "20px 24px", borderRadius: "18px", background: "#FFFFFF", border: "3px solid #1B2A4A", color: "#1B2A4A", textDecoration: "none" }}>
             <span style={{ flexShrink: "0", width: "68px", height: "68px", borderRadius: "50%", background: "#E9EDF5", color: "#1B2A4A", display: "flex", alignItems: "center", justifyContent: "center" }}>
               <svg className="ic" width="34" height="34" viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M3 3l18 18" />

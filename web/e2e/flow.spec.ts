@@ -25,3 +25,24 @@ test("Moncton replay: Check → Q1 → Q2 → Location → Loading → Verdict",
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Likely from the Long Lake fire");
   await expect(page.getByText("Low confidence")).toBeVisible();
 });
+
+test("Q2 lists the dark column first, in English and French", async ({ page }) => {
+  await page.goto("/?mode=replay");
+  await page.goto("/q2");
+  await expect(page.locator("a.opt").first()).toContainText("Dark column rising from one spot");
+  await page.getByRole("button", { name: "Français" }).click();
+  await expect(page.locator("a.opt").first()).toContainText("Colonne sombre qui monte d’un seul endroit");
+});
+
+test("the loading counter reads Heure {n} sur 24 in French", async ({ page }) => {
+  await page.goto("/?mode=replay");
+  await page.getByRole("button", { name: "Français" }).click();
+  await page.goto("/location");
+  await page.locator("input[type=search]").fill("Monc");
+  await page.getByRole("option", { name: /Moncton/ }).click();
+  const chip = page.locator(".hours");
+  await expect(chip).toBeAttached();
+  const label = await chip.evaluate((el) => getComputedStyle(el, "::before").content);
+  expect(label).toContain("Heure ");
+  expect(label).toContain(" sur 24");
+});

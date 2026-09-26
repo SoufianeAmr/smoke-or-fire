@@ -57,6 +57,7 @@
   "loading.fires": "TODO",
   "loading.firesSource": "TODO",
   "loading.tracing": "TODO",
+  "loading.hour": "Heure {n} sur 24",
   "province.NB": "N.-B.",
   "province.NS": "N.-É.",
   "province.PE": "Î.-P.-É.",

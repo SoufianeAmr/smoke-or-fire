@@ -41,7 +41,7 @@ body.emergency{background:#D92D20}
 @keyframes draw{0%{stroke-dashoffset:200}42%{stroke-dashoffset:0}100%{stroke-dashoffset:0}}
 @property --h{syntax:'<integer>';inherits:false;initial-value:1}
 .hours{counter-reset:h var(--h);animation:hours 4.8s linear infinite}
-.hours::before{content:"Hour " counter(h) " of 24"}
+.hours::before{content:attr(data-before) counter(h) attr(data-after)} /* "Hour {n} of 24" from the strings file */
 @keyframes hours{0%{--h:1}42%{--h:10}80%{--h:24}100%{--h:24}}
 .spin{animation:spin 1s linear infinite;transform-origin:50% 50%}
 @keyframes spin{to{transform:rotate(360deg)}}
@@ -64,4 +64,12 @@ body.emergency{background:#D92D20}
   .nodata-main{gap:8px !important}
   .nodata-head{gap:6px !important}
   .nodata-callout{padding:12px 20px !important}
+}
+
+/* iPhone SE in Safari with its toolbars (375 × 550): both Q1 answers clear the 911 bar. */
+@media (max-height: 600px){
+  .q1-main{gap:8px !important;padding-top:4px !important}
+  .q1-head{gap:4px !important}
+  .q1-answers{gap:8px !important}
+  .q1-answer{min-height:0 !important;padding:12px 24px !important}
 }

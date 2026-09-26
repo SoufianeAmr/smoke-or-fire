@@ -1,11 +1,16 @@
 // Small phones: on every screen the main action and the 911 bar are visible without scrolling,
 // and the main action is not hidden behind the 911 bar.
+// Q2 on short screens (decided): only the first answer, the urgent "dark column", must be visible;
+// the other two may scroll. At 390 × 844 all three must be visible.
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
 const VIEWPORTS = [
   { width: 375, height: 667 },
   { width: 390, height: 844 },
 ];
+// A real iPhone SE in Safari with its toolbars showing: checked on the first screens only.
+const SAFARI_SE = { width: 375, height: 550 };
+const SAFARI_SE_SCREENS = ["01 Check", "02 Q1", "04 Emergency"];
 
 type Check = { name: string; open: (page: Page) => Promise<void>; main: (page: Page) => Locator[]; bar: boolean };
 
@@ -25,7 +30,7 @@ const verdictMain = (page: Page) => [page.locator("#verdict-h"), page.locator("s
 const SCREENS: Check[] = [
   { name: "01 Check", open: (p) => p.goto("/").then(), main: (p) => [p.locator('a[href="/q1"]')], bar: false },
   { name: "02 Q1", open: (p) => p.goto("/q1").then(), main: (p) => [p.locator('a[href="/emergency"]'), p.locator('a[href="/q2"]')], bar: true },
-  { name: "03 Q2", open: (p) => p.goto("/q2").then(), main: (p) => [p.locator("a.opt")], bar: true },
+  { name: "03 Q2", open: (p) => p.goto("/q2").then(), main: (p) => [p.viewportSize()!.height >= 844 ? p.locator("a.opt") : p.locator("a.opt").first()], bar: true },
   { name: "04 Emergency", open: (p) => p.goto("/emergency").then(), main: (p) => [p.locator('main a[href="tel:911"]')], bar: false },
   { name: "05 Location", open: (p) => p.goto("/location").then(), main: (p) => [p.locator('main a[href="/loading"]').first(), p.locator("input[type=search]")], bar: true },
   { name: "06 Loading", open: (p) => searchTown(p, "Moncton"), main: (p) => [p.locator("h1")], bar: true },
@@ -63,11 +68,13 @@ async function hidden(page: Page, check: Check) {
   return problems;
 }
 
-for (const viewport of VIEWPORTS) {
+const RUNS = [...VIEWPORTS.map((viewport) => ({ viewport, screens: SCREENS })), { viewport: SAFARI_SE, screens: SCREENS.filter((s) => SAFARI_SE_SCREENS.includes(s.name)) }];
+
+for (const { viewport, screens } of RUNS) {
   for (const lang of ["en", "fr"] as const) {
     test.describe(`${viewport.width}×${viewport.height} ${lang.toUpperCase()}`, () => {
       test.use({ viewport });
-      for (const check of SCREENS) {
+      for (const check of screens) {
         test(check.name, async ({ page }) => {
           await page.goto("/?mode=replay");
           if (lang === "fr") await page.getByRole("button", { name: "Français" }).click();

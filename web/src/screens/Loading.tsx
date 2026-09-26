@@ -25,6 +25,8 @@ const CHECK = (
 export function Loading() {
   const { mode, lang, place, result, setResult } = useApp();
   const t = useT();
+  // The chip counts the hours in CSS (counter(h)); the words around the number come from the strings file.
+  const [hourBefore, hourAfter] = t("loading.hour").split("{n}");
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -80,7 +82,7 @@ export function Loading() {
             <circle cx={USER_XY[0]} cy={USER_XY[1]} r="9" style={{ fill: "#1B2A4A", stroke: "#FFFFFF", strokeWidth: "3" }} />
             <text className="lbl" x={USER_XY[0] + 16} y={USER_XY[1] + 6}>{place.name}</text>
           </svg>
-          <span className="hours" aria-hidden="true" style={{ position: "absolute", left: "12px", top: "12px", height: "36px", padding: "0 14px", borderRadius: "999px", background: "#1B2A4A", color: "#FFFFFF", fontSize: "16px", fontWeight: "700", fontVariantNumeric: "tabular-nums", display: "flex", alignItems: "center", boxShadow: "0 4px 12px rgba(26, 29, 33, 0.2)" }} />
+          <span className="hours" data-before={hourBefore} data-after={hourAfter} aria-hidden="true" style={{ position: "absolute", left: "12px", top: "12px", height: "36px", padding: "0 14px", borderRadius: "999px", background: "#1B2A4A", color: "#FFFFFF", fontSize: "16px", fontWeight: "700", fontVariantNumeric: "tabular-nums", display: "flex", alignItems: "center", boxShadow: "0 4px 12px rgba(26, 29, 33, 0.2)" }} />
         </div>
         <ul style={{ listStyle: "none", margin: "0", padding: "4px 16px", background: "#FFFFFF", borderRadius: "18px", boxShadow: "0 1px 2px rgba(26, 29, 33, 0.06), 0 8px 24px rgba(26, 29, 33, 0.07)", display: "flex", flexDirection: "column" }}>
           <li style={{ display: "flex", alignItems: "center", gap: "14px", minHeight: "54px", borderBottom: "1px solid #EEE7DC" }}>

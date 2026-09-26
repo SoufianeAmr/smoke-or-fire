@@ -32,12 +32,14 @@ export function Q2Describe() {
     <Screen>
       <ReplayBanner />
       <TopBar back="/q1" />
-      <main style={{ flexGrow: "1", display: "flex", flexDirection: "column", gap: "16px", padding: "4px 16px 152px" }}>
+      <main style={{ flexGrow: "1", display: "flex", flexDirection: "column", gap: "12px", padding: "4px 16px 152px" }}>
         <div style={{ display: "flex", flexDirection: "column", gap: "10px", padding: "0 4px" }}>
           <p style={{ margin: "0", fontSize: "18px", fontWeight: "600", color: "#4F5561" }}>{t("q2.step")}</p>
           <h1 style={{ margin: "0", fontSize: "34px", fontWeight: "800", lineHeight: "1.12", letterSpacing: "-0.02em", textWrap: "balance" }}>{t("q2.title")}</h1>
         </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+        {/* Urgent answer first (decided); gaps trimmed 16 → 12 and 10 → 6 px so all three answers fit at 390 × 844 in French. */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+          <Option to="/emergency" style={OPTION_URGENT} iconColor="#D92D20" title="q2.column" sub="q2.columnSub" icon={<SmokeColumnIcon size={36} style={{ strokeWidth: "2.3" }} />} />
           <Option
             to="/location"
             style={OPTION}
@@ -64,7 +66,6 @@ export function Q2Describe() {
               </svg>
             }
           />
-          <Option to="/emergency" style={OPTION_URGENT} iconColor="#D92D20" title="q2.column" sub="q2.columnSub" icon={<SmokeColumnIcon size={36} style={{ strokeWidth: "2.3" }} />} />
         </div>
       </main>
       <Sticky911 />

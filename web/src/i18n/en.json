@@ -57,6 +57,7 @@
   "loading.fires": "Active fires checked",
   "loading.firesSource": "(NRCan)",
   "loading.tracing": "Tracing 24 hours of wind…",
+  "loading.hour": "Hour {n} of 24",
   "province.NB": "NB",
   "province.NS": "NS",
   "province.PE": "PE",
