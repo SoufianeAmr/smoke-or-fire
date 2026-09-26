@@ -16,7 +16,9 @@ OPEN_METEO_CHUNK = 300  # grid points per request, to keep URLs short
 OPEN_METEO_POINTS_PER_MINUTE = 600
 
 
-def fetch_open_meteo(client, url: str, points: list[tuple[float, float]], **time_window: str) -> tuple[list, list[str]]:
+def fetch_open_meteo(
+    client, url: str, points: list[tuple[float, float]], sleep=time.sleep, **time_window: str
+) -> tuple[list, list[str]]:
     """Fetch the wind grid in chunks, pausing to stay under the per-minute limit.
 
     Returns (the combined multi-location answer, the URLs requested).
@@ -25,13 +27,13 @@ def fetch_open_meteo(client, url: str, points: list[tuple[float, float]], **time
     for i in range(0, len(points), OPEN_METEO_CHUNK):
         chunk = points[i : i + OPEN_METEO_CHUNK]
         if used + len(chunk) > OPEN_METEO_POINTS_PER_MINUTE:
-            time.sleep(max(0.0, 61 - (time.monotonic() - minute_started)))
+            sleep(max(0.0, 61 - (time.monotonic() - minute_started)))
             used, minute_started = 0, time.monotonic()
         for attempt in range(3):
             response = client.get(url, params=open_meteo_params(chunk, **time_window), timeout=300)
             if response.status_code != 429 or attempt == 2:
                 break
-            time.sleep(61)  # "Minutely API request limit exceeded. Please try again in one minute."
+            sleep(61)  # "Minutely API request limit exceeded. Please try again in one minute."
             minute_started = time.monotonic()
         response.raise_for_status()
         part = response.json()

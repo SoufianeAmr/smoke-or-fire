@@ -3,13 +3,19 @@
 Wind: the whole 693-point grid is refreshed in a background thread every 3 hours.
 One refresh is 693 Open-Meteo calls, over the free tier's 600 a minute, so it
 takes about 2 minutes; requests never wait for it, they read the last grid.
+Each refresh is saved to disk; after a restart a saved grid under 6 hours old
+is used at once, so live mode answers immediately.
 Fires and AQHI: fetched when asked, cached for 15 minutes.
 """
 
+import json
 import logging
+import os
 import threading
 import time
+from contextlib import asynccontextmanager
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 
 import httpx
 
@@ -20,7 +26,13 @@ log = logging.getLogger("smoke_engine.live")
 
 WIND_REFRESH_EVERY = timedelta(hours=3)
 WIND_RETRY_AFTER = timedelta(minutes=5)
+SAVED_WIND_MAX_AGE = timedelta(hours=6)
 CACHE_FOR = timedelta(minutes=15)
+WIND_FILE = Path(__file__).resolve().parents[2] / ".cache" / "live-wind.json"
+
+
+def _utc_now() -> datetime:
+    return datetime.now(timezone.utc)
 
 
 def _bucket(t: datetime) -> datetime:
@@ -30,8 +42,17 @@ def _bucket(t: datetime) -> datetime:
 
 
 class LiveFeeds:
-    def __init__(self, client: httpx.Client | None = None):
+    def __init__(
+        self,
+        client: httpx.Client | None = None,
+        wind_file: Path = WIND_FILE,
+        now=_utc_now,
+        sleep=time.sleep,
+    ):
         self._client = client or httpx.Client(headers={"User-Agent": sources.USER_AGENT}, timeout=120)
+        self._wind_file = Path(wind_file)
+        self._now = now
+        self._sleep = sleep
         self._lock = threading.Lock()
         self._wind: list | None = None
         self._wind_fetched_at: datetime | None = None
@@ -42,14 +63,42 @@ class LiveFeeds:
 
     # --- background wind refresh ---------------------------------------------------------------
 
+    @asynccontextmanager
+    async def lifespan(self, app):
+        """FastAPI lifespan: load the saved grid and start refreshing; stop on shutdown."""
+        self.start()
+        yield
+        self.stop()
+
     def start(self) -> None:
+        self._load_saved_wind()
         self._thread = threading.Thread(target=self._refresh_loop, name="wind-refresh", daemon=True)
         self._thread.start()
 
     def stop(self) -> None:
         self._stop.set()
 
+    def _load_saved_wind(self) -> None:
+        try:
+            saved = json.loads(self._wind_file.read_text(encoding="utf-8"))
+            fetched_at = datetime.fromisoformat(saved["fetchedAt"].replace("Z", "+00:00"))
+        except (OSError, ValueError, KeyError) as error:
+            log.info("no saved wind grid used (%s)", type(error).__name__)
+            return
+        age = self._now() - fetched_at
+        if age >= SAVED_WIND_MAX_AGE or len(saved.get("answer", [])) != len(GRID_POINTS):
+            log.info("saved wind grid from %s not used (%.1f h old)", saved["fetchedAt"], age.total_seconds() / 3600)
+            return
+        with self._lock:
+            self._wind, self._wind_fetched_at = saved["answer"], fetched_at
+        log.info("using saved wind grid from %s (%.1f h old)", saved["fetchedAt"], age.total_seconds() / 3600)
+
     def _refresh_loop(self) -> None:
+        with self._lock:
+            fetched_at = self._wind_fetched_at
+        # A fresh saved grid sets the schedule: refresh when it turns 3 hours old.
+        first_wait = (fetched_at + WIND_REFRESH_EVERY - self._now()) if fetched_at else timedelta(0)
+        self._stop.wait(max(0.0, first_wait.total_seconds()))
         while not self._stop.is_set():
             try:
                 self.refresh_wind()
@@ -63,15 +112,27 @@ class LiveFeeds:
     def refresh_wind(self) -> None:
         started = time.monotonic()
         answer, _ = sources.fetch_open_meteo(
-            self._client, sources.OPEN_METEO_LIVE, GRID_POINTS, past_days="2", forecast_days="2"
+            self._client, sources.OPEN_METEO_LIVE, GRID_POINTS, sleep=self._sleep, past_days="2", forecast_days="2"
         )
         if len(answer) != len(GRID_POINTS):
             raise FeedUnavailable(f"Open-Meteo answered for {len(answer)} of {len(GRID_POINTS)} grid points")
+        fetched_at = self._now()
         with self._lock:
             self._wind = answer
-            self._wind_fetched_at = datetime.now(timezone.utc)
+            self._wind_fetched_at = fetched_at
             self._wind_error = None
+        self._save_wind(answer, fetched_at)
         log.info("wind grid refreshed in %.0f s", time.monotonic() - started)
+
+    def _save_wind(self, answer: list, fetched_at: datetime) -> None:
+        """Write the grid next to its fetch time; replace the old file only once fully written."""
+        self._wind_file.parent.mkdir(parents=True, exist_ok=True)
+        partial = self._wind_file.with_suffix(".partial")
+        partial.write_text(
+            json.dumps({"fetchedAt": fetched_at.strftime("%Y-%m-%dT%H:%M:%SZ"), "answer": answer}, separators=(",", ":")),
+            encoding="utf-8",
+        )
+        os.replace(partial, self._wind_file)
 
     def status(self) -> dict:
         with self._lock:
@@ -102,7 +163,7 @@ class LiveFeeds:
         return self._cached(("hotspots", slot), sources.CWFIS_HOTSPOTS, params)
 
     def aqhi_stations(self):
-        slot = _bucket(datetime.now(timezone.utc))
+        slot = _bucket(self._now())
         return self._cached(("aqhi_stations", slot), sources.ECCC_STATIONS, sources.stations_params())
 
     def aqhi_readings(self, station_id, start, end):

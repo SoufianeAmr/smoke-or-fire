@@ -1,4 +1,7 @@
 
+# Live wind grid saved by the engine between restarts
+.cache/
+
 # Python
 .venv/
 __pycache__/
