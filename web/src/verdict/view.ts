@@ -10,6 +10,8 @@ const unbroken = (satellite: string) => satellite.replace(/-/g, NBH).replace(/ /
 
 export type Variant = "7a" | "7b" | "7c" | "7d";
 export type AreaWide = { lead: string; text: string };
+/** Health Canada's windows advice and "take a break from the smoke", with map searches near the checked spot. */
+export type SmokeBreak = { windows: string; text: string; library: { label: string; url: string }; community: { label: string; url: string }; hours: string; source: string; sourceUrl: string };
 
 export interface VerdictView {
   variant: Variant;
@@ -34,8 +36,8 @@ export interface VerdictView {
   };
   twoPossibilities: { title: string; driftingChip: string; driftingLead: string; driftingText: string; unexplainedChip: string; unexplainedLead: string; unexplainedText: string; lookOutside: string } | null;
   todo:
-    | { kind: "advice"; title: string; general: string; official: string; areaWide: AreaWide | null; nurse: string; groupsLabel: string; atRisk: string; higherRiskLead: string; higherRisk: string; doctor: string }
-    | { kind: "noReading"; title: string; general: string; linkText: string; linkHost: string; linkUrl: string; nurse: string };
+    | { kind: "advice"; title: string; general: string; official: string; areaWide: AreaWide | null; smokeBreak: SmokeBreak | null; nurse: string; groupsLabel: string; atRisk: string; higherRiskLead: string; higherRisk: string; doctor: string }
+    | { kind: "noReading"; title: string; general: string; linkText: string; linkHost: string; linkUrl: string; smokeBreak: SmokeBreak | null; nurse: string };
   aqhi: { title: string; station: string; display: string; risk: string; scale: string; scaleLow: string; scaleHigh: string; segments: number; category: AqhiCategory | null; needle: string | null; areaWide: AreaWide | null; source: string };
   why: { title: string; items: { title: string; body: string; detail?: string | null }[]; howLink: string };
   /** When the featured fire is under 25 km from you: a notice under the band, linking to "If you’re told to leave". */
@@ -44,6 +46,13 @@ export interface VerdictView {
 
 /** A featured fire this close to you gets the notice. */
 const NEAR_FIRE_KM = 25;
+
+/**
+ * A Google Maps search for `query` around a spot: the replay town, the town picked, or the phone's spot. Rounded to
+ * about 100 m, close enough to find what's near without sending the exact spot.
+ */
+export const nearMeUrl = (query: string, { lat, lon }: { lat: number; lon: number }) =>
+  `https://www.google.com/maps/search/${encodeURIComponent(query)}/@${Number(lat.toFixed(3))},${Number(lon.toFixed(3))},13z`;
 
 const AREA_KEYS = ["NB", "NS", "PE", "QC", "ME", "BAY_OF_FUNDY", "GULF_OF_ST_LAWRENCE", "GULF_OF_MAINE"] as const;
 
@@ -229,6 +238,20 @@ export function verdictView(json: VerdictJson, lang: Lang, townName?: string): V
   const aq = json.aqhi;
   const areaWide = variant === "7b" || variant === "7d" ? { lead: t("aq.areaWide.lead"), text: t("aq.areaWide.text") } : null;
   const level = aq ? (aq.display === "10+" ? 11 : Number(aq.display)) : 0;
+  // Health Canada's break from the smoke: at a moderate AQHI or worse, or with no reading when the air likely (7a)
+  // or possibly (7c) carries a fire's smoke. The engine's location is the spot that was checked.
+  const smokeBreak: SmokeBreak | null =
+    (aq ? aq.category !== "low" : variant === "7a" || variant === "7c")
+      ? {
+          windows: t("todo.break.windows"),
+          text: t("todo.break"),
+          library: { label: t("todo.break.library"), url: nearMeUrl(t("todo.break.library.query"), json.location) },
+          community: { label: t("todo.break.community"), url: nearMeUrl(t("todo.break.community.query"), json.location) },
+          hours: t("todo.break.hours"),
+          source: t("todo.break.source"),
+          sourceUrl: t("todo.break.source.url"),
+        }
+      : null;
   const todo: VerdictView["todo"] = aq
     ? {
         kind: "advice",
@@ -236,6 +259,7 @@ export function verdictView(json: VerdictJson, lang: Lang, townName?: string): V
         general: t(`advice.general.${aq.category}` as StringKey),
         official: t(`todo.official.${aq.category}` as StringKey, { n: aq.display }),
         areaWide,
+        smokeBreak,
         nurse: t("todo.nurse"),
         groupsLabel: t("todo.groups"),
         atRisk: t(`advice.atRisk.${aq.category}` as StringKey),
@@ -243,7 +267,7 @@ export function verdictView(json: VerdictJson, lang: Lang, townName?: string): V
         higherRisk: t("todo.higherRisk.list"),
         doctor: t("todo.doctor"),
       }
-    : { kind: "noReading", title: t("todo.title"), general: t("todo.noReading"), linkText: t("todo.officialLink"), linkHost: t("todo.officialLink.host"), linkUrl: t("todo.officialLink.url"), nurse: t("todo.nurse") };
+    : { kind: "noReading", title: t("todo.title"), general: t("todo.noReading"), linkText: t("todo.officialLink"), linkHost: t("todo.officialLink.host"), linkUrl: t("todo.officialLink.url"), smokeBreak, nurse: t("todo.nurse") };
   const aqhi: VerdictView["aqhi"] = {
     title: t("aq.title"),
     station: t("aq.station", { station: aq ? (lang === "fr" ? aq.station.nameFr : aq.station.nameEn) : town }),

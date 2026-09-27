@@ -1,9 +1,9 @@
 // Cards below the map on screens 7a–7d (design/screens/07*.html).
 import { useState, type CSSProperties } from "react";
 import { Link } from "react-router";
-import { ChevronDownIcon, ChevronRightIcon, ChevronUpIcon, PhoneIcon } from "../components/icons";
+import { ChevronDownIcon, ChevronRightIcon, ChevronUpIcon, MapPinIcon, PhoneIcon } from "../components/icons";
 import type { Confidence } from "./types";
-import type { AreaWide, VerdictView } from "./view";
+import type { AreaWide, SmokeBreak, VerdictView } from "./view";
 
 const CARD: CSSProperties = { background: "#FFFFFF", borderRadius: "18px", boxShadow: "0 1px 2px rgba(26, 29, 33, 0.06), 0 8px 24px rgba(26, 29, 33, 0.07)" };
 const BODY: CSSProperties = { margin: "0", fontSize: "18px", lineHeight: "1.45" };
@@ -79,6 +79,29 @@ export function TwoPossibilitiesCard({ view }: { view: VerdictView }) {
   );
 }
 
+// Outlined navy, as "Told to leave your home?" on the Check screen: never red, which is kept for Call 911.
+const OUTLINED: CSSProperties = { minHeight: "56px", display: "flex", alignItems: "center", justifyContent: "center", gap: "10px", padding: "8px 16px", borderRadius: "18px", border: "2px solid #1B2A4A", color: "#1B2A4A", textDecoration: "none", fontSize: "18px", fontWeight: "700", lineHeight: "1.3", textAlign: "center" };
+
+// Health Canada's windows advice and "take a break from the smoke", after the official AQHI line and before the 811 line.
+function SmokeBreakAdvice({ advice }: { advice: SmokeBreak }) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: "12px", margin: "8px 0 0" }}>
+      <p style={BODY}>{advice.windows}</p>
+      <p style={BODY}>{advice.text}</p>
+      {[advice.library, advice.community].map((search) => (
+        <a key={search.url} href={search.url} target="_blank" rel="noopener noreferrer" className="press" style={OUTLINED}>
+          <MapPinIcon size={24} />
+          <span style={{ textWrap: "balance" }}>{search.label}</span>
+        </a>
+      ))}
+      <p style={{ margin: "0", fontSize: "16px", lineHeight: "1.4", color: "#4F5561" }}>{advice.hours}</p>
+      <a href={advice.sourceUrl} target="_blank" rel="noopener noreferrer" style={{ alignSelf: "flex-start", minHeight: "56px", display: "flex", alignItems: "center", fontSize: "16px", lineHeight: "1.4", color: "#1B2A4A" }}>
+        {advice.source}
+      </a>
+    </div>
+  );
+}
+
 export function WhatToDoCard({ view }: { view: VerdictView }) {
   const [open, setOpen] = useState(false);
   const todo = view.todo;
@@ -96,6 +119,7 @@ export function WhatToDoCard({ view }: { view: VerdictView }) {
         <>
           <p style={{ margin: "0", fontSize: "16px", lineHeight: "1.4", color: "#4F5561" }}>{todo.official}</p>
           {todo.areaWide && <AreaWideNote note={todo.areaWide} />}
+          {todo.smokeBreak && <SmokeBreakAdvice advice={todo.smokeBreak} />}
           {nurse}
           <button type="button" onClick={() => setOpen(!open)} aria-expanded={open} aria-controls="groups" style={{ margin: "8px -20px 0", width: "calc(100% + 40px)", minHeight: "60px", padding: "0 20px", border: "0", borderTop: "1px solid #EEE7DC", background: "transparent", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", fontFamily: "inherit", fontSize: "18px", fontWeight: "700", color: "#1B2A4A", textAlign: "left", cursor: "pointer" }}>
             <span style={{ textWrap: "balance" }}>{todo.groupsLabel}</span>
@@ -122,6 +146,7 @@ export function WhatToDoCard({ view }: { view: VerdictView }) {
               <path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5" />
             </svg>
           </a>
+          {todo.smokeBreak && <SmokeBreakAdvice advice={todo.smokeBreak} />}
           {nurse}
         </>
       )}

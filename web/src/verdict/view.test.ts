@@ -15,6 +15,9 @@ import { verdictView } from "./view";
 
 const json = (data: unknown) => data as VerdictJson;
 const NBSP = String.fromCharCode(0xa0);
+// Health Canada, "Wildfire smoke with extreme heat": the windows line and "air conditioning and filtered air".
+const EN_SOURCE = "https://www.canada.ca/en/health-canada/services/publications/healthy-living/combine-wildfire-smoke-heat.html";
+const FR_SOURCE = "https://www.canada.ca/fr/sante-canada/services/publications/vie-saine/effets-combines-fumee-feux-foret-chaleur.html";
 const NBH = String.fromCharCode(0x2011); // no-break hyphen, as in N.‑É. and NOAA‑20
 
 describe("Moncton replay (drifting, low: the three heights disagree)", () => {
@@ -290,6 +293,61 @@ describe("What to do: the area-wide caveat on unexplained verdicts", () => {
 
   test("is not on drifting or unclear verdicts (Moncton, Miramichi replays)", () => {
     expect([caveat(json(moncton), "en"), caveat(json(miramichi), "en")]).toEqual([null, null]);
+  });
+});
+
+describe("What to do: Health Canada’s break from the smoke", () => {
+  const smokeBreak = (data: unknown, lang: "en" | "fr" = "en") => verdictView(json(data), lang).todo.smokeBreak;
+
+  test("shows on the Moncton replay (AQHI 10+), with map searches around Moncton, in English", () => {
+    expect(smokeBreak(moncton)).toEqual({
+      windows: "Keep windows and doors closed as much as possible. When there’s an extreme heat event occurring with a wildfire smoke event, prioritize keeping cool.",
+      text: "Can’t keep the air clean and cool at home? Health Canada suggests a break from the smoke in public spaces with air conditioning and filtered air. Libraries and community centres often have both.",
+      library: { label: "Find a library near me", url: "https://www.google.com/maps/search/library/@46.099,-64.8,13z" },
+      community: { label: "Find a community centre near me", url: "https://www.google.com/maps/search/community%20centre/@46.099,-64.8,13z" },
+      hours: "Check opening hours before you go.",
+      source: "Source: Health Canada",
+      sourceUrl: EN_SOURCE,
+    });
+  });
+
+  test("and in French, searching in French", () => {
+    expect(smokeBreak(moncton, "fr")).toEqual({
+      windows: "À l’intérieur, gardez les fenêtres et les portes fermées autant que possible. En cas d’épisode de chaleur extrême et de fumée de feux de forêt, la priorité est de demeurer au frais.",
+      text: `Vous n’arrivez pas à garder l’air propre et frais chez vous${NBSP}? Santé Canada suggère une pause de la fumée dans des espaces publics climatisés à l’air filtré. Les bibliothèques et les centres communautaires en offrent souvent.`,
+      library: { label: "Trouver une bibliothèque près de moi", url: "https://www.google.com/maps/search/biblioth%C3%A8que/@46.099,-64.8,13z" },
+      community: { label: "Trouver un centre communautaire près de moi", url: "https://www.google.com/maps/search/centre%20communautaire/@46.099,-64.8,13z" },
+      hours: "Vérifiez les heures d’ouverture avant d’y aller.",
+      source: `Source${NBSP}: Santé Canada`,
+      sourceUrl: FR_SOURCE,
+    });
+  });
+
+  test("searches around the spot that was checked: another replay town, or a phone's spot", () => {
+    const moderate = { ...json(halifax), aqhi: { ...json(halifax).aqhi!, value: 5, display: "5", category: "moderate" } } as VerdictJson;
+    expect(verdictView(moderate, "en").todo.smokeBreak?.library.url).toBe("https://www.google.com/maps/search/library/@44.647,-63.591,13z");
+    const phone = { ...json(moncton), location: { ...json(moncton).location, lat: 46.2123456, lon: -64.5498765 } };
+    expect(verdictView(phone, "en").todo.smokeBreak?.community.url).toBe("https://www.google.com/maps/search/community%20centre/@46.212,-64.55,13z");
+  });
+
+  test("shows at a moderate, high or very high AQHI on every verdict (7a–7d), and is hidden at a low one", () => {
+    const noFires = { ...json(halifax), noFiresInRange: true, nearestFire: null, closestApproach: null } as VerdictJson;
+    const verdicts = [json(moncton), json(halifax), json(miramichi), noFires];
+    const at = (data: VerdictJson, category: string) => ({ ...data, aqhi: { ...json(halifax).aqhi!, category } }) as VerdictJson;
+    const shown = (category: string) => verdicts.map((d) => [verdictView(at(d, category), "en").variant, verdictView(at(d, category), "en").todo.smokeBreak !== null]);
+    const all = (on: boolean) => [["7a", on], ["7b", on], ["7c", on], ["7d", on]];
+    expect([shown("moderate"), shown("high"), shown("very_high"), shown("low")]).toEqual([all(true), all(true), all(true), all(false)]);
+  });
+
+  test("is hidden at a low AQHI on the replays: unexplained (Halifax, Fredericton, Edmundston), drifting (Bridgetown) and unclear (Charlottetown) alike", () => {
+    expect([halifax, fredericton, edmundston, bridgetown, charlottetown].map((d) => smokeBreak(d))).toEqual([null, null, null, null, null]);
+  });
+
+  test("with no AQHI reading: shown on drifting and unclear verdicts, hidden on unexplained ones", () => {
+    const noReading = (data: unknown) => ({ ...json(data), aqhi: null }) as VerdictJson;
+    const noFires = { ...noReading(halifax), noFiresInRange: true, nearestFire: null, closestApproach: null } as VerdictJson;
+    const shown = [noReading(moncton), noReading(miramichi), noReading(halifax), noFires].map((d) => [verdictView(d, "en").variant, verdictView(d, "en").todo.smokeBreak !== null]);
+    expect(shown).toEqual([["7a", true], ["7c", true], ["7b", false], ["7d", false]]);
   });
 });
 

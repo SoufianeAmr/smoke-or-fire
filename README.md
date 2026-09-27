@@ -13,6 +13,8 @@ The engine traces the air arriving at your spot backward on hourly winds, at sev
 
 "If you’re told to leave" (from Check, Emergency, and verdicts with the fire under 25 km away) first asks where you are, unless a place was chosen this session. It shows the evacuation centres officials announced, from `web/src/data/evacuation-events.json`: hand-curated from official releases, each item with its source, shown only on the dates the event was active and within its radius of the fire (40 km). In replay (Aug 25, 2025), Bridgetown and West Dalhousie, N.S. get the Long Lake centres; farther away the screen says that evacuation doesn't apply and where officials announce centres for the province, as live mode does. The app plans no routes: "Get directions" hands the address to the phone's maps app. Nothing is looked up at runtime.
 
+When the AQHI is moderate or worse, or there is no reading and the smoke is likely or possibly from a fire, "What to do" adds Health Canada's advice on keeping windows closed (heat comes first) and taking a break from the smoke. Two buttons open a Google Maps search for libraries and community centres around the spot that was checked, rounded to about 100 m. No address is stored or looked up by the app.
+
 [TECH-FACTS.md](TECH-FACTS.md) has the architecture, the method, the data sources and their limits, the Moncton replay facts and the test counts. It is generated from the code, the data and actual test runs by `engine/scripts/tech_facts.py`.
 
 [VALIDATION.md](VALIDATION.md) tests the unchanged engine against 2025 reports of wildfire smoke in Maritimes communities and two quiet control days, with rules fixed before the run.
@@ -22,6 +24,7 @@ The engine traces the air arriving at your spot backward on hourly winds, at sev
 - **Natural Resources Canada, Canadian Wildland Fire Information System (CWFIS)**: active fires and satellite hotspots. Open Government Licence – Canada.
 - **NASA FIRMS**: satellite fire detections (VIIRS and MODIS). We acknowledge the use of data from NASA’s Fire Information for Resource Management System (FIRMS) (https://www.earthdata.nasa.gov/data/tools/firms), part of NASA’s Earth Science Data and Information System (ESDIS).
 - **Environment and Climate Change Canada (ECCC)**: Air Quality Health Index observations and stations. Open Government Licence – Canada.
+- **Health Canada**: the windows and break-from-the-smoke advice, from its page "Wildfire smoke with extreme heat".
 - **Open-Meteo**: hourly wind (GFS 0.25°). Weather data by Open-Meteo.com, CC BY 4.0.
 - **NRCan Canadian Geographical Names Database (CGNDB)**: community names and locations. Open Government Licence – Canada.
 - **Natural Earth**: province, state and marine area outlines. Public domain.

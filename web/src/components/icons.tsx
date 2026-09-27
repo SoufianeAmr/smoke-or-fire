@@ -94,6 +94,17 @@ export const CoffeeIcon = ({ size, style }: IconProps) =>
 
 export const NavigationIcon = ({ size, style }: IconProps) => svg(size, <polygon points="3 11 22 2 13 21 11 13 3 11" />, style);
 
+// A break from the smoke, map searches near you: path data from Lucide "map-pin" (ISC licence).
+export const MapPinIcon = ({ size, style }: IconProps) =>
+  svg(
+    size,
+    <>
+      <path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0" />
+      <circle cx="12" cy="10" r="3" />
+    </>,
+    style,
+  );
+
 export const MessageIcon = ({ size, style }: IconProps) =>
   svg(size, <path d="M2.992 16.342a2 2 0 0 1 .094 1.167l-1.065 3.29a1 1 0 0 0 1.236 1.168l3.413-.998a2 2 0 0 1 1.099.092 10 10 0 1 0-4.777-4.719" />, style);
 
