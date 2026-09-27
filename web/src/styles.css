@@ -2,6 +2,8 @@
    single screen overrides (Emergency, How it works) are scoped to that screen. */
 
 body{margin:0;background:#FAF6F0}
+/* A focused link scrolls clear of the fixed 911 bar (about 132px tall at 375 × 667). */
+html{scroll-padding-bottom:calc(150px + env(safe-area-inset-bottom))}
 *{box-sizing:border-box}
 a{color:#1B2A4A}a:hover{color:#0F1A33}
 .ic{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}

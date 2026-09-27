@@ -23,8 +23,8 @@
       "note": "Government of New Brunswick, Understanding evacuations."
     },
     "twoOneOne": {
-      "note": "211 in both provinces: dial 2-1-1. 211 NB is free, bilingual and confidential; 211 Nova Scotia has no French service, only interpretation (the French screen says so).",
-      "sources": ["https://nb.211.ca/about-211-nb/", "https://www.gnb.ca/fr/urgence/contact.html", "https://ns.211.ca/about-211-nova-scotia/", "https://ns.211.ca/contact-us/"]
+      "note": "211 in New Brunswick, Nova Scotia and P.E.I.: dial 2-1-1, 24/7. 211 NB is free, bilingual and confidential. The Nova Scotia and P.E.I. line asks callers whether they are calling from PEI or Nova Scotia and lets them choose English or French (211 PEI FAQ); other languages through interpreters. P.E.I.'s emergency guide: \"If you need temporary shelter support, dial 211 to be connected to a reception centre or another accommodation near you.\" No P.E.I. government page is linked: princeedwardisland.ca pages sit behind a bot check and could not be confirmed.",
+      "sources": ["https://nb.211.ca/about-211-nb/", "https://www.gnb.ca/fr/urgence/contact.html", "https://ns.211.ca/contact-us/", "https://pe.211.ca/frequently-asked-questions", "https://pe.211.ca/contactus", "https://www.princeedwardisland.ca/sites/default/files/publications/ops-preguide.pdf", "https://www.princeedwardisland.ca/sites/default/files/publications/emergency_prepardness_guide_french.pdf"]
     }
   },
   "events": [
@@ -33,6 +33,9 @@
       "fire": { "name": "Long Lake", "lat": 44.7024, "lon": -65.2034 },
       "fireNote": "The name is in data/places/fire-names.json. The point is the replay's Aug 25 position of the fire (data/demo, closestApproach.fire and nearestFire: FIRMS and CWFIS detections in the 24 hours to 12:00 UTC), the same point the verdict map draws; a test keeps them equal.",
       "authority": { "en": "Municipality of the County of Annapolis", "fr": "Municipalité du comté d’Annapolis" },
+      "area": { "en": "Annapolis County", "fr": "comté d’Annapolis" },
+      "radiusKm": 40,
+      "radiusNote": "The centres show only to someone within this distance of the fire point: West Dalhousie is 3 km from it, Bridgetown 17 km, Middleton (the reception centre) 29 km; Moncton is about 160 km away.",
       "announced": "2025-08",
       "province": "NS",
       "active": { "from": "2025-08-25", "to": "2025-09-02" },

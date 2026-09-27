@@ -169,6 +169,34 @@
    "fire": "Long Lake",
    "chosenHeight": "850hPa",
    "heightsAgree": true
+  },
+  {
+   "town": "Bridgetown",
+   "province": "NS",
+   "lat": 44.84158,
+   "lon": -65.29121,
+   "cgndbType": "UNP",
+   "file": "bridgetown.json",
+   "verdict": "drifting",
+   "confidence": "high",
+   "closestKm": 0,
+   "fire": "Long Lake",
+   "chosenHeight": "100m",
+   "heightsAgree": true
+  },
+  {
+   "town": "West Dalhousie",
+   "province": "NS",
+   "lat": 44.71904,
+   "lon": -65.22563,
+   "cgndbType": "UNP",
+   "file": "west-dalhousie.json",
+   "verdict": "drifting",
+   "confidence": "high",
+   "closestKm": 0,
+   "fire": "Long Lake",
+   "chosenHeight": "100m",
+   "heightsAgree": true
   }
  ]
 }

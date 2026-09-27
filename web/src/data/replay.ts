@@ -1,4 +1,4 @@
-// Replay mode: the 12 towns and their recorded verdicts from data/demo/, bundled into the app.
+// Replay mode: the replay towns and their recorded verdicts from data/demo/, bundled into the app.
 // Replay never calls the engine.
 import type { Place } from "../app/state";
 import type { VerdictJson } from "../verdict/types";

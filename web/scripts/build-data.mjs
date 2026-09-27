@@ -3,7 +3,7 @@
 //
 // src/data/maritimes.topo.json  land outlines (N.B., N.S., P.E.I., Quebec, Maine) as TopoJSON, so the
 //                               map can draw coastlines and province borders separately.
-// src/data/replay-towns.json    the 12 replay towns from data/demo/index.json, with their county.
+// src/data/replay-towns.json    the replay towns from data/demo/index.json, with their county.
 // src/data/places.json          every Maritimes community for the live town search, cities and towns first.
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { topology } from "topojson-server";

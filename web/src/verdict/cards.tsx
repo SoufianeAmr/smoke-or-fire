@@ -23,8 +23,8 @@ const BARS: Record<Confidence, [boolean, boolean, boolean]> = { high: [true, tru
 export function ConfidenceCard({ view }: { view: VerdictView }) {
   const [one, two, three] = BARS[view.confidence.level];
   return (
-    <section aria-label="Confidence" style={{ ...CARD, padding: "20px", display: "flex", flexDirection: "column", alignItems: "flex-start", gap: "12px" }}>
-      <span style={{ display: "flex", alignItems: "center", gap: "8px", height: "40px", padding: "0 16px 0 12px", borderRadius: "999px", background: "#E9EDF5", color: "#1B2A4A", fontSize: "18px", fontWeight: "700" }}>
+    <section aria-labelledby="conf-h" style={{ ...CARD, padding: "20px", display: "flex", flexDirection: "column", alignItems: "flex-start", gap: "12px" }}>
+      <span id="conf-h" style={{ display: "flex", alignItems: "center", gap: "8px", height: "40px", padding: "0 16px 0 12px", borderRadius: "999px", background: "#E9EDF5", color: "#1B2A4A", fontSize: "18px", fontWeight: "700" }}>
         <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true">
           {one && <rect x="3" y="14" width="4.5" height="7" rx="1" style={{ fill: "currentColor" }} />}
           {two ? <rect x="9.75" y="9" width="4.5" height="12" rx="1" style={{ fill: "currentColor" }} /> : <rect x="10.45" y="9.7" width="3.1" height="10.6" rx="0.8" style={{ fill: "none", stroke: "currentColor", strokeWidth: "1.5" }} />}

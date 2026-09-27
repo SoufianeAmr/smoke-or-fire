@@ -20,7 +20,7 @@ export function loadCommunities(): Promise<Community[]> {
   return communities;
 }
 
-/** The places the town search offers: the 12 replay towns, or every community in live mode. */
+/** The places the town search offers: the replay towns, or every community in live mode. */
 export function usePlaces(mode: Mode): Place[] {
   const [live, setLive] = useState<Place[]>([]);
   useEffect(() => {

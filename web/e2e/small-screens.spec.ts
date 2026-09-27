@@ -45,7 +45,8 @@ const SCREENS: Check[] = [
   { name: "08 How it works", open: (p) => p.goto("/how-it-works").then(), main: (p) => [p.locator("h1")], bar: true },
   { name: "09a Location off", open: (p) => p.goto("/location-off").then(), main: (p) => [p.locator("input[type=search]"), p.locator('main a[href="/loading"]')], bar: true },
   { name: "09b No data", open: (p) => p.goto("/no-data").then(), main: (p) => [p.locator("main button")], bar: true },
-  { name: "10 Told to leave", open: (p) => p.goto("/leave").then(), main: (p) => [p.locator("h1")], bar: true },
+  // Opened with no place chosen yet: the screen asks "Where are you?" first.
+  { name: "10 Told to leave", open: (p) => p.goto("/leave").then(), main: (p) => [p.locator("h1"), p.locator('main a[href="/leave"]')], bar: true },
 ];
 
 /** Every box that falls outside the visible area, as "what: top–bottom (limit)". */

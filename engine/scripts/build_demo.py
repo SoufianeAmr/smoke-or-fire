@@ -22,6 +22,8 @@ TOWNS = [
     ("Moncton", "NB"), ("Dieppe", "NB"), ("Sackville", "NB"), ("Sussex", "NB"), ("Saint John", "NB"),
     ("Fredericton", "NB"), ("Miramichi", "NB"), ("Bathurst", "NB"), ("Edmundston", "NB"),
     ("Charlottetown", "PE"), ("Truro", "NS"), ("Halifax", "NS"),
+    # Near the Long Lake fire, for "If you're told to leave".
+    ("Bridgetown", "NS"), ("West Dalhousie", "NS"),
 ]
 TYPE_PREFERENCE = ["CITY", "TOWN", "VILG", "MUN1", "UNP"]
 

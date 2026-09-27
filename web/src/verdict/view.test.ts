@@ -1,6 +1,7 @@
 // The verdict view from the real replay files in data/demo/ (2025-08-25 12:00 UTC).
 import { describe, expect, test } from "vitest";
 import bathurst from "../../../data/demo/bathurst.json";
+import bridgetown from "../../../data/demo/bridgetown.json";
 import charlottetown from "../../../data/demo/charlottetown.json";
 import edmundston from "../../../data/demo/edmundston.json";
 import fredericton from "../../../data/demo/fredericton.json";
@@ -8,6 +9,7 @@ import halifax from "../../../data/demo/halifax.json";
 import miramichi from "../../../data/demo/miramichi.json";
 import moncton from "../../../data/demo/moncton.json";
 import sackville from "../../../data/demo/sackville.json";
+import westDalhousie from "../../../data/demo/west-dalhousie.json";
 import type { Fire, VerdictJson } from "./types";
 import { verdictView } from "./view";
 
@@ -392,4 +394,49 @@ describe("Why: the three heights, when they disagree on 7a and 7c", () => {
 test("satellite names never break across lines: no plain hyphen or space inside a name (Moncton replay)", () => {
   const view = verdictView(json(moncton), "en");
   expect([view.why.items[1].detail, view.map.badge].filter((text) => /NOAA-|Sentinel-|Suomi NPP/.test(text ?? ""))).toEqual([]);
+});
+
+describe("near the fire: Bridgetown and West Dalhousie replays (the fire under 25 km away)", () => {
+  test("a town picked from the search is named as picked; a GPS location keeps the engine's name for the spot", () => {
+    const picked = verdictView(json(bridgetown), "en", "Bridgetown");
+    expect([picked.map.legend.you, picked.why.items[0].body]).toEqual([
+      "You (Bridgetown)",
+      "Using hourly winds, we followed the air arriving in Bridgetown backward, one hour at a time, until it left the area our wind data covers.",
+    ]);
+    expect(picked.map.aria).toMatch(/ to Bridgetown$/);
+    expect(verdictView(json(bridgetown), "en").map.legend.you).toBe("You (Lawrencetown)"); // the engine's nearest village
+  });
+
+  test("the air passed over the fire: less than 1 km, never 0 km, in English and French", () => {
+    const [en, fr] = [verdictView(json(westDalhousie), "en"), verdictView(json(westDalhousie), "fr")];
+    expect([en.confidence.text, en.why.items[1].title]).toEqual([
+      "The air passed less than 1 km from the fire, and winds were steady all day.",
+      "It passed less than 1 km from an active fire",
+    ]);
+    expect([fr.confidence.text, fr.why.items[1].title]).toEqual([
+      "L’air est passé à moins de 1 km du feu, et les vents sont restés stables toute la journée.",
+      "Il est passé à moins de 1 km d’un feu actif",
+    ]);
+    expect(JSON.stringify([en, fr])).not.toMatch(/\b0 km|moins de 0/);
+  });
+
+  test("a fire less than 1 km from you: no distance number and no compass direction", () => {
+    const atFire = json({ ...westDalhousie, closestApproach: { ...westDalhousie.closestApproach, fire: { ...westDalhousie.closestApproach!.fire, km: 0 } } });
+    const [en, fr] = [verdictView(atFire, "en"), verdictView(atFire, "fr")];
+    expect(en.band.sub).toBe("Smoke drifting from Nova Scotia, less than 1 km from you.");
+    expect(fr.band.sub).toBe("Fumée venue de la Nouvelle-Écosse, à moins de 1 km de vous.");
+    expect(en.fireRow).toMatchObject({ km: `<${NBSP}1 km`, side: "" });
+    // The map's description too: which way the air moved is left out.
+    expect(verdictView(atFire, "en", "West Dalhousie").map.aria).toBe("Map: in less than an hour, the air moved from the Long Lake fire in Nova Scotia to West Dalhousie");
+    expect(verdictView(atFire, "fr", "West Dalhousie").map.aria).toBe(`Carte${NBSP}: en moins d’une heure, l’air s’est déplacé depuis le feu de Long Lake (Nouvelle-Écosse) jusqu’à West Dalhousie`);
+  });
+
+  test("the notice and its link show when the featured fire is under 25 km away (Bridgetown 17 km, West Dalhousie 3 km), not for Moncton (159 km)", () => {
+    const notice = { text: "The fire is close to you. Follow official instructions, and call 911 if you see flames or a smoke column.", link: "Told to leave your home? What to do" };
+    expect([bridgetown, westDalhousie, moncton].map((d) => verdictView(json(d), "en").notice)).toEqual([notice, notice, null]);
+    expect(verdictView(json(bridgetown), "fr").notice).toEqual({
+      text: "Le feu est près de vous. Suivez les consignes des autorités et appelez le 911 si vous voyez des flammes ou une colonne de fumée.",
+      link: `On vous demande de partir${NBSP}? Que faire`,
+    });
+  });
 });

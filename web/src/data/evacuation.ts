@@ -41,6 +41,10 @@ export interface EvacuationEvent {
   /** Who announced the centres, and when (YYYY-MM). */
   authority: Record<Lang, string>;
   announced: string;
+  /** Where the evacuation was, e.g. "Annapolis County". */
+  area: Record<Lang, string>;
+  /** The centres show only within this distance of the fire. */
+  radiusKm: number;
   /** The official page that announced the centres. */
   source: string;
   centres: Centre[];
@@ -58,6 +62,8 @@ export const EVENTS: EvacuationEvent[] = data.events.map((event) => {
     fire: event.fire,
     active: event.active,
     authority: event.authority,
+    area: event.area,
+    radiusKm: event.radiusKm,
     announced: event.announced,
     source: event.source,
     centres: event.centres.map((c) => ({ ...c, type: c.type as CentreType, services: c.services as Service[], hours: c.hours as Hours | null })),
@@ -84,8 +90,20 @@ export function eventFor(mode: Mode, now = new Date()): EvacuationEvent | null {
 
 export const centreOf = (event: EvacuationEvent, type: CentreType) => event.centres.find((c) => c.type === type) ?? null;
 
-/** Google Maps directions to the address; the phone's maps app plans the route. */
-export const directionsUrl = (centre: Centre) => `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(centre.destination)}`;
+/** Great-circle distance in km. */
+export function kmBetween(a: LatLon, b: LatLon): number {
+  const rad = Math.PI / 180;
+  const h = Math.sin(((b.lat - a.lat) * rad) / 2) ** 2 + Math.cos(a.lat * rad) * Math.cos(b.lat * rad) * Math.sin(((b.lon - a.lon) * rad) / 2) ** 2;
+  return 2 * 6371 * Math.asin(Math.sqrt(h));
+}
+
+/** The event's centres apply to someone within its radius of the fire. */
+export const isNear = (event: EvacuationEvent, place: LatLon) => kmBetween(place, event.fire) <= event.radiusKm;
+
+/** Google Maps directions to the address; the phone's maps app plans the route. With no origin it starts where the
+ *  phone is; replay passes the chosen town, since the phone is not there. */
+export const directionsUrl = (centre: Centre, origin?: LatLon) =>
+  `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(centre.destination)}${origin ? `&origin=${origin.lat},${origin.lon}` : ""}`;
 
 /** "1-833-806-1515" → "tel:18338061515". */
 export const telUrl = (number: string) => `tel:${number.replace(/\D/g, "")}`;

@@ -31,7 +31,7 @@ test("Live: Check → Q1 → Q2 → Location → Loading → Verdict from GET /v
   await page.getByRole("link", { name: /No flames in sight/ }).click();
   await page.getByRole("link", { name: /Haze everywhere/ }).click();
 
-  // Live search covers every Maritimes community, not only the 12 replay towns.
+  // Live search covers every Maritimes community, not only the replay towns.
   await page.getByLabel("Town or city").fill("Shedi");
   await page.getByRole("option", { name: /^Shediac, NB/ }).click();
 

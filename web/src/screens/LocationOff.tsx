@@ -16,12 +16,12 @@ export function LocationOff() {
   const [query, setQuery] = useState("");
   const places = usePlaces(mode);
 
-  // "Check this place" checks the first town matching what was typed (replay: the 12 replay towns).
+  // "Check this place" checks the first town matching what was typed (replay: the replay towns).
   const check = (event: React.MouseEvent) => {
     event.preventDefault();
     const place = searchPlaces(places, query)[0];
     if (!place) return;
-    setPlace(place);
+    setPlace({ ...place, source: "search" });
     navigate("/loading");
   };
 

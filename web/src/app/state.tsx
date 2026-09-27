@@ -16,6 +16,8 @@ export interface Place {
   lon: number;
   /** Replay only: the file in data/demo/ holding this town's recorded verdict. */
   replayFile?: string;
+  /** How it was picked: from the town search (its name is shown everywhere) or by GPS (the engine names the spot). */
+  source?: "search" | "gps";
 }
 
 interface Stored {
@@ -72,7 +74,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setResult(null);
   }, []);
   const setLang = useCallback((lang: Lang) => setStored((s) => ({ ...s, lang })), []);
-  const setPlace = useCallback((place: Place | null) => setStored((s) => ({ ...s, place })), []);
+  const setPlace = useCallback((place: Place | null) => {
+    setStored((s) => ({ ...s, place }));
+    // A verdict belongs to the spot it was checked for: another place (or none) forgets it, so it is never
+    // shown under another town's name.
+    setResult((r) => (r && place && Math.abs(r.location.lat - place.lat) < 1e-6 && Math.abs(r.location.lon - place.lon) < 1e-6 ? r : null));
+  }, []);
   const setShared = useCallback((shared: { lat: number; lon: number }) => setStored((s) => ({ ...s, shared })), []);
   const reset = useCallback(() => {
     setStored((s) => ({ ...s, place: null }));

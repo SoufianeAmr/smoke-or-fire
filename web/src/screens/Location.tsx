@@ -13,9 +13,9 @@ import { circleBox, textBox } from "../map/labels";
 import { Basemap, USER_XY, frameProjection } from "../map/basemap";
 import type { StringKey } from "../i18n";
 
-export function PlaceSearch({ id, places, query, setQuery, choose }: { id: string; places: Place[]; query: string; setQuery: (q: string) => void; choose: (p: Place) => void }) {
+export function PlaceSearch({ id, places, query, setQuery, choose, href = "/loading" }: { id: string; places: Place[]; query: string; setQuery: (q: string) => void; choose: (p: Place) => void; href?: string }) {
   const t = useT();
-  // Replay searches only the 12 replay towns; live mode searches every Maritimes community.
+  // Replay searches only the replay towns; live mode searches every Maritimes community.
   const results = searchPlaces(places, query);
   return (
     <>
@@ -29,7 +29,7 @@ export function PlaceSearch({ id, places, query, setQuery, choose }: { id: strin
       {results.length > 0 && (
         <div role="listbox" aria-label={t("location.results")} style={{ background: "#FFFFFF", borderRadius: "18px", boxShadow: "0 1px 2px rgba(26, 29, 33, 0.06), 0 8px 24px rgba(26, 29, 33, 0.07)", overflow: "hidden" }}>
           {results.map((place) => (
-            <a key={`${place.name}-${place.province}-${place.lat}`} role="option" aria-selected="false" href="/loading" onClick={(e) => { e.preventDefault(); choose(place); }} className="row" style={{ display: "flex", alignItems: "center", gap: "14px", minHeight: "68px", padding: "8px 16px", color: "#1A1D21", textDecoration: "none" }}>
+            <a key={`${place.name}-${place.province}-${place.lat}`} role="option" aria-selected="false" href={href} onClick={(e) => { e.preventDefault(); choose({ ...place, source: "search" }); }} className="row" style={{ display: "flex", alignItems: "center", gap: "14px", minHeight: "68px", padding: "8px 16px", color: "#1A1D21", textDecoration: "none" }}>
               <svg className="ic" width="26" height="26" viewBox="0 0 24 24" aria-hidden="true" style={{ color: "#1B2A4A" }}>
                 <path d="M12 22s7-6.2 7-12a7 7 0 0 0-14 0c0 5.8 7 12 7 12z" />
                 <circle cx="12" cy="10" r="2.5" />
@@ -47,8 +47,29 @@ export function PlaceSearch({ id, places, query, setQuery, choose }: { id: strin
   );
 }
 
+/**
+ * "Use my location": asks the phone where it is, remembers that for the text to family, and passes on the place
+ * to check: in replay the nearest replay town, in live mode the spot itself, named after the nearest town.
+ */
+export function useLocate(onPlace: (place: Place) => void, onOff: () => void) {
+  const { mode, setShared } = useApp();
+  return (event: React.MouseEvent) => {
+    event.preventDefault();
+    if (!("geolocation" in navigator)) return onOff();
+    navigator.geolocation.getCurrentPosition(
+      ({ coords }) => {
+        setShared({ lat: coords.latitude, lon: coords.longitude });
+        if (mode === "replay") return onPlace({ ...nearestReplayTown(coords.latitude, coords.longitude), source: "gps" });
+        loadCommunities().then((list) => onPlace({ ...placeAt(list, coords.latitude, coords.longitude), source: "gps" }));
+      },
+      onOff,
+      { enableHighAccuracy: false, timeout: 15000, maximumAge: 600000 },
+    );
+  };
+}
+
 export function Location() {
-  const { mode, lang, place, setPlace, setShared } = useApp();
+  const { mode, lang, place, setPlace } = useApp();
   const t = useT();
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
@@ -59,19 +80,7 @@ export function Location() {
     navigate("/loading");
   };
 
-  const useMyLocation = (event: React.MouseEvent) => {
-    event.preventDefault();
-    if (!("geolocation" in navigator)) return navigate("/location-off");
-    navigator.geolocation.getCurrentPosition(
-      ({ coords }) => {
-        setShared({ lat: coords.latitude, lon: coords.longitude }); // for "My location" in the text to family
-        if (mode === "replay") return choose(nearestReplayTown(coords.latitude, coords.longitude));
-        loadCommunities().then((list) => choose(placeAt(list, coords.latitude, coords.longitude)));
-      },
-      () => navigate("/location-off"),
-      { enableHighAccuracy: false, timeout: 15000, maximumAge: 600000 },
-    );
-  };
+  const useMyLocation = useLocate(choose, () => navigate("/location-off"));
 
   const pin = searchPlaces(places, query)[0] ?? place ?? REPLAY_TOWNS[0];
   const projection = frameProjection(pin, 358, 140);

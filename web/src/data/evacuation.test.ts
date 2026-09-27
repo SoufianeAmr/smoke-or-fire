@@ -3,7 +3,7 @@ import halifax from "../../../data/demo/halifax.json";
 import moncton from "../../../data/demo/moncton.json";
 import fireNames from "../../../data/places/fire-names.json";
 import data from "./evacuation-events.json";
-import { EVENTS, REPLAY_DATE, activeEvent, clockTime, directionsUrl, eventFor, mapLink, monthName, smsUrl, telUrl, todayAtlantic } from "./evacuation";
+import { EVENTS, REPLAY_DATE, activeEvent, clockTime, directionsUrl, eventFor, isNear, kmBetween, mapLink, monthName, smsUrl, telUrl, todayAtlantic } from "./evacuation";
 
 const SOURCE_2204 = "https://annapoliscounty.ca/government/news-media-releases/2204-west-dalhousie-wildfires-evacuees-registration";
 
@@ -67,14 +67,30 @@ describe("which event shows", () => {
     expect(eventFor("live", new Date("2025-08-25T15:00:00Z"))?.id).toBe("long-lake-2025");
     expect(todayAtlantic(new Date("2025-09-04T02:30:00Z"))).toBe("2025-09-03"); // 11:30 p.m. ADT
   });
+
+  test("the centres apply within the event's radius of the fire (40 km, in the data), not farther", () => {
+    expect(data.events[0].radiusKm).toBe(40);
+    const towns = { "West Dalhousie": [44.71904, -65.22563], Bridgetown: [44.84158, -65.29121], Halifax: [44.6474, -63.59065], Moncton: [46.09948, -64.7998] }; // CGNDB
+    const at = ([lat, lon]: number[]) => ({ lat, lon });
+    expect(Object.values(towns).map((p) => Math.round(kmBetween(at(p), EVENTS[0].fire)))).toEqual([3, 17, 128, 159]);
+    expect(Object.values(towns).map((p) => isNear(EVENTS[0], at(p)))).toEqual([true, true, false, false]);
+    expect(isNear(EVENTS[0], EVENTS[0].centres[0])).toBe(true); // the reception centre itself, 29 km away
+  });
 });
 
 describe("links", () => {
   test("Get directions hands the encoded address to Google Maps, which plans the route", () => {
-    expect(EVENTS[0].centres.map(directionsUrl)).toEqual([
+    expect(EVENTS[0].centres.map((c) => directionsUrl(c))).toEqual([
       "https://www.google.com/maps/dir/?api=1&destination=295%20Commercial%20St.%2C%20Middleton%2C%20NS",
       "https://www.google.com/maps/dir/?api=1&destination=31%20Bay%20Rd.%2C%20Bridgetown%2C%20NS",
     ]);
+  });
+
+  test("in replay the route starts at the chosen town", () => {
+    const bridgetown = { lat: 44.84158, lon: -65.29121 };
+    expect(directionsUrl(EVENTS[0].centres[0], bridgetown)).toBe(
+      "https://www.google.com/maps/dir/?api=1&destination=295%20Commercial%20St.%2C%20Middleton%2C%20NS&origin=44.84158,-65.29121",
+    );
   });
 
   test("phone numbers dial as digits", () => {
@@ -100,7 +116,7 @@ describe("wording", () => {
 
   test("nothing the screen shows from the data says safe", () => {
     // Shown: the fire's name, the centres' names, addresses and towns, the authority, the phone numbers.
-    const shown = EVENTS.flatMap((e) => [e.fire.name, ...Object.values(e.authority), e.phones.information.number, e.phones.overnight, ...e.centres.flatMap((c) => [c.name, c.address, c.town])]);
+    const shown = EVENTS.flatMap((e) => [e.fire.name, ...Object.values(e.authority), ...Object.values(e.area), e.phones.information.number, e.phones.overnight, ...e.centres.flatMap((c) => [c.name, c.address, c.town])]);
     expect(shown.filter((s) => /safe|sécuri/i.test(s))).toEqual([]);
   });
 });

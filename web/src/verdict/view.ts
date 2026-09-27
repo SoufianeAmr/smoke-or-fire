@@ -38,7 +38,12 @@ export interface VerdictView {
     | { kind: "noReading"; title: string; general: string; linkText: string; linkHost: string; linkUrl: string; nurse: string };
   aqhi: { title: string; station: string; display: string; risk: string; scale: string; scaleLow: string; scaleHigh: string; segments: number; category: AqhiCategory | null; needle: string | null; areaWide: AreaWide | null; source: string };
   why: { title: string; items: { title: string; body: string; detail?: string | null }[]; howLink: string };
+  /** When the featured fire is under 25 km from you: a notice under the band, linking to "If you’re told to leave". */
+  notice: { text: string; link: string } | null;
 }
+
+/** A featured fire this close to you gets the notice. */
+const NEAR_FIRE_KM = 25;
 
 const AREA_KEYS = ["NB", "NS", "PE", "QC", "ME", "BAY_OF_FUNDY", "GULF_OF_ST_LAWRENCE", "GULF_OF_MAINE"] as const;
 
@@ -68,9 +73,15 @@ function whenWord(lang: Lang, shiftIso: string, checkIso: string): string {
   return t(`when.${yesterday ? "yesterday" : "today"}.${part}` as StringKey);
 }
 
-export function verdictView(json: VerdictJson, lang: Lang): VerdictView {
+/**
+ * Everything the verdict screen says. `townName` is the town the person picked (from the search, or a replay town);
+ * without one (a live GPS location) the engine's name for the spot, its nearest city, town or village, is used.
+ */
+export function verdictView(json: VerdictJson, lang: Lang, townName?: string): VerdictView {
   const t = (key: StringKey, vars?: Vars) => translate(lang, key, vars);
-  const town = json.location.name ?? "";
+  const town = townName ?? json.location.name ?? "";
+  // Distances are whole km: 0 reads "less than 1" ("It passed less than 1 km from…", "à moins de 1 km…").
+  const km1 = (km: number) => (km < 1 ? t("unit.lessThanOne") : km);
   const approach = json.closestApproach;
   const variant: Variant =
     json.verdict === "drifting" ? "7a" : json.verdict === "unclear" ? "7c" : json.noFiresInRange ? "7d" : "7b";
@@ -107,7 +118,10 @@ export function verdictView(json: VerdictJson, lang: Lang): VerdictView {
       ? {
           label: t("verdict.label.drifting"),
           headline: t("verdict.headline.drifting", { fire: fireThe(fire!) }),
-          sub: t("verdict.sub.drifting", { from: area(fire!.province, "from") ?? "", km: fire!.km, direction: compassWord(fire!.compass, "at") }),
+          sub:
+            fire!.km < 1 // no compass direction under 1 km
+              ? t("verdict.sub.drifting.under", { from: area(fire!.province, "from") ?? "" })
+              : t("verdict.sub.drifting", { from: area(fire!.province, "from") ?? "", km: fire!.km, direction: compassWord(fire!.compass, "at") }),
         }
       : variant === "7c"
         ? {
@@ -125,12 +139,14 @@ export function verdictView(json: VerdictJson, lang: Lang): VerdictView {
   const confidenceText = !json.heights.agree
     ? t("confidence.text.heights")
     : variant === "7a"
-      ? t("confidence.text.drifting", { km: approach!.km })
+      ? t(approach!.km < 1 ? "confidence.text.drifting.under" : "confidence.text.drifting", { km: approach!.km })
       : !json.wind.steady
         ? t("confidence.text.unsteady", { when })
         : variant === "7c"
-          ? t("confidence.text.unclearSteady", { km: approach!.km })
+          ? t("confidence.text.unclearSteady", { km: km1(approach!.km) })
           : t("confidence.text.unexplained");
+
+  const kmUnit = (km: number) => (km < 1 ? t("unit.km.under") : t("unit.km", { km }));
 
   // Fire row. On 7d, a line says when both fire sources were checked (live data only).
   const dataChecked = () => {
@@ -143,13 +159,13 @@ export function verdictView(json: VerdictJson, lang: Lang): VerdictView {
     variant === "7d"
       ? { kind: "none", label: t("fire.none.label"), title: t("fire.none.title", { km: json.rules.fireRadiusKm }), checked: dataChecked() }
       : variant === "7b"
-        ? { kind: "nearest", label: t("fire.nearest.label"), title: t("fire.nearest.title", { fire: fireTitle(fire!), province: area(fire!.province, "short") ?? "" }), km: t("unit.km", { km: fire!.km }), side: t("fire.offPath") }
+        ? { kind: "nearest", label: t("fire.nearest.label"), title: t("fire.nearest.title", { fire: fireTitle(fire!), province: area(fire!.province, "short") ?? "" }), km: kmUnit(fire!.km), side: t("fire.offPath") }
         : {
             kind: "fire",
             title: fireTitle(fire!),
             subtitle: t("fire.locality", { place: fire!.locality ?? fire!.nearCommunity ?? "", province: area(fire!.province, "short") ?? "" }),
-            km: t("unit.km", { km: fire!.km }),
-            side: compassWord(fire!.compass, "abbr"),
+            km: kmUnit(fire!.km),
+            side: fire!.km < 1 ? "" : compassWord(fire!.compass, "abbr"), // no compass direction under 1 km
           };
 
   // Map
@@ -157,12 +173,14 @@ export function verdictView(json: VerdictJson, lang: Lang): VerdictView {
   // French elides "vers le" before a vowel: "vers le nord", "vers l’est".
   const toward = (text: string) => (lang === "fr" && /^[eo]/.test(travel) ? text.replace(`le ${travel}`, `l’${travel}`) : text);
   // "about 1 hour", "less than an hour": never "1 hours" or "0 hours".
-  const perHours = (key: "map.aria.drifting" | "map.aria.unclear", h: number) => (h <= 0 ? `${key}.under` : h === 1 ? `${key}.one` : key) as StringKey;
+  const perHours = (key: "map.aria.drifting" | "map.aria.drifting.near" | "map.aria.unclear", h: number) => (h <= 0 ? `${key}.under` : h === 1 ? `${key}.one` : key) as StringKey;
   const mapAria =
     variant === "7a"
-      ? toward(t(perHours("map.aria.drifting", approach!.hoursAgo), { h: approach!.hoursAgo, fire: firePlain(fire!), province: area(fire!.province, "name") ?? "", direction: travel, town }))
+      ? fire!.km < 1 // no compass direction under 1 km
+        ? t(perHours("map.aria.drifting.near", approach!.hoursAgo), { h: approach!.hoursAgo, fire: firePlain(fire!), province: area(fire!.province, "name") ?? "", town })
+        : toward(t(perHours("map.aria.drifting", approach!.hoursAgo), { h: approach!.hoursAgo, fire: firePlain(fire!), province: area(fire!.province, "name") ?? "", direction: travel, town }))
       : variant === "7c"
-        ? t(perHours("map.aria.unclear", approach!.hoursAgo), { km: approach!.km, fire: fireThe(fire!), h: approach!.hoursAgo, town })
+        ? t(perHours("map.aria.unclear", approach!.hoursAgo), { km: km1(approach!.km), fire: fireThe(fire!), h: approach!.hoursAgo, town })
         : variant === "7b"
           ? t("map.aria.unexplained", { town, km: json.rules.searchKm, fire: firePlain(fire!) })
           : t("map.aria.noFires", { town, km: json.rules.fireRadiusKm });
@@ -171,7 +189,7 @@ export function verdictView(json: VerdictJson, lang: Lang): VerdictView {
     you: t("map.you"),
     fireLabel: fire ? fireTitle(fire) : null,
     approachLabel: variant === "7a" && approach ? hours(approach.hoursAgo, "map.hoursAgo.one", "map.hoursAgo", "map.hoursAgo.under") : null,
-    approachKm: variant === "7c" && approach ? t("unit.km", { km: approach.km }) : null,
+    approachKm: variant === "7c" && approach ? kmUnit(approach.km) : null,
     badge: newest ? t(newest.latencyClass === "URT" ? "badge.seenBy.urt" : "badge.seenBy", { satellite: unbroken(newest.satellite!), time: ago(newest) }) : null,
     edgeLabel: (h, code) => {
       const ago = hours(h, "map.hoursAgo.one", "map.hoursAgo", "map.hoursAgo.under");
@@ -199,7 +217,7 @@ export function verdictView(json: VerdictJson, lang: Lang): VerdictView {
           title: t("two.title"),
           driftingChip: t("two.drifting.chip"),
           driftingLead: lead(t("two.drifting.lead", { fire: fireThe(fire!), province: area(fire!.province, "short") ?? "" })),
-          driftingText: t(approach!.hoursAgo <= 0 ? "two.drifting.text.under" : approach!.hoursAgo === 1 ? "two.drifting.text.one" : "two.drifting.text", { km: approach!.km, h: approach!.hoursAgo }),
+          driftingText: t(approach!.hoursAgo <= 0 ? "two.drifting.text.under" : approach!.hoursAgo === 1 ? "two.drifting.text.one" : "two.drifting.text", { km: km1(approach!.km), h: approach!.hoursAgo }),
           unexplainedChip: t("two.unexplained.chip"),
           unexplainedLead: t("two.unexplained.lead"),
           unexplainedText: t("two.unexplained.text"),
@@ -275,14 +293,14 @@ export function verdictView(json: VerdictJson, lang: Lang): VerdictView {
     const list = new Intl.ListFormat(lang, { style: "long", type: "conjunction" }).format(satellites.map(unbroken));
     return t(satellites.length === 1 ? "why.satellites.one" : "why.satellites", { n: satellites.length, list });
   };
-  const passed = { title: t("why.passed", { km: approach?.km ?? 0 }), body: "", detail: variant === "7a" || variant === "7c" ? satellitesLine(fire!) : null };
+  const passed = { title: t("why.passed", { km: km1(approach?.km ?? 0) }), body: "", detail: variant === "7a" || variant === "7c" ? satellitesLine(fire!) : null };
   const second =
     variant === "7a"
       ? { ...passed, body: overFire() }
       : variant === "7c"
         ? { ...passed, body: approach!.km <= json.rules.driftingKm ? overFire() : t("why.closeButFar", { km: json.rules.driftingKm }) }
         : variant === "7b"
-          ? { title: t("why.noneNear"), body: t("why.noneNear.body", { km: json.rules.searchKm, nearest: fire!.name ?? firePlain(fire!), distance: fire!.km }) }
+          ? { title: t("why.noneNear"), body: t("why.noneNear.body", { km: json.rules.searchKm, nearest: fire!.name ?? firePlain(fire!), distance: km1(fire!.km) }) }
           : { title: t("why.noneInRegion"), body: t("why.noneInRegion.body", { km: json.rules.fireRadiusKm }) };
   // When the three heights disagree on 7a and 7c, the steady-wind item gives way to how close each
   // height came: 100 m is "near the ground", 925 and 850 hPa are "higher up" (pressure levels are never named on screen).
@@ -292,7 +310,7 @@ export function verdictView(json: VerdictJson, lang: Lang): VerdictView {
     (variant === "7a" || variant === "7c") && !json.heights.agree && heightsKm.every((k) => k !== null)
       ? {
           title: t("why.heights"),
-          body: t("why.heights.body", { km100: heightsKm[0]!, km925: heightsKm[1]!, km850: heightsKm[2]!, level: t(`why.level.${json.confidence}` as StringKey) }),
+          body: t("why.heights.body", { km100: km1(heightsKm[0]!), km925: km1(heightsKm[1]!), km850: km1(heightsKm[2]!), level: t(`why.level.${json.confidence}` as StringKey) }),
         }
       : null;
   const third =
@@ -305,7 +323,7 @@ export function verdictView(json: VerdictJson, lang: Lang): VerdictView {
   const forward = json.forward && fire
     ? {
         title: t(json.forward.agrees ? "why.forward.title.agrees" : "why.forward.title.elsewhere"),
-        body: t(json.forward.agrees ? "why.forward.passed" : "why.forward.stayed", { fire: firePlain(fire), km: json.forward.closestKm }),
+        body: t(json.forward.agrees ? "why.forward.passed" : "why.forward.stayed", { fire: firePlain(fire), km: km1(json.forward.closestKm) }),
       }
     : null;
 
@@ -320,6 +338,7 @@ export function verdictView(json: VerdictJson, lang: Lang): VerdictView {
     todo,
     aqhi,
     why: { title: t("why.title"), items: forward ? [traced, second, forward, third] : [traced, second, third], howLink: t("why.howLink") },
+    notice: fire && fire.km < NEAR_FIRE_KM ? { text: t("verdict.notice"), link: t("leave.entry") } : null,
   };
 }
 
