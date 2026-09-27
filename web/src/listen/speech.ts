@@ -43,7 +43,7 @@ export function script(lang: Lang, key: StringKey, vars: Vars = {}): string[] {
 /** "159 kilometres", "one kilometre", "less than one kilometre". */
 export const spokenKm = (km: number, lang: Lang) => (km < 1 ? translate(lang, "voice.km.under") : km === 1 ? translate(lang, "voice.km.one") : translate(lang, "voice.km", { km }));
 
-/** After a colon, or inside a list, a word starts in lower case ("Medication" → "medication"); "I" and "ID" stay. */
+/** Inside a sentence, a label starts in lower case ("Very high risk" → "very high risk"); "I" and "ID" stay. */
 export const lowerFirst = (text: string, lang: Lang) => (/^\p{Lu}\p{Ll}/u.test(text) ? text.charAt(0).toLocaleLowerCase(lang) + text.slice(1) : text);
 
 /** `install`: the Add to home screen link is shown (not when the app is open from the home screen). */
@@ -55,7 +55,7 @@ export const checkVoice = (lang: Lang, replay: boolean, install: boolean) => [
 export const q1Voice = (lang: Lang) => script(lang, "voice.q1");
 export const locationVoice = (lang: Lang) => script(lang, "voice.location");
 export const loadingVoice = (lang: Lang) => script(lang, "voice.loading");
-export const emergencyVoice = (lang: Lang) => script(lang, "voice.emergency");
+export const emergencyVoice = (lang: Lang) => script(lang, "voice.emergency", { leave: translate(lang, "leave.entry") });
 export const howVoice = (lang: Lang) => script(lang, "voice.how");
 export const locationOffVoice = (lang: Lang) => script(lang, "voice.locationOff");
 export const noDataVoice = (lang: Lang) => script(lang, "voice.noData");
@@ -63,20 +63,16 @@ export const noDataVoice = (lang: Lang) => script(lang, "voice.noData");
 /** What the leave screen shows: no place yet; the centres near the event; the event far away; or no event (live). */
 export type LeaveState =
   | { kind: "where" }
-  | { kind: "near"; name: string; address: string; take: string[] }
+  | { kind: "near"; name: string; address: string }
   | { kind: "far"; fire: string; km: number; town: string; ofTown: string; links: boolean; call211: boolean }
   | { kind: "none"; links: boolean; call211: boolean };
 
 export function leaveVoice(lang: Lang, state: LeaveState): string[] {
   if (state.kind === "where") return script(lang, "voice.leave.where");
-  const call211 = state.kind !== "near" && state.call211 ? script(lang, "voice.leave.211") : [];
-  if (state.kind === "near") {
-    const list = new Intl.ListFormat(lang, { style: "long", type: "conjunction" }).format(state.take.map((item) => lowerFirst(item, lang)));
-    return [...script(lang, "voice.leave.intro"), ...script(lang, "voice.leave.near", { name: state.name, address: state.address, list })];
-  }
+  if (state.kind === "near") return script(lang, "voice.leave.near", { name: state.name, address: state.address });
   if (state.kind === "far") {
     const far = script(lang, "voice.leave.far", { fire: translate(lang, "fire.the.named", { name: state.fire }), distance: spokenKm(state.km, lang), town: state.town, ofTown: state.ofTown });
-    return [...far, ...(state.links ? script(lang, "voice.leave.far.links") : []), ...call211];
+    return [...far, ...(state.links ? script(lang, "voice.leave.far.links") : []), ...(state.call211 ? script(lang, "voice.leave.far.211") : [])];
   }
-  return [...script(lang, "voice.leave.intro"), ...(state.links ? script(lang, "voice.leave.none.links") : []), ...call211];
+  return [...script(lang, "voice.leave.intro"), ...(state.links ? script(lang, "voice.leave.none.links") : []), ...(state.call211 ? script(lang, "voice.leave.211") : [])];
 }

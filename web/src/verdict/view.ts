@@ -1,6 +1,6 @@
 // Everything the verdict screens (7a–7d) say, from the engine's answer. Pure: no React, no DOM.
 import { translate, type Lang, type StringKey, type Vars } from "../i18n";
-import { script, spokenKm } from "../listen/speech";
+import { lowerFirst, script, spokenKm } from "../listen/speech";
 import type { AqhiCategory, Confidence, Fire, LastSeen, VerdictJson } from "./types";
 
 const NBSP = String.fromCharCode(0xa0); // no-break space: keeps a fire's name on one line in French
@@ -43,7 +43,7 @@ export interface VerdictView {
   why: { title: string; items: { title: string; body: string; detail?: string | null }[]; howLink: string };
   /** When the featured fire is under 25 km from you: a notice under the band, linking to "If you’re told to leave". */
   notice: { text: string; link: string } | null;
-  /** What Listen says, one sentence per item: the answer, then what to do and which button does it. */
+  /** What Listen says, one sentence per item: the answer, how sure, then what to do and which button does it. */
   voice: string[];
 }
 
@@ -354,25 +354,35 @@ export function verdictView(json: VerdictJson, lang: Lang, townName?: string): V
       }
     : null;
 
-  // Listen: the answer in plain words (the fire as on screen, "du feu de…" in French), then each step and its button.
+  // Listen: the answer in plain words (the fire as on screen, "du feu de…" in French), how sure, then each step and
+  // its button, named as on screen.
   const notice = fire && fire.km < NEAR_FIRE_KM ? { text: t("verdict.notice"), link: t("leave.entry") } : null;
   const say = (key: StringKey, vars?: Vars) => script(lang, key, vars);
   const answer =
     variant === "7a"
-      ? fire!.km < 1
-        ? say("voice.verdict.drifting.under", { fire: fireThe(fire!), level: t(`why.level.${json.confidence}` as StringKey), confidence: confidenceText })
-        : say("voice.verdict.drifting", { fire: fireThe(fire!), distance: spokenKm(fire!.km, lang), direction: compassWord(fire!.compass, "at"), level: t(`why.level.${json.confidence}` as StringKey), confidence: confidenceText })
+      ? [
+          ...(fire!.km < 1
+            ? say("voice.verdict.drifting.under", { fire: fireThe(fire!) })
+            : say("voice.verdict.drifting", { fire: fireThe(fire!), distance: spokenKm(fire!.km, lang), direction: compassWord(fire!.compass, "at") })),
+          // "From far away" only when it is: a fire under 25 km away gets the notice instead.
+          ...(notice ? [] : say("voice.verdict.drifting.far")),
+        ]
       : variant === "7c"
         ? say(approach!.km <= json.rules.driftingKm ? "voice.verdict.unclear.wind" : "voice.verdict.unclear", { fire: fireThe(fire!), distance: spokenKm(approach!.km, lang) })
         : say("voice.verdict.unexplained");
+  // Confidence is low for two reasons only (engine/smoke_engine/verdict.py): the heights disagree, or the wind shifted.
+  const sure =
+    json.confidence === "low"
+      ? say("voice.verdict.confidence.low", { reason: json.heights.agree ? t("voice.verdict.reason.unsteady", { when }) : t("voice.verdict.reason.heights") })
+      : say(`voice.verdict.confidence.${json.confidence}` as StringKey);
   const voice = [
     ...answer,
+    ...sure,
     ...(notice ? say("voice.verdict.notice", { link: notice.link }) : []),
-    ...say("voice.verdict.todo", { advice: todo.general }),
+    ...(aq ? say("voice.verdict.aq", { risk: lowerFirst(aqhi.risk, lang), advice: todo.general }) : say("voice.verdict.aq.none", { link: t("todo.officialLink") })),
     ...(smokeBreak ? say("voice.verdict.break") : []),
     ...say("voice.verdict.nurse"),
     ...say("voice.verdict.call"),
-    ...say("voice.verdict.why"),
   ];
 
   return {

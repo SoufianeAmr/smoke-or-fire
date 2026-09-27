@@ -113,20 +113,26 @@ async function named(locator: Locator, label: string, background?: string) {
   if (background) expect(await locator.first().evaluate((el) => getComputedStyle(el).backgroundColor)).toBe(background);
 }
 
+/** A label inside a sentence: "Very high risk" → "very high risk". */
+const lowerFirst = (lang: Lang, label: string) => (/^\p{Lu}\p{Ll}/u.test(label) ? label.charAt(0).toLocaleLowerCase(lang) + label.slice(1) : label);
+const sameText = (a: string, b: string) => a.replace(/\s/g, " ") === b.replace(/\s/g, " ");
+
 /** What a verdict screen shows, as the voice says it. */
 async function verdictScript(page: Page, lang: Lang) {
   const s = STRINGS[lang];
   const label = await text(page, "section[aria-labelledby=verdict-h] > div:nth-child(2) > p");
   const headline = await text(page, "#verdict-h");
   const sub = await text(page, "#verdict-h + p");
-  const chip = await text(page, "#conf-h");
-  const level = (lang === "en" ? chip.replace(/ confidence$/i, "") : chip.replace(/^Confiance /, "")).toLowerCase();
-  const confidence = await text(page, "section[aria-labelledby=conf-h] p");
+  const noticeLink = page.locator("main > section").first().getByRole("link", { name: s["leave.entry"].replace(/\s/g, " ") });
+  const notice = (await noticeLink.count()) > 0 ? script(lang, "voice.verdict.notice", { link: ((await noticeLink.textContent()) ?? "").trim() }) : [];
   let answer: string[];
   if (label === s["verdict.label.drifting"]) {
     const fire = headline.replace(lang === "en" ? /^Likely from / : /^Elle vient probablement /, "");
-    const [, km, direction] = sub.match(lang === "en" ? /about (\d+)\s+km\s+(.+) of you\.$/ : /à environ (\d+)\s+km\s+(.+) de chez vous\.$/)!;
-    answer = script(lang, "voice.verdict.drifting", { fire, distance: spokenKm(lang, Number(km)), direction, level, confidence });
+    const far = sub.match(lang === "en" ? /about (\d+)\s+km\s+(.+) of you\.$/ : /à environ (\d+)\s+km\s+(.+) de chez vous\.$/);
+    answer = [
+      ...(far ? script(lang, "voice.verdict.drifting", { fire, distance: spokenKm(lang, Number(far[1])), direction: far[2] }) : script(lang, "voice.verdict.drifting.under", { fire })),
+      ...(notice.length > 0 ? [] : script(lang, "voice.verdict.drifting.far")), // "from far away" only without the fire-close notice
+    ];
   } else if (label === s["verdict.label.unclear"]) {
     const [, fire] = sub.match(lang === "en" ? /^The air passed (?:near|close to) (.+), but/ : /^L’air est passé près (.+), mais/)!;
     const passed = await text(page, "section[aria-labelledby=poss-h]");
@@ -135,17 +141,33 @@ async function verdictScript(page: Page, lang: Lang) {
   } else {
     answer = script(lang, "voice.verdict.unexplained");
   }
-  const noticeLink = page.locator("main > section").first().getByRole("link", { name: s["leave.entry"].replace(/\s/g, " ") });
-  const notice = (await noticeLink.count()) > 0 ? script(lang, "voice.verdict.notice", { link: ((await noticeLink.textContent()) ?? "").trim() }) : [];
+  // How sure, as the confidence card says: when low, its reason (the heights disagree, or the wind shifted).
+  const chip = await text(page, "#conf-h");
+  const level = (["high", "medium", "low"] as const).find((l) => sameText(chip, s[`confidence.${l}`]))!;
+  const card = await text(page, "section[aria-labelledby=conf-h] p");
+  const reason = () =>
+    sameText(card, s["confidence.text.heights"])
+      ? s["voice.verdict.reason.heights"]
+      : s["voice.verdict.reason.unsteady"].replace("{when}", card.match(lang === "en" ? /^Winds shifted (.+), so/ : /^Les vents ont changé (.+), donc/)![1]);
+  const sure = script(lang, `voice.verdict.confidence.${level}`, level === "low" ? { reason: reason() } : {});
+  // Air quality: the risk level and the first line of What to do; with no reading, the official link instead.
+  const official = page.locator("section[aria-labelledby=todo-h]").getByRole("link", { name: s["todo.officialLink"] });
+  const air =
+    (await official.count()) > 0
+      ? script(lang, "voice.verdict.aq.none", { link: s["todo.officialLink"] })
+      : script(lang, "voice.verdict.aq", {
+          risk: lowerFirst(lang, await text(page, "section[aria-labelledby=aqhi-h] > div:nth-child(2) > span:nth-child(2) > span:first-child")),
+          advice: await text(page, "section[aria-labelledby=todo-h] h2 + p"),
+        });
   const library = page.getByRole("link", { name: s["todo.break.library"] });
   return [
     ...answer,
+    ...sure,
     ...notice,
-    ...script(lang, "voice.verdict.todo", { advice: await text(page, "section[aria-labelledby=todo-h] h2 + p") }),
+    ...air,
     ...((await library.count()) > 0 ? script(lang, "voice.verdict.break") : []),
     ...script(lang, "voice.verdict.nurse"),
     ...script(lang, "voice.verdict.call"),
-    ...script(lang, "voice.verdict.why"),
   ];
 }
 /** Every button the verdict's script names. */
@@ -155,17 +177,19 @@ async function verdictButtons(page: Page, lang: Lang) {
   if ((await notice.count()) > 0) await named(notice, s["leave.entry"]);
   const library = page.getByRole("link", { name: s["todo.break.library"] });
   if ((await library.count()) > 0) await named(library, s["todo.break.library"]);
+  const official = page.locator("section[aria-labelledby=todo-h]").getByRole("link", { name: s["todo.officialLink"] });
+  if ((await official.count()) > 0) await named(official, s["todo.officialLink"]);
   await named(page.locator('a[href="tel:811"]'), "811");
-  await named(page.locator('a.press[href="tel:911"]'), s["sticky.call"], RED); // "the red Call 911 button at the bottom of the screen"
-  await named(page.getByRole("button", { name: s["why.title"] }), s["why.title"]);
+  await named(page.locator('a.press[href="tel:911"]'), s["sticky.call"], RED); // "the red button at the bottom to call nine-one-one"
 }
 
-/** The on-screen labels of the buttons a verdict's script names (the notice and Health Canada only when shown). */
+/** The on-screen labels of the buttons a verdict's script names (the notice, Health Canada and the official link only when shown). */
 async function verdictLabels(page: Page, lang: Lang) {
   const s = STRINGS[lang];
   const notice = await page.locator("main > section").first().getByRole("link", { name: s["leave.entry"].replace(/\s/g, " ") }).count();
   const library = await page.getByRole("link", { name: s["todo.break.library"] }).count();
-  return [...(notice ? [s["leave.entry"]] : []), ...(library ? [s["todo.break.library"]] : []), s["sticky.call"], s["why.title"]];
+  const official = await page.locator("section[aria-labelledby=todo-h]").getByRole("link", { name: s["todo.officialLink"] }).count();
+  return [...(notice ? [s["leave.entry"]] : []), ...(library ? [s["todo.break.library"]] : []), ...(official ? [s["todo.officialLink"]] : []), s["sticky.call"]];
 }
 
 /**
@@ -192,7 +216,7 @@ const SCREENS: Screen[] = [
       ...script(lang, "voice.check.install", { add: await text(page, "main > div:last-child button") }),
     ],
     buttons: async (page, lang) => {
-      await named(page.locator('main a[href="/q1"]'), STRINGS[lang]["check.cta"], NAVY); // "the big dark blue button"
+      await named(page.locator('main a[href="/q1"]'), STRINGS[lang]["check.cta"], NAVY); // "the big blue button"
       await named(page.getByRole("button", { name: STRINGS[lang]["keep.add"], exact: true }), STRINGS[lang]["keep.add"]);
       await expect(page.locator('main a[href="/leave"]')).toHaveCount(0); // no Told to leave button, so the script names none
     },
@@ -206,9 +230,9 @@ const SCREENS: Screen[] = [
       // The two answers, top to bottom as the voice gives them.
       const answers = page.locator("main a.q1-answer");
       await expect(answers).toHaveCount(2);
-      await named(answers.nth(0), STRINGS[lang]["q1.yes"], RED); // "the red button at the top: Yes"
+      await named(answers.nth(0), STRINGS[lang]["q1.yes"], RED); // "the red Yes button"
       await expect(answers.nth(0)).toHaveAttribute("href", "/emergency");
-      await named(answers.nth(1), STRINGS[lang]["q1.no"], WHITE); // "the white button below it: No"
+      await named(answers.nth(1), STRINGS[lang]["q1.no"], WHITE); // "tap No"
       await expect(answers.nth(1)).toHaveAttribute("href", "/location");
     },
     labels: keys("q1.yes", "q1.no"),
@@ -218,8 +242,8 @@ const SCREENS: Screen[] = [
     open: (page) => page.goto("/location").then(),
     script: async (_, lang) => script(lang, "voice.location"),
     buttons: async (page, lang) => {
-      await named(page.locator('main a[href="/loading"]'), STRINGS[lang]["location.useMine"], NAVY); // "the dark blue button"
-      await expect(page.locator("main input[type=search]")).toBeVisible(); // "the box below"
+      await named(page.locator('main a[href="/loading"]'), STRINGS[lang]["location.useMine"], NAVY); // "the blue button"
+      await expect(page.locator("main input[type=search]")).toBeVisible(); // "the box"
     },
     labels: keys("location.useMine"),
   },
@@ -241,9 +265,12 @@ const SCREENS: Screen[] = [
   {
     name: "Emergency",
     open: (page) => page.goto("/emergency").then(),
-    script: async (_, lang) => script(lang, "voice.emergency"),
-    buttons: async (page, lang) => named(page.locator('main a[href="tel:911"]'), STRINGS[lang]["emergency.call"], WHITE), // "the big white Call 911 button"
-    labels: keys("emergency.call"),
+    script: async (page, lang) => script(lang, "voice.emergency", { leave: await text(page, 'main a[href="/leave"]') }),
+    buttons: async (page, lang) => {
+      await named(page.locator('main a[href="tel:911"]'), STRINGS[lang]["emergency.call"], WHITE); // "the big white button at the bottom"
+      await named(page.locator('main a[href="/leave"]'), STRINGS[lang]["leave.entry"]);
+    },
+    labels: keys("leave.entry"),
   },
   {
     name: "Told to leave, no place yet",
@@ -260,9 +287,7 @@ const SCREENS: Screen[] = [
     open: (page) => leaveFor(page, "Bridgetown"),
     script: async (page, lang) => {
       const [name, address] = (await page.locator("section[aria-labelledby=reception-h] > p").first().innerText()).split("\n");
-      const items = await page.locator("section[aria-labelledby=take-h] li").allTextContents();
-      const list = await page.evaluate(([l, all]) => new Intl.ListFormat(l, { style: "long", type: "conjunction" }).format((all as string[]).map((i) => (/^\p{Lu}\p{Ll}/u.test(i) ? i.charAt(0).toLocaleLowerCase(l as string) + i.slice(1) : i))), [lang, items] as const);
-      return [...script(lang, "voice.leave.intro"), ...script(lang, "voice.leave.near", { name, address, list })];
+      return script(lang, "voice.leave.near", { name, address });
     },
     buttons: async (page, lang) => {
       await named(page.locator("section[aria-labelledby=reception-h]").getByRole("link", { name: STRINGS[lang]["leave.directions"] }), STRINGS[lang]["leave.directions"]);
@@ -282,7 +307,7 @@ const SCREENS: Screen[] = [
       return [
         ...script(lang, "voice.leave.far", { fire, distance: spokenKm(lang, Number(km)), town, ofTown: town }),
         ...(links > 0 ? script(lang, "voice.leave.far.links") : []),
-        ...(call211 > 0 ? script(lang, "voice.leave.211") : []),
+        ...(call211 > 0 ? script(lang, "voice.leave.far.211") : []),
       ];
     },
     buttons: async (page) => {
@@ -348,8 +373,8 @@ for (const lang of ["en", "fr"] as const) {
         const said = await spoken(page);
         expect(said.map((u) => u.text)).toEqual(expected);
 
-        // One sentence per utterance, the voice picked for the language, rate 0.95, pitch 1, full volume, ~300 ms between sentences.
-        expect(said.map(({ lang: l, rate, pitch, volume, voice }) => ({ l, rate, pitch, volume, voice }))).toEqual(said.map(() => ({ l: `${lang}-CA`, rate: 0.95, pitch: 1, volume: 1, voice: VOICE[lang] })));
+        // One sentence per utterance, the voice picked for the language, rate 0.92, pitch 1.05, full volume, ~300 ms between sentences.
+        expect(said.map(({ lang: l, rate, pitch, volume, voice }) => ({ l, rate, pitch, volume, voice }))).toEqual(said.map(() => ({ l: `${lang}-CA`, rate: 0.92, pitch: 1.05, volume: 1, voice: VOICE[lang] })));
         for (let i = 1; i < said.length; i++) expect(said[i].at - said[i - 1].end).toBeGreaterThanOrEqual(290);
         // Phone numbers spelled out; never "safe"; nothing against calling 911.
         expect(said.filter((u) => /\b(911|811|211)\b|safe|sécuri|(do not|don’t|never|no need to) call|ne (pas|jamais) appeler|n’appelez (pas|jamais)/i.test(u.text))).toEqual([]);
@@ -392,7 +417,7 @@ test.describe("Listen: Check opened from the home screen", () => {
     test(`${lang.toUpperCase()}: the script ends with the 911 line, without Add to home screen`, async ({ page }) => {
       await start(page, lang, "live");
       await expect(page.getByRole("button", { name: STRINGS[lang]["keep.add"], exact: true })).toHaveCount(0);
-      const expected = script(lang, "voice.check", { leave: STRINGS[lang]["leave.entry"] });
+      const expected = script(lang, "voice.check");
       await listenButton(page, lang).click();
       await expect.poll(async () => (await spoken(page)).length, { timeout: 10_000 }).toBeGreaterThanOrEqual(expected.length);
       await expect(listenButton(page, lang)).toBeVisible({ timeout: 5_000 }); // the reading has ended

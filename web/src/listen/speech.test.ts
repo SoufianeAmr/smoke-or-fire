@@ -17,19 +17,19 @@ const json = (data: unknown) => data as VerdictJson;
 const NBSP = String.fromCharCode(0xa0);
 const LANGS = ["en", "fr"] as const;
 const VOICE_KEYS = Object.keys(en).filter((key) => key.startsWith("voice.")) as StringKey[];
-const TAKE = {
-  en: ["Medication", "Wallet and ID", "Keys", "Phone and charger", "Glasses and hearing aids", "Pets"],
-  fr: ["Médicaments", "Portefeuille et pièces d’identité", "Clés", "Téléphone et chargeur", "Lunettes et appareils auditifs", "Animaux de compagnie"],
-};
+const NEAR = { kind: "near", name: "NSCC Annapolis Valley Campus", address: "295 Commercial St., Middleton" } as const;
 const noFires = { ...json(halifax), noFiresInRange: true, nearestFire: null, closestApproach: null } as VerdictJson;
+// Low confidence because the wind shifted overnight, the three heights agreeing.
+const unsteady = json({ ...miramichi, heights: { ...miramichi.heights, agree: true }, wind: { ...miramichi.wind, steady: false, biggestShift: null } });
+const VERDICTS = [moncton, bridgetown, westDalhousie, miramichi, charlottetown, halifax, noFires, unsteady, { ...moncton, aqhi: null }].map(json);
 
 /** Everything the app can say, in both languages, across screens and states. */
 const everything = LANGS.flatMap((lang) => [
   ...voice.checkVoice(lang, true, true), ...voice.checkVoice(lang, false, false), ...voice.q1Voice(lang), ...voice.locationVoice(lang),
   ...voice.loadingVoice(lang), ...voice.emergencyVoice(lang), ...voice.howVoice(lang), ...voice.locationOffVoice(lang), ...voice.noDataVoice(lang),
-  ...[moncton, bridgetown, westDalhousie, miramichi, charlottetown, halifax, noFires, { ...moncton, aqhi: null }].flatMap((d) => verdictView(json(d), lang).voice),
+  ...VERDICTS.flatMap((d) => verdictView(d, lang).voice),
   ...voice.leaveVoice(lang, { kind: "where" }),
-  ...voice.leaveVoice(lang, { kind: "near", name: "NSCC Annapolis Valley Campus", address: "295 Commercial St., Middleton", take: TAKE[lang] }),
+  ...voice.leaveVoice(lang, NEAR),
   ...voice.leaveVoice(lang, { kind: "far", fire: "Long Lake", km: 159, town: "Moncton", ofTown: "de Moncton", links: true, call211: true }),
   ...voice.leaveVoice(lang, { kind: "none", links: true, call211: true }),
 ]);
@@ -56,10 +56,9 @@ describe("the scripts", () => {
   });
 
   test("a value never splits a sentence: an address with “St.”, a label with a question mark", () => {
-    const near = voice.leaveVoice("en", { kind: "near", name: "NSCC Annapolis Valley Campus", address: "295 Commercial St., Middleton", take: TAKE.en });
-    expect(near).toContain("The reception centre is NSCC Annapolis Valley Campus, 295 Commercial St., Middleton.");
-    expect(voice.script("en", "voice.verdict.notice", { link: "Told to leave your home? What to do" }).at(-1)).toBe("If you were told to leave, tap: Told to leave your home? What to do.");
-    expect(voice.script("fr", "voice.verdict.notice", { link: `On vous demande de partir${NBSP}? Que faire` }).at(-1)).toBe(`Si on vous a demandé de partir, touchez${NBSP}: On vous demande de partir${NBSP}? Que faire.`);
+    expect(voice.leaveVoice("en", NEAR)).toContain("Here’s where to go: the reception centre is NSCC Annapolis Valley Campus, at 295 Commercial St., Middleton.");
+    expect(voice.emergencyVoice("en").at(-1)).toBe("If officials told you to leave, tap: Told to leave your home? What to do.");
+    expect(voice.emergencyVoice("fr").at(-1)).toBe(`Si les autorités vous ont demandé de partir, touchez${NBSP}: On vous demande de partir${NBSP}? Que faire.`);
   });
 });
 
@@ -72,15 +71,30 @@ describe("screens", () => {
     }
   });
 
-  test("Check: the replay line comes first, only in replay", () => {
-    expect(voice.checkVoice("en", true, true).slice(0, 3)).toEqual(["Right now, the app is showing a replay of August 25, 2025.", "Hello.", "This app tells you, in about a minute, if the smoke you smell comes from a known fire."]);
-    expect(voice.checkVoice("en", false, true)[0]).toBe("Hello.");
-    expect(voice.checkVoice("fr", true, true)[0]).toBe("En ce moment, l’application montre une reprise du 25 août 2025.");
+  test("Check: the app speaks as “I”; the replay line comes first, only in replay", () => {
+    expect(voice.checkVoice("en", true, true)).toEqual([
+      "Right now, I’m showing you a replay of August 25, 2025.",
+      "Hi.",
+      "I’m here to help you figure out where the smoke is coming from.",
+      "It only takes a minute.",
+      "If you smell smoke, tap the big blue button: I smell smoke.",
+      "And if you ever see flames, call nine-one-one right away.",
+      "To keep me on your phone, tap: Add to home screen.",
+    ]);
+    expect(voice.checkVoice("en", false, true)[0]).toBe("Hi.");
+    expect(voice.checkVoice("fr", true, false)).toEqual([
+      "En ce moment, je vous montre une reprise du 25 août 2025.",
+      "Bonjour.",
+      "Je suis là pour vous aider à savoir d’où vient la fumée.",
+      "Ça ne prend qu’une minute.",
+      `Si vous sentez de la fumée, touchez le grand bouton bleu${NBSP}: Je sens de la fumée.`,
+      "Et si vous voyez des flammes, appelez le neuf-un-un tout de suite.",
+    ]);
   });
 
   test("Check ends with Add to home screen, naming the link as on screen; not when the link is hidden", () => {
-    expect(voice.checkVoice("en", false, true).at(-1)).toBe("To keep this app on your phone, tap: Add to home screen.");
-    expect(voice.checkVoice("fr", true, true).at(-1)).toBe(`Pour garder cette application sur votre téléphone, touchez${NBSP}: Ajouter à l’écran d’accueil.`);
+    expect(voice.checkVoice("en", false, true).at(-1)).toBe("To keep me on your phone, tap: Add to home screen.");
+    expect(voice.checkVoice("fr", true, true).at(-1)).toBe(`Pour me garder sur votre téléphone, touchez${NBSP}: Ajouter à l’écran d’accueil.`);
     for (const lang of LANGS) {
       for (const replay of [true, false]) {
         const hidden = voice.checkVoice(lang, replay, false);
@@ -92,51 +106,134 @@ describe("screens", () => {
 
   test("Q1, the only question: one sentence per utterance, in English and French", () => {
     expect(voice.q1Voice("en")).toEqual([
-      "Look outside, toward the smell.",
+      "Let’s start.",
+      "Take a look outside, toward the smell.",
       "Do you see flames, or a column of smoke rising from one spot?",
-      "If you do, tap the red button at the top: Yes.",
-      "If you only see smoke or haze, tap the white button below it: No.",
+      "If you do, tap the red Yes button, and I’ll help you call nine-one-one.",
+      "If it’s just smoke or haze, tap No, and I’ll find out where it’s coming from.",
     ]);
     expect(voice.q1Voice("fr")).toEqual([
+      "On commence.",
       "Regardez dehors, du côté de l’odeur.",
       `Voyez-vous des flammes, ou une colonne de fumée qui monte d’un seul endroit${NBSP}?`,
-      `Si oui, touchez le bouton rouge en haut${NBSP}: Oui.`,
-      `Si vous voyez seulement de la fumée ou un voile, touchez le bouton blanc juste en dessous${NBSP}: Non.`,
+      "Si oui, touchez le bouton rouge Oui, et je vous aide à appeler le neuf-un-un.",
+      "Si c’est seulement de la fumée ou un voile, touchez Non, et je vais trouver d’où elle vient.",
     ]);
   });
 
-  test("Emergency starts with Call nine-one-one now, and ends with moving away while you talk", () => {
-    const [first, ...rest] = voice.emergencyVoice("en");
-    expect([first, rest[1], rest[rest.length - 1]]).toEqual(["Call nine-one-one now.", "Tap the big white Call nine-one-one button at the bottom.", "If the fire is close to you, move away while you talk."]);
-    expect(voice.emergencyVoice("fr")[0]).toBe("Appelez le neuf-un-un maintenant.");
+  test("Location and Loading", () => {
+    expect(voice.locationVoice("en")).toEqual([
+      "Now, where are you?",
+      "The easiest way is to tap the blue button, Use my location, and say yes when your phone asks.",
+      "Or type your town in the box, and tap it in the list.",
+    ]);
+    expect(voice.locationVoice("fr")).toEqual([
+      `Maintenant, où êtes-vous${NBSP}?`,
+      "Le plus simple, c’est de toucher le bouton bleu, Utiliser ma position, puis de dire oui quand votre téléphone le demande.",
+      "Ou tapez le nom de votre ville dans la case, et touchez-le dans la liste.",
+    ]);
+    expect(voice.loadingVoice("en")).toEqual(["Thanks.", "Give me a few seconds.", "I’m following the wind backward, hour by hour, to see where your air came from."]);
+    expect(voice.loadingVoice("fr")).toEqual(["Merci.", "Donnez-moi quelques secondes.", "Je suis le vent à rebours, heure par heure, pour voir d’où vient votre air."]);
+  });
+
+  test("Emergency: call nine-one-one now, the big white button, what to tell them, then told to leave, named as on screen", () => {
+    expect(voice.emergencyVoice("en")).toEqual([
+      "Okay.",
+      "Flames or a smoke column can mean a fire near you, so let’s call nine-one-one now.",
+      "Tap the big white button at the bottom.",
+      "When they answer, tell them where you are, what you see, which way it’s moving if you can tell, and if anyone needs help.",
+      "Stay on the line, and if the fire is close, move away while you talk.",
+      "You’re doing the right thing.",
+      "If officials told you to leave, tap: Told to leave your home? What to do.",
+    ]);
+    expect(voice.emergencyVoice("fr").slice(0, 3)).toEqual([
+      "D’accord.",
+      "Des flammes ou une colonne de fumée peuvent signaler un feu près de vous, alors appelons le neuf-un-un maintenant.",
+      "Touchez le grand bouton blanc, en bas.",
+    ]);
   });
 });
 
 describe("verdicts", () => {
-  test("drifting (Moncton replay): the fire, how far and which way, the confidence, then what to do and which button does it", () => {
+  test("drifting (Moncton replay): the fire, how far and which way, from far away, how sure, then what to do and which button does it", () => {
     expect(verdictView(json(moncton), "en").voice).toEqual([
-      "Here’s the answer.",
-      "The smoke you smell most likely comes from the Long Lake fire, about 159 kilometres south-southwest of you.",
-      "Our confidence is low.",
-      "We traced the air at three heights above the ground, and they don’t agree.",
-      "What to do: Reduce or reschedule strenuous activities outdoors, especially if you experience symptoms such as coughing and throat irritation.",
-      "If you can’t keep the air clean at home, tap: Find a library near me, to see places with filtered air.",
-      "If you feel unwell but it’s not an emergency, tap the eight-one-one line to talk to a nurse.",
-      "If you see flames or a smoke column, tap the red Call nine-one-one button at the bottom of the screen.",
-      "For the details, open: Why we think this.",
+      "Okay, here’s what I found.",
+      "The smoke you’re smelling is most likely drifting from the Long Lake fire, about 159 kilometres south-southwest of you.",
+      "So it’s most likely smoke carried by the wind from far away.",
+      "I’m not completely sure, because the air at different heights took different paths.",
+      "Air quality right now: very high risk.",
+      "Here’s the official advice: Reduce or reschedule strenuous activities outdoors, especially if you experience symptoms such as coughing and throat irritation.",
+      "If the air inside gets uncomfortable, a library or community centre with filtered air can help.",
+      "Tap: Find a library near me.",
+      "If you feel unwell but it’s not an emergency, you can call eight-one-one to talk to a nurse.",
+      "And if you ever see flames or a smoke column, tap the red button at the bottom to call nine-one-one.",
     ]);
   });
 
   test("and in French, with the French article: « vient probablement du feu de Long Lake »", () => {
-    const fr = verdictView(json(moncton), "fr").voice;
-    expect(fr.slice(0, 3)).toEqual(["Voici la réponse.", "La fumée que vous sentez vient probablement du feu de Long Lake, à environ 159 kilomètres au sud-sud-ouest de vous.", "Notre confiance est faible."]);
-    expect(fr[fr.length - 1]).toBe(`Pour les détails, ouvrez${NBSP}: Pourquoi nous le pensons.`);
+    expect(verdictView(json(moncton), "fr").voice).toEqual([
+      "Voici ce que j’ai trouvé.",
+      "La fumée que vous sentez vient probablement du feu de Long Lake, à environ 159 kilomètres au sud-sud-ouest de vous.",
+      "C’est donc très probablement de la fumée transportée par le vent, de loin.",
+      "Ce n’est pas tout à fait certain, parce que l’air a pris des chemins différents selon la hauteur.",
+      `Qualité de l’air en ce moment${NBSP}: risque très élevé.`,
+      `Voici le conseil officiel${NBSP}: Réduisez ou réorganisez les activités exténuantes en plein air, particulièrement si vous éprouvez des symptômes comme la toux et une irritation de la gorge.`,
+      "Si l’air devient inconfortable chez vous, une bibliothèque ou un centre communautaire à l’air filtré peut aider.",
+      `Touchez${NBSP}: Trouver une bibliothèque près de moi.`,
+      "Si vous vous sentez mal mais que ce n’est pas une urgence, vous pouvez appeler le huit-un-un pour parler à du personnel infirmier.",
+      "Et si vous voyez des flammes ou une colonne de fumée, touchez le bouton rouge en bas pour appeler le neuf-un-un.",
+    ]);
   });
 
-  test("near the fire (Bridgetown): the notice, naming its link as on screen", () => {
-    const view = verdictView(json(bridgetown), "en");
-    expect(view.voice.slice(4, 7)).toEqual(["The fire is close to you.", "Follow official instructions.", "If you were told to leave, tap: Told to leave your home? What to do."]);
+  test("near the fire (Bridgetown): never “from far away”; the notice after how sure, naming its link as on screen", () => {
+    expect(verdictView(json(bridgetown), "en").voice).toEqual([
+      "Okay, here’s what I found.",
+      "The smoke you’re smelling is most likely drifting from the Long Lake fire, about 17 kilometres south-southeast of you.",
+      "I’m quite confident about this.",
+      "The fire is close to you.",
+      "Please follow official instructions.",
+      "If you’ve been told to leave, tap: Told to leave your home? What to do.",
+      "Air quality right now: low risk.",
+      "Here’s the official advice: Ideal air quality for outdoor activities.",
+      "If you feel unwell but it’s not an emergency, you can call eight-one-one to talk to a nurse.",
+      "And if you ever see flames or a smoke column, tap the red button at the bottom to call nine-one-one.",
+    ]);
+    expect(verdictView(json(bridgetown), "fr").voice.slice(3, 6)).toEqual(["Le feu est près de vous.", "Suivez les consignes des autorités.", `Si on vous a demandé de partir, touchez${NBSP}: On vous demande de partir${NBSP}? Que faire.`]);
     expect(verdictView(json(moncton), "en").voice.join(" ")).not.toContain("The fire is close to you.");
+  });
+
+  test("how sure, on every verdict: high, medium, or low with its reason (the heights disagree, or the wind shifted)", () => {
+    const levels = ["high", "medium", "low"].map((level) => `voice.verdict.confidence.${level}` as StringKey);
+    const sure = (d: unknown, lang: "en" | "fr") => verdictView(json(d), lang).voice.find((s) => levels.some((key) => s.startsWith(voice.script(lang, key)[0].split("{")[0])));
+    expect([bridgetown, halifax, miramichi, unsteady].map((d) => sure(d, "en"))).toEqual([
+      "I’m quite confident about this.",
+      "I’m fairly confident, but not completely.",
+      "I’m not completely sure, because the air at different heights took different paths.",
+      "I’m not completely sure, because the wind shifted overnight.",
+    ]);
+    expect([bridgetown, halifax, miramichi, unsteady].map((d) => sure(d, "fr"))).toEqual([
+      "C’est assez certain.",
+      "C’est assez probable, mais pas certain.",
+      "Ce n’est pas tout à fait certain, parce que l’air a pris des chemins différents selon la hauteur.",
+      "Ce n’est pas tout à fait certain, parce que le vent a changé pendant la nuit.",
+    ]);
+  });
+
+  test("in this order: the answer, how sure, the notice, air quality, Health Canada, 811, then 911", () => {
+    for (const lang of LANGS) {
+      for (const d of VERDICTS) {
+        const said = verdictView(d, lang).voice;
+        // Where a script's first sentence is said (up to its first {value}); -1 when it isn't.
+        const at = (...keys: StringKey[]) => Math.max(...keys.map((key) => said.findIndex((s) => s.startsWith(voice.script(lang, key)[0].split("{")[0]))));
+        const sure = at("voice.verdict.confidence.high", "voice.verdict.confidence.medium", "voice.verdict.confidence.low");
+        const air = at("voice.verdict.aq", "voice.verdict.aq.none");
+        const order = [sure, at("voice.verdict.notice"), air, at("voice.verdict.break"), at("voice.verdict.nurse"), at("voice.verdict.call")].filter((i) => i >= 0);
+        expect([sure > 0, air > 0], `${lang} ${d.location.name}`).toEqual([true, true]);
+        expect(order, `${lang} ${d.location.name}`).toEqual([...order].sort((a, b) => a - b));
+        expect(said.at(-2)).toBe(voice.script(lang, "voice.verdict.nurse")[0]);
+        expect(said.at(-1)).toBe(voice.script(lang, "voice.verdict.call")[0]);
+      }
+    }
   });
 
   test("the Health Canada line only when its block is shown (Moncton, AQHI 10+), not at a low AQHI (Bridgetown)", () => {
@@ -146,64 +243,84 @@ describe("verdicts", () => {
 
   test("unclear (Miramichi): an unnamed fire with its article, and how far the air passed", () => {
     expect(verdictView(json(miramichi), "en").voice.slice(0, 4)).toEqual([
-      "Here’s the answer.",
-      "It could be drifting smoke from a fire near Fontaine, or something new.",
-      "The air passed 42 kilometres from it, which isn’t close enough to be sure.",
-      "Please look outside.",
+      "Okay, here’s what I found.",
+      "It could be smoke drifting from a fire near Fontaine, but the air passed 42 kilometres from it, so I can’t be sure.",
+      "It might also be something close by.",
+      "Please take a look outside.",
     ]);
-    expect(verdictView(json(miramichi), "fr").voice[1]).toBe("Ce pourrait être de la fumée qui dérive d’un feu près de Fontaine, ou quelque chose de nouveau.");
+    expect(verdictView(json(miramichi), "fr").voice[1]).toBe("Ce pourrait être de la fumée qui vient d’un feu près de Fontaine, mais l’air est passé à 42 kilomètres de ce feu, alors ce n’est pas certain.");
   });
 
   test("unclear because the wind shifted: says so, rather than that the air wasn’t close enough", () => {
     const close = json({ ...miramichi, closestApproach: { ...miramichi.closestApproach, km: 12 } });
-    expect(verdictView(close, "en").voice[2]).toBe("The air passed 12 kilometres from it, but the wind shifted, so we can’t be sure.");
-    expect(verdictView(close, "fr").voice[2]).toBe("L’air est passé à 12 kilomètres de ce feu, mais le vent a changé, donc nous ne pouvons pas en être certains.");
+    expect(verdictView(close, "en").voice.slice(1, 3)).toEqual(["It could be smoke drifting from a fire near Fontaine.", "The air passed 12 kilometres from it, but the wind shifted, so I can’t be sure."]);
+    expect(verdictView(close, "fr").voice.slice(1, 3)).toEqual(["Ce pourrait être de la fumée qui vient d’un feu près de Fontaine.", "L’air est passé à 12 kilomètres de ce feu, mais le vent a changé, alors ce n’est pas certain."]);
   });
 
-  test("distances: one kilometre, and less than one kilometre with no direction", () => {
+  test("distances: one kilometre, and less than one kilometre with no direction; a fire that close is never “far away”", () => {
     const at = (km: number) => json({ ...westDalhousie, closestApproach: { ...westDalhousie.closestApproach, fire: { ...westDalhousie.closestApproach!.fire, km } } });
-    expect(verdictView(at(1), "en").voice[1]).toBe("The smoke you smell most likely comes from the Long Lake fire, about one kilometre southeast of you.");
-    expect(verdictView(at(0), "en").voice[1]).toBe("The smoke you smell most likely comes from the Long Lake fire, less than one kilometre from you.");
+    expect(verdictView(at(1), "en").voice[1]).toBe("The smoke you’re smelling is most likely drifting from the Long Lake fire, about one kilometre southeast of you.");
+    expect(verdictView(at(0), "en").voice[1]).toBe("The smoke you’re smelling is most likely drifting from the Long Lake fire, less than one kilometre from you.");
     expect(verdictView(at(0), "fr").voice[1]).toBe("La fumée que vous sentez vient probablement du feu de Long Lake, à moins d’un kilomètre de vous.");
+    for (const km of [0, 1, 24]) expect(verdictView(at(km), "en").voice[2]).toBe("I’m quite confident about this.");
+    expect(verdictView(at(25), "en").voice[2]).toBe("So it’s most likely smoke carried by the wind from far away.");
   });
 
-  test("unexplained (Halifax) and no fires in range: the same answer; with no AQHI reading, What to do says so", () => {
-    const answer = ["Here’s the answer.", "We didn’t find a known fire where your air came from.", "The smoke may come from something close by, like a new fire, a brush pile, or wood smoke.", "Please look outside."];
-    expect([verdictView(json(halifax), "en").voice.slice(0, 4), verdictView(noFires, "en").voice.slice(0, 4)]).toEqual([answer, answer]);
-    expect(verdictView({ ...json(moncton), aqhi: null }, "en").voice).toContain("What to do: No air quality reading from the last 2 hours.");
+  test("unexplained (Halifax) and no fires in range: the same answer; with no AQHI reading, where to find the official advice", () => {
+    const answer = [
+      "Okay, here’s what I found.",
+      "I didn’t find a known fire where your air came from.",
+      "That doesn’t mean there’s no fire.",
+      "It could be something close by, like a new fire, a brush pile, or wood smoke.",
+      "Please take a look outside.",
+    ];
+    expect([verdictView(json(halifax), "en").voice.slice(0, 5), verdictView(noFires, "en").voice.slice(0, 5)]).toEqual([answer, answer]);
+    expect(verdictView(json(halifax), "fr").voice.slice(1, 3)).toEqual(["Je n’ai trouvé aucun feu connu là d’où vient votre air.", "Ça ne veut pas dire qu’il n’y a pas de feu."]);
+    const none = verdictView({ ...json(moncton), aqhi: null }, "en").voice;
+    expect(none.slice(4, 6)).toEqual(["I don’t have an air quality reading from the last two hours.", "For the official advice, tap: Check official air quality."]);
+    expect(none.join(" ")).not.toContain("Air quality right now");
   });
 });
 
 describe("the leave screen", () => {
-  test("near the event: leave, register, the reception centre, directions, the grab list, then tell family", () => {
-    expect(voice.leaveVoice("en", { kind: "near", name: "NSCC Annapolis Valley Campus", address: "295 Commercial St., Middleton", take: TAKE.en })).toEqual([
-      "If you’re told to leave, leave right away.",
-      "Follow emergency alerts and local radio.",
-      "First, register, at the centre or online.",
-      "That’s how officials know you’re accounted for.",
-      "The reception centre is NSCC Annapolis Valley Campus, 295 Commercial St., Middleton.",
+  test("near the event: where to go, register, directions, what to take, then tell family", () => {
+    expect(voice.leaveVoice("en", NEAR)).toEqual([
+      "I’m here to help you leave.",
+      "Please leave right away when officials tell you to, and keep listening to emergency alerts and local radio.",
+      "Here’s where to go: the reception centre is NSCC Annapolis Valley Campus, at 295 Commercial St., Middleton.",
+      "When you get there, register first, so officials know you’re accounted for.",
       "Tap: Get directions, and your phone’s map will guide you.",
-      "If you have time, take: medication, wallet and ID, keys, phone and charger, glasses and hearing aids, and pets.",
-      "Do not delay for non-essential items.",
-      "When you’re on your way, tap: Tell family you’re OK, to send them a message.",
+      "If you have time, take your medication, wallet and ID, keys, phone and charger, glasses, and your pets.",
+      "Don’t delay for anything else.",
+      "Once you’re on your way, tap: Tell family you’re OK, and I’ll help you send them a message with your location.",
     ]);
-    expect(voice.leaveVoice("fr", { kind: "near", name: "NSCC", address: "295 Commercial St., Middleton", take: TAKE.fr })[6]).toBe(
-      `Si vous avez le temps, prenez${NBSP}: médicaments, portefeuille et pièces d’identité, clés, téléphone et chargeur, lunettes et appareils auditifs et animaux de compagnie.`,
-    );
+    expect(voice.leaveVoice("fr", NEAR)).toEqual([
+      "Je suis là pour vous aider à partir.",
+      "Partez tout de suite quand les autorités vous le demandent, et continuez d’écouter les alertes d’urgence et la radio locale.",
+      `Voici où aller${NBSP}: le centre d’accueil est NSCC Annapolis Valley Campus, au 295 Commercial St., Middleton.`,
+      "En arrivant, inscrivez-vous d’abord, pour que les autorités sachent où vous êtes.",
+      `Touchez${NBSP}: Itinéraire, et la carte de votre téléphone vous guidera.`,
+      "Si vous avez le temps, prenez vos médicaments, votre portefeuille et vos pièces d’identité, vos clés, votre téléphone et son chargeur, vos lunettes, et vos animaux.",
+      "Ne tardez pas pour le reste.",
+      `Une fois en route, touchez${NBSP}: Dites à vos proches que vous allez bien, et je vous aide à leur envoyer un message avec votre position.`,
+    ]);
   });
 
   test("far: doesn’t apply, the links and 211 only when shown; French elides “de” (d’Edmundston)", () => {
     const far = { kind: "far", fire: "Long Lake", km: 159, town: "Moncton", ofTown: "de Moncton", links: true, call211: true } as const;
     expect(voice.leaveVoice("en", far)).toEqual([
-      "This evacuation was for people near the Long Lake fire, 159 kilometres from Moncton.",
-      "It doesn’t apply to you.",
-      "For your area, officials announce where to go on the links below.",
-      "You can also call two-one-one for shelters and help.",
+      "This evacuation was for people near the Long Lake fire, 159 kilometres from Moncton, so it doesn’t apply to you.",
+      "If officials ever ask you to leave, they’ll announce where to go on the links below.",
+      "You can also call two-one-one for help.",
     ]);
     // P.E.I.: no provincial page, so no links sentence.
-    expect(voice.leaveVoice("en", { ...far, town: "Charlottetown", links: false })).not.toContain("For your area, officials announce where to go on the links below.");
+    expect(voice.leaveVoice("en", { ...far, town: "Charlottetown", links: false })).not.toContain("If officials ever ask you to leave, they’ll announce where to go on the links below.");
     expect(voice.leaveVoice("en", { ...far, call211: false }).join(" ")).not.toContain("two-one-one");
-    expect(voice.leaveVoice("fr", { ...far, town: "Edmundston", ofTown: "d’Edmundston" })[0]).toBe("Cette évacuation visait les personnes près du feu de Long Lake, à 159 kilomètres d’Edmundston.");
+    expect(voice.leaveVoice("fr", { ...far, town: "Edmundston", ofTown: "d’Edmundston" })).toEqual([
+      "Cette évacuation visait les personnes près du feu de Long Lake, à 159 kilomètres d’Edmundston, alors elle ne s’applique pas à vous.",
+      "Si les autorités vous demandent un jour de partir, elles annonceront où aller dans les liens ci-dessous.",
+      "Vous pouvez aussi appeler le deux-un-un pour de l’aide.",
+    ]);
   });
 
   test("no place yet, and no event (live)", () => {

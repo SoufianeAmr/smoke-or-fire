@@ -67,7 +67,7 @@ export function Leave() {
     !place
       ? { kind: "where" }
       : reception
-        ? { kind: "near", name: reception.name, address: reception.address, take: TAKE.map(([key]) => t(key)) }
+        ? { kind: "near", name: reception.name, address: reception.address }
         : event && !near
           ? { kind: "far", ...farVars(event, place, lang), links: links.length > 0, call211 }
           : { kind: "none", links: links.length > 0, call211 },

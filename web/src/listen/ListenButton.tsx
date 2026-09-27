@@ -69,8 +69,9 @@ export function ListenButton({ sentences, style }: { sentences: string[]; style?
       const utterance = new SpeechSynthesisUtterance(sentences[i]);
       utterance.lang = LOCALE[lang];
       utterance.voice = voice;
-      utterance.rate = 0.95;
-      utterance.pitch = 1;
+      // Calm and warm: a little slower than normal, a little higher.
+      utterance.rate = 0.92;
+      utterance.pitch = 1.05;
       utterance.volume = 1;
       // Next sentence after a pause; one that fails is skipped. Some browsers send both error and end: act once.
       let settled = false;
