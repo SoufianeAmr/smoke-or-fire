@@ -7,6 +7,12 @@ Smell smoke in the Maritimes? The app traces the air you are breathing back 24 h
 - `data/`: recorded replay data (Moncton, Aug 25, 2025), demo verdicts and place data.
 - `design/`: the frozen screens and the design lock.
 
+## How it works (technical)
+
+The engine traces the air arriving at your spot backward on hourly winds, at several heights, and measures how close it passed to each active fire; the verdict follows the table in `design/DESIGN-LOCK.md`. It also traces the fire's smoke forward in time as a second check, which never changes the verdict. The web app draws the engine's answer.
+
+[TECH-FACTS.md](TECH-FACTS.md) has the architecture, the method, the data sources and their limits, the Moncton replay facts and the test counts. It is generated from the code, the data and actual test runs by `engine/scripts/tech_facts.py`.
+
 ## Data credits
 
 - **Natural Resources Canada, Canadian Wildland Fire Information System (CWFIS)**: active fires and satellite hotspots. Open Government Licence – Canada.

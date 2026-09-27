@@ -134,15 +134,22 @@ def within(detections: list[Detection], since: datetime, at: datetime) -> list[D
     return [d for d in detections if since < d.time <= at]
 
 
-def fuse(firms: list[Detection], cwfis: list[Detection]) -> list[Detection]:
-    """One list: FIRMS detections, with the CWFIS rows that are the same observation merged in.
+@dataclass
+class Matches:
+    """Which CWFIS rows are FIRMS detections; the keys are indexes into the FIRMS list."""
+
+    twins: dict[int, list[Detection]]  # rule 1: FIRMS detections republished by CWFIS
+    same_satellite: dict[int, Detection]  # rule 2: at most one CWFIS row per FIRMS detection
+    rest: list[Detection]  # CWFIS rows that are no FIRMS detection
+
+
+def match(firms: list[Detection], cwfis: list[Detection]) -> Matches:
+    """Pair CWFIS rows with the FIRMS detections they repeat.
 
     1. A CWFIS row within TWIN_KM of a FIRMS detection with the same FRP (within TWIN_FRP_MW) is that
        detection republished, however late CWFIS reported it: it merges into its FIRMS twin.
     2. Otherwise a CWFIS row merges into the nearest FIRMS detection from the same satellite within
        FUSE_KM and FUSE_MINUTES (each FIRMS detection takes at most one).
-    A merged detection keeps the FIRMS record (acquisition time, satellite, instrument, latency class)
-    and records both sources. Other CWFIS rows stay, with their report time.
     """
     order = sorted(range(len(firms)), key=lambda i: firms[i].lat)
     lats = [firms[i].lat for i in order]
@@ -158,37 +165,47 @@ def fuse(firms: list[Detection], cwfis: list[Detection]) -> list[Detection]:
                 found.append((d, i))
         return sorted(found)
 
-    merged: dict[int, list[Detection]] = {}
+    twins: dict[int, list[Detection]] = {}
     unmatched = []
     for row in cwfis:
         twin = next((i for _, i in near(row, TWIN_KM) if _same_frp(row, firms[i])), None)
         if twin is None:
             unmatched.append(row)
         else:
-            merged.setdefault(twin, []).append(row)
+            twins.setdefault(twin, []).append(row)
+    same_satellite: dict[int, Detection] = {}
     rest = []
     for row in unmatched:
-        match = next(
+        found = next(
             (
                 i for _, i in near(row, FUSE_KM)
-                if i not in merged and row.satellite and row.satellite == firms[i].satellite
+                if i not in twins and i not in same_satellite and row.satellite and row.satellite == firms[i].satellite
                 and abs(firms[i].time - row.time) <= timedelta(minutes=FUSE_MINUTES)
             ),
             None,
         )
-        if match is None:
+        if found is None:
             rest.append(row)
         else:
-            merged[match] = [row]
+            same_satellite[found] = row
+    return Matches(twins, same_satellite, rest)
 
+
+def fuse(firms: list[Detection], cwfis: list[Detection]) -> list[Detection]:
+    """One list: FIRMS detections, with the CWFIS rows that are the same observation (see match()) merged in.
+
+    A merged detection keeps the FIRMS record (acquisition time, satellite, instrument, latency class)
+    and records both sources. Other CWFIS rows stay, with their report time.
+    """
+    matches = match(firms, cwfis)
     fused = []
     for i, detection in enumerate(firms):
-        rows = merged.get(i)
+        rows = matches.twins.get(i) or ([matches.same_satellite[i]] if i in matches.same_satellite else [])
         if rows:
             names = {*detection.satellites, *(name for row in rows for name in row.satellites)}
             detection = replace(detection, sources=("FIRMS", "CWFIS"), satellites=tuple(sorted(names)))
         fused.append(detection)
-    return fused + rest
+    return fused + matches.rest
 
 
 def _same_frp(row: Detection, firms: Detection) -> bool:
