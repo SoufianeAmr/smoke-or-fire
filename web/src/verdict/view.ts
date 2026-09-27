@@ -26,7 +26,7 @@ export interface VerdictView {
     /** The satellite that made the fire's newest detection, and when. Null when no satellite is named. */
     badge: string | null;
     edgeLabel: (hoursAgo: number, area: string | null) => string;
-    legend: { path: string; hour: string; corridor: string | null; closest: string | null; fire: string | null; you: string; otherHeights: string };
+    legend: { path: string; hour: string; corridor: string | null; closest: string | null; fire: string | null; you: string; otherHeights: string; forward: string | null };
   };
   twoPossibilities: { title: string; driftingChip: string; driftingLead: string; driftingText: string; unexplainedChip: string; unexplainedLead: string; unexplainedText: string; lookOutside: string } | null;
   todo:
@@ -182,6 +182,7 @@ export function verdictView(json: VerdictJson, lang: Lang): VerdictView {
       fire: fire ? t("legend.fire") : null,
       you: t("legend.you", { town }),
       otherHeights: t("legend.otherHeights"),
+      forward: json.forward && fire ? t("legend.forward") : null,
     },
   };
 
@@ -277,6 +278,10 @@ export function verdictView(json: VerdictJson, lang: Lang): VerdictView {
       : json.wind.steady
         ? { title: t("why.steady"), body: t("why.steady.body") }
         : { title: t("why.unsteady"), body: when === t("when.overnight") ? t("why.unsteady.overnight") : t("why.unsteady.body", { when }) };
+  // The featured fire's smoke traced forward to the check: supporting evidence only, after item 2.
+  const forward = json.forward && fire
+    ? { title: "", body: t(json.forward.agrees ? "why.forward.passed" : "why.forward.stayed", { fire: firePlain(fire), km: json.forward.closestKm }) }
+    : null;
 
   return {
     variant,
@@ -288,7 +293,7 @@ export function verdictView(json: VerdictJson, lang: Lang): VerdictView {
     twoPossibilities,
     todo,
     aqhi,
-    why: { title: t("why.title"), items: [traced, second, third], howLink: t("why.howLink") },
+    why: { title: t("why.title"), items: forward ? [traced, second, forward, third] : [traced, second, third], howLink: t("why.howLink") },
   };
 }
 

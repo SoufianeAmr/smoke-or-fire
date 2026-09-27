@@ -10,6 +10,7 @@ import type { VerdictView } from "./view";
 const W = 358;
 const H = 220;
 const ARROW = "M-5 -4.5L5 0L-5 4.5Z";
+const FAN_OPACITY = "0.5"; // 35% was too faint at 390 × 844, on the map and in the legend
 const FLAME = "M12 21.5c3.9 0 6.5-2.6 6.5-6.3 0-3-1.8-5.3-3.4-7-.4 1.6-1.2 2.6-2.3 3.2.4-3.2-1-6.3-3.8-8.9.2 3.4-1.5 5.4-3 7.3-1.2 1.6-2 3.2-2 5.4 0 3.7 2.6 6.3 6.5 6.3z";
 
 type XY = [number, number];
@@ -37,6 +38,16 @@ export function VerdictMap({ json, view }: { json: VerdictJson; view: VerdictVie
   const chosen = json.heights.chosen;
   const path = project(json.path.points);
   const others = (Object.keys(json.heights.paths) as Height[]).filter((h) => h !== chosen).map((h) => project(json.heights.paths[h].points));
+  // The fire's smoke traced forward, under the air paths. Each path is cut one point after it last leaves
+  // the map, so every path draws its visible part outward from the fire over the same 1.5 s.
+  const fan = (json.forward && fire ? json.forward.paths : []).flatMap((p) => {
+    const line = p.points.map(xy);
+    let last = 0;
+    line.forEach((q, i) => { if (inside(q)) last = i; });
+    const shown = line.slice(0, last + 2);
+    const length = shown.slice(1).reduce((sum, q, i) => sum + Math.hypot(q[0] - shown[i][0], q[1] - shown[i][1]), 0);
+    return length > 0 ? [{ points: shown, length }] : [];
+  });
   const [ux, uy] = xy(user);
   const pxPerKm = Math.abs(xy({ lat: user.lat, lon: user.lon })[1] - xy({ lat: user.lat + 1, lon: user.lon })[1]) / 111.2;
 
@@ -99,6 +110,13 @@ export function VerdictMap({ json, view }: { json: VerdictJson; view: VerdictVie
         {(view.variant === "7b" || view.variant === "7d") && (
           <polyline className="corridor" points={pts([...path].reverse())} style={{ strokeWidth: String(round(2 * json.rules.searchKm * pxPerKm)) }} />
         )}
+        {fan.length > 0 && (
+          <g style={{ opacity: FAN_OPACITY }}>
+            {fan.map((line, i) => (
+              <polyline key={i} className="fan" points={pts(line.points)} style={{ "--len": `${Math.ceil(line.length) + 1}px` } as CSSProperties} />
+            ))}
+          </g>
+        )}
         {others.map((other, i) => (
           <polyline key={i} className="trail" points={pts([...other].reverse())} style={{ opacity: "0.3", strokeWidth: "1.75" }} />
         ))}
@@ -158,6 +176,14 @@ function Legend({ view }: { view: VerdictView }) {
         </svg>
         {l.otherHeights}
       </span>
+      {l.forward && (
+        <span style={LEGEND_ITEM}>
+          <svg width="30" height="10" viewBox="0 0 30 10" aria-hidden="true">
+            <line x1="2" y1="5" x2="28" y2="5" style={{ stroke: "#8A8F98", strokeWidth: "1.5", strokeLinecap: "round", opacity: FAN_OPACITY }} />
+          </svg>
+          {l.forward}
+        </span>
+      )}
       <span style={LEGEND_ITEM}>
         <svg width="14" height="14" viewBox="-7 -7 14 14" aria-hidden="true">
           <path d={ARROW} style={{ fill: "#1B2A4A" }} />

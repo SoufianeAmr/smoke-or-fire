@@ -61,6 +61,17 @@ export interface ClosestApproach {
   fire: Fire;
 }
 
+/** The featured fire's smoke, released every hour over the 24 hours before the check and followed forward. */
+export interface Forward {
+  closestKm: number;
+  closestReleasedAt: string;
+  closestHeight: Height;
+  /** The smoke passed within 25 km of the user. Informational only: it never changes the verdict. */
+  agrees: boolean;
+  /** The closest height's paths, oldest release first; each starts at the fire. */
+  paths: { height: Height; releasedAt: string; points: { lat: number; lon: number; time: string }[] }[];
+}
+
 export interface VerdictJson {
   mode: "live" | "replay";
   time: string;
@@ -94,6 +105,8 @@ export interface VerdictJson {
     results: Record<Height, { verdict: Verdict; confidence: Confidence; closestApproachKm: number | null; steady: boolean }>;
     paths: Record<Height, Path>;
   };
+  /** Null when no fire is featured (7d). */
+  forward: Forward | null;
   aqhi: {
     value: number;
     display: string;

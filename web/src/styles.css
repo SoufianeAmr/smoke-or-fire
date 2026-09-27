@@ -52,7 +52,10 @@ body.emergency{background:#D92D20}
 /* 07 Verdict */
 .flow{animation:flow 1.1s linear infinite}
 @keyframes flow{to{stroke-dashoffset:-16}}
-@media (prefers-reduced-motion: reduce){.flow{animation:none}}
+/* The fire's smoke traced forward: each path draws outward from the fire once (--len is its length). */
+.fan{fill:none;stroke:#8A8F98;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:var(--len);stroke-dashoffset:var(--len);animation:fan 1.5s ease-out forwards}
+@keyframes fan{to{stroke-dashoffset:0}}
+@media (prefers-reduced-motion: reduce){.flow{animation:none}.fan{animation:none;stroke-dashoffset:0}}
 
 /* 08 How it works */
 .how .arr{fill:#1B2A4A;stroke:#F3EEE6;stroke-width:1.5;stroke-linejoin:round}

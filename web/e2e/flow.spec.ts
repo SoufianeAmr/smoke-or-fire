@@ -24,6 +24,28 @@ test("Moncton replay: Check → Q1 → Q2 → Location → Loading → Verdict",
   await expect(page.getByText("DRIFTING SMOKE")).toBeVisible();
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Likely from the Long Lake fire");
   await expect(page.getByText("Low confidence")).toBeVisible();
+
+  // The fire's smoke, traced forward: 24 paths that draw outward from the fire once.
+  await expect(page.getByText("Smoke from the fire, traced forward")).toBeVisible();
+  await expect(page.locator("polyline.fan")).toHaveCount(24);
+  const fan = await page.locator("polyline.fan").first().evaluate((el) => [getComputedStyle(el).animationName, getComputedStyle(el).animationIterationCount]);
+  expect(fan).toEqual(["fan", "1"]);
+});
+
+test.describe("reduced motion", () => {
+  test.use({ reducedMotion: "reduce" });
+
+  test("the fire’s smoke, traced forward, is drawn at once", async ({ page }) => {
+    await page.goto("/?mode=replay");
+    await page.waitForFunction(() => sessionStorage.getItem("smoke-or-fire")?.includes('"mode":"replay"'));
+    await page.goto("/location");
+    await page.locator("input[type=search]").fill("Monc");
+    await page.getByRole("option", { name: /Moncton, NB/ }).click();
+    await expect(page).toHaveURL(/\/verdict$/, { timeout: 10_000 });
+
+    const fan = await page.locator("polyline.fan").first().evaluate((el) => [getComputedStyle(el).animationName, getComputedStyle(el).strokeDashoffset]);
+    expect(fan).toEqual(["none", "0px"]);
+  });
 });
 
 test("Q2 lists the dark column first, in English and French", async ({ page }) => {

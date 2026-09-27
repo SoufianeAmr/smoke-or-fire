@@ -75,7 +75,7 @@ export function HowItWorks() {
             <Tiles items={[["24 h", t("how.lookedBack")], ["24", t("how.hourlySteps")]]} />
           </Step>
           <Step n={3} title={t("how.step3")}>
-            <p style={BODY}>{t("how.step3.before")} <strong>{t("how.step3.term")}</strong>{t("how.step3.after")}</p>
+            <p style={BODY}>{t("how.step3.before")} <strong>{t("how.step3.term")}</strong>{t("how.step3.after")} {t("how.step3.forward")}</p>
             <svg viewBox="0 0 318 96" width="100%" role="img" aria-label={t("how.diagramAria")} style={{ display: "block", maxWidth: "318px" }}>
               <rect x="0" y="0" width="318" height="96" rx="14" style={{ fill: "#F3EEE6" }} />
               <polyline points="16,76 70,62 124,50 178,44 232,40 300,30" style={{ fill: "none", stroke: "#1B2A4A", strokeWidth: "3.5", strokeLinecap: "round", strokeDasharray: "9 7" }} />

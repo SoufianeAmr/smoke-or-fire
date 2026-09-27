@@ -3,6 +3,7 @@ import { describe, expect, test } from "vitest";
 import bathurst from "../../../data/demo/bathurst.json";
 import charlottetown from "../../../data/demo/charlottetown.json";
 import edmundston from "../../../data/demo/edmundston.json";
+import fredericton from "../../../data/demo/fredericton.json";
 import halifax from "../../../data/demo/halifax.json";
 import miramichi from "../../../data/demo/miramichi.json";
 import moncton from "../../../data/demo/moncton.json";
@@ -284,5 +285,38 @@ describe("What to do: the area-wide caveat on unexplained verdicts", () => {
 
   test("is not on drifting or unclear verdicts (Moncton, Miramichi replays)", () => {
     expect([caveat(json(moncton), "en"), caveat(json(miramichi), "en")]).toEqual([null, null]);
+  });
+});
+
+describe("Why item 3: the fire’s smoke traced forward", () => {
+  const noFires = { ...json(halifax), noFiresInRange: true, nearestFire: null, closestApproach: null, forward: null } as VerdictJson;
+
+  test("says the smoke passed close when the forward trace agrees (Moncton replay)", () => {
+    expect([verdictView(json(moncton), "en").why.items[2].body, verdictView(json(moncton), "fr").why.items[2].body]).toEqual([
+      "Traced forward from the Long Lake fire, its smoke passed 2 km from you.",
+      "Suivie vers l’avant depuis le feu de Long Lake, sa fumée est passée à 2 km de vous.",
+    ]);
+  });
+
+  test("says the smoke stayed away otherwise, with the article for an unnamed fire (Fredericton replay)", () => {
+    expect([verdictView(json(fredericton), "en").why.items[2].body, verdictView(json(fredericton), "fr").why.items[2].body]).toEqual([
+      "Traced forward from a fire near Ramsay Lodge, its smoke stayed 117 km away from you.",
+      "Suivie vers l’avant depuis un feu près de Ramsay Lodge, sa fumée est restée à 117 km de vous.",
+    ]);
+  });
+
+  test("comes after item 2, and is left out when no fire is featured (7d)", () => {
+    expect([verdictView(json(moncton), "en").why.items.map((item) => item.title), verdictView(noFires, "en").why.items.length]).toEqual([
+      ["We traced the air back 20 hours", "It passed 19 km from an active fire", "", "The wind stayed steady"],
+      3,
+    ]);
+  });
+
+  test("the map legend names the forward paths, in English and French, and only when they are drawn", () => {
+    expect([verdictView(json(moncton), "en").map.legend.forward, verdictView(json(moncton), "fr").map.legend.forward, verdictView(noFires, "en").map.legend.forward]).toEqual([
+      "Smoke from the fire, traced forward",
+      "Fumée du feu, suivie vers l’avant",
+      null,
+    ]);
   });
 });
