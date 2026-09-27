@@ -4,7 +4,8 @@ import type { VerdictJson } from "../verdict/types";
 
 export type Mode = "live" | "replay";
 
-/** The engine for live mode (GET /verdict), e.g. VITE_ENGINE_URL=http://localhost:8000. Unset: replay only. */
+/** The engine for live mode (GET /verdict): VITE_ENGINE_URL, from web/.env.production in production builds
+ *  (locally e.g. VITE_ENGINE_URL=http://localhost:8000). Unset: replay only. */
 export const ENGINE_URL: string = import.meta.env.VITE_ENGINE_URL ?? "";
 
 export interface Place {

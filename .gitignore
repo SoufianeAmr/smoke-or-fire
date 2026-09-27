@@ -1,6 +1,8 @@
 # Secrets
 .env
 .env.*
+# The web app's production engine URL is public, not a secret.
+!web/.env.production
 
 # Packed design bundles and PDF exports (design/screens/ is the source of truth)
 design/*.html
