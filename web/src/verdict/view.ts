@@ -5,6 +5,7 @@ import type { AqhiCategory, Confidence, Fire, LastSeen, VerdictJson } from "./ty
 const NBSP = String.fromCharCode(0xa0); // no-break space: keeps a fire's name on one line in French
 
 export type Variant = "7a" | "7b" | "7c" | "7d";
+export type AreaWide = { lead: string; text: string };
 
 export interface VerdictView {
   variant: Variant;
@@ -29,9 +30,9 @@ export interface VerdictView {
   };
   twoPossibilities: { title: string; driftingChip: string; driftingLead: string; driftingText: string; unexplainedChip: string; unexplainedLead: string; unexplainedText: string; lookOutside: string } | null;
   todo:
-    | { kind: "advice"; title: string; general: string; official: string; nurse: string; groupsLabel: string; atRisk: string; higherRiskLead: string; higherRisk: string; doctor: string }
+    | { kind: "advice"; title: string; general: string; official: string; areaWide: AreaWide | null; nurse: string; groupsLabel: string; atRisk: string; higherRiskLead: string; higherRisk: string; doctor: string }
     | { kind: "noReading"; title: string; general: string; linkText: string; linkHost: string; linkUrl: string; nurse: string };
-  aqhi: { title: string; station: string; display: string; risk: string; scale: string; scaleLow: string; scaleHigh: string; segments: number; category: AqhiCategory | null; needle: string | null; areaWide: { lead: string; text: string } | null; source: string };
+  aqhi: { title: string; station: string; display: string; risk: string; scale: string; scaleLow: string; scaleHigh: string; segments: number; category: AqhiCategory | null; needle: string | null; areaWide: AreaWide | null; source: string };
   why: { title: string; items: { title: string; body: string; detail?: string | null }[]; howLink: string };
 }
 
@@ -201,8 +202,9 @@ export function verdictView(json: VerdictJson, lang: Lang): VerdictView {
         }
       : null;
 
-  // What to do + Air quality
+  // What to do + Air quality. On unexplained verdicts both cards say the AQHI reading is area-wide.
   const aq = json.aqhi;
+  const areaWide = variant === "7b" || variant === "7d" ? { lead: t("aq.areaWide.lead"), text: t("aq.areaWide.text") } : null;
   const level = aq ? (aq.display === "10+" ? 11 : Number(aq.display)) : 0;
   const todo: VerdictView["todo"] = aq
     ? {
@@ -210,6 +212,7 @@ export function verdictView(json: VerdictJson, lang: Lang): VerdictView {
         title: t("todo.title"),
         general: t(`advice.general.${aq.category}` as StringKey),
         official: t(`todo.official.${aq.category}` as StringKey, { n: aq.display }),
+        areaWide,
         nurse: t("todo.nurse"),
         groupsLabel: t("todo.groups"),
         atRisk: t(`advice.atRisk.${aq.category}` as StringKey),
@@ -229,7 +232,7 @@ export function verdictView(json: VerdictJson, lang: Lang): VerdictView {
     segments: aq ? Math.min(level, 11) : 0,
     category: aq ? aq.category : null,
     needle: aq ? needle(level) : null,
-    areaWide: variant === "7b" || variant === "7d" ? { lead: t("aq.areaWide.lead"), text: t("aq.areaWide.text") } : null,
+    areaWide,
     source: t("aq.source"),
   };
 

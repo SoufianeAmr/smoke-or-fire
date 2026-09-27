@@ -46,3 +46,17 @@ test("the loading counter reads Heure {n} sur 24 in French", async ({ page }) =>
   expect(label).toContain("Heure ");
   expect(label).toContain(" sur 24");
 });
+
+test("Halifax replay (unexplained): the area-wide caveat follows the official AQHI line and stays in the Air quality card", async ({ page }) => {
+  await page.goto("/?mode=replay");
+  await page.waitForFunction(() => sessionStorage.getItem("smoke-or-fire")?.includes('"mode":"replay"')); // before leaving the page
+  await page.goto("/location");
+  await page.locator("input[type=search]").fill("Halifax");
+  await page.getByRole("option", { name: /^Halifax/ }).first().click();
+  await expect(page).toHaveURL(/\/verdict$/, { timeout: 10_000 });
+
+  const caveat = "This is an area-wide reading. Smoke from a nearby source can be much stronger where you are.";
+  const official = page.locator("section[aria-labelledby=todo-h] p", { hasText: "Official advice for an AQHI of" });
+  await expect(official.locator("xpath=following-sibling::*[1]")).toHaveText(caveat);
+  await expect(page.locator("section[aria-labelledby=aqhi-h]")).toContainText(caveat);
+});

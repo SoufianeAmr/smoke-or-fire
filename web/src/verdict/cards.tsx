@@ -3,10 +3,19 @@ import { useState, type CSSProperties } from "react";
 import { Link } from "react-router";
 import { ChevronDownIcon, ChevronRightIcon, ChevronUpIcon, PhoneIcon } from "../components/icons";
 import type { Confidence } from "./types";
-import type { VerdictView } from "./view";
+import type { AreaWide, VerdictView } from "./view";
 
 const CARD: CSSProperties = { background: "#FFFFFF", borderRadius: "18px", boxShadow: "0 1px 2px rgba(26, 29, 33, 0.06), 0 8px 24px rgba(26, 29, 33, 0.07)" };
 const BODY: CSSProperties = { margin: "0", fontSize: "18px", lineHeight: "1.45" };
+
+// "This is an area-wide reading. …", on unexplained verdicts (7b, 7d).
+function AreaWideNote({ note }: { note: AreaWide }) {
+  return (
+    <p style={{ margin: "0", padding: "14px 16px", borderRadius: "14px", background: "#F3EEE6", fontSize: "18px", lineHeight: "1.45" }}>
+      <strong>{note.lead}</strong> {note.text}
+    </p>
+  );
+}
 
 // Confidence chip icons: three bars, filled up to the level (7a high, 7b medium, 7c low).
 const BARS: Record<Confidence, [boolean, boolean, boolean]> = { high: [true, true, true], medium: [true, true, false], low: [true, false, false] };
@@ -86,6 +95,7 @@ export function WhatToDoCard({ view }: { view: VerdictView }) {
       {todo.kind === "advice" ? (
         <>
           <p style={{ margin: "0", fontSize: "16px", lineHeight: "1.4", color: "#4F5561" }}>{todo.official}</p>
+          {todo.areaWide && <AreaWideNote note={todo.areaWide} />}
           {nurse}
           <button type="button" onClick={() => setOpen(!open)} aria-expanded={open} aria-controls="groups" style={{ margin: "8px -20px 0", width: "calc(100% + 40px)", minHeight: "60px", padding: "0 20px", border: "0", borderTop: "1px solid #EEE7DC", background: "transparent", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", fontFamily: "inherit", fontSize: "18px", fontWeight: "700", color: "#1B2A4A", textAlign: "left", cursor: "pointer" }}>
             <span style={{ textWrap: "balance" }}>{todo.groupsLabel}</span>
@@ -151,11 +161,7 @@ export function AirQualityCard({ view }: { view: VerdictView }) {
           <span>{aq.scaleHigh}</span>
         </div>
       </div>
-      {aq.areaWide && (
-        <p style={{ margin: "0", padding: "14px 16px", borderRadius: "14px", background: "#F3EEE6", fontSize: "18px", lineHeight: "1.45" }}>
-          <strong>{aq.areaWide.lead}</strong> {aq.areaWide.text}
-        </p>
-      )}
+      {aq.areaWide && <AreaWideNote note={aq.areaWide} />}
       <p style={{ margin: "0", fontSize: "16px", color: "#4F5561" }}>{aq.source}</p>
     </section>
   );

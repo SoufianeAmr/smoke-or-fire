@@ -266,3 +266,23 @@ describe("the map description never says 1 hours or 0 hours", () => {
     ]);
   });
 });
+
+describe("What to do: the area-wide caveat on unexplained verdicts", () => {
+  const caveat = (data: VerdictJson, lang: "en" | "fr") => {
+    const { todo } = verdictView(data, lang);
+    return todo.kind === "advice" && todo.areaWide ? `${todo.areaWide.lead} ${todo.areaWide.text}` : null;
+  };
+  const noFires = { ...json(halifax), noFiresInRange: true, nearestFire: null, closestApproach: null } as VerdictJson;
+
+  test("follows the official AQHI line on 7b (Halifax replay) and 7d, in English and French", () => {
+    expect([caveat(json(halifax), "en"), caveat(json(halifax), "fr"), caveat(noFires, "en")]).toEqual([
+      "This is an area-wide reading. Smoke from a nearby source can be much stronger where you are.",
+      "Cette mesure couvre toute la région. La fumée d’une source proche peut être beaucoup plus forte là où vous êtes.",
+      "This is an area-wide reading. Smoke from a nearby source can be much stronger where you are.",
+    ]);
+  });
+
+  test("is not on drifting or unclear verdicts (Moncton, Miramichi replays)", () => {
+    expect([caveat(json(moncton), "en"), caveat(json(miramichi), "en")]).toEqual([null, null]);
+  });
+});
