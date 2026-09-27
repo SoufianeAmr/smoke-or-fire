@@ -46,9 +46,11 @@ export const spokenKm = (km: number, lang: Lang) => (km < 1 ? translate(lang, "v
 /** After a colon, or inside a list, a word starts in lower case ("Medication" → "medication"); "I" and "ID" stay. */
 export const lowerFirst = (text: string, lang: Lang) => (/^\p{Lu}\p{Ll}/u.test(text) ? text.charAt(0).toLocaleLowerCase(lang) + text.slice(1) : text);
 
-export const checkVoice = (lang: Lang, replay: boolean) => [
+/** `install`: the Add to home screen link is shown (not when the app is open from the home screen). */
+export const checkVoice = (lang: Lang, replay: boolean, install: boolean) => [
   ...(replay ? script(lang, "voice.check.replay") : []),
   ...script(lang, "voice.check", { leave: translate(lang, "leave.entry") }),
+  ...(install ? script(lang, "voice.check.install", { add: translate(lang, "keep.add") }) : []),
 ];
 export const q1Voice = (lang: Lang) => script(lang, "voice.q1");
 export const q2Voice = (lang: Lang) => script(lang, "voice.q2");

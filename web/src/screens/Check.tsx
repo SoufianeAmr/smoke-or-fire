@@ -5,6 +5,8 @@ import { useApp, useT } from "../app/state";
 import { Screen } from "../components/Screen";
 import { LangToggle } from "../components/TopBar";
 import { ChevronRightIcon, DoorOpenIcon } from "../components/icons";
+import { useInstall } from "../keep/keep";
+import { KeepOnPhone } from "../keep/KeepOnPhone";
 import { ListenButton } from "../listen/ListenButton";
 import { checkVoice } from "../listen/speech";
 
@@ -24,6 +26,7 @@ export function Check() {
   const { mode, lang, setMode, reset } = useApp();
   const t = useT();
   const isReplay = mode === "replay";
+  const install = useInstall();
 
   return (
     <Screen>
@@ -33,7 +36,7 @@ export function Check() {
         <div className="haze haze3" style={{ width: "420px", height: "240px", left: "-60px", top: "560px", background: "#E9E1D5", opacity: "0.8" }} />
       </div>
       <div style={{ position: "relative", zIndex: "1", display: "flex", alignItems: "center", justifyContent: "flex-end", gap: "8px", padding: "8px 12px 0 4px", height: "68px" }}>
-        <ListenButton sentences={checkVoice(lang, isReplay)} />
+        <ListenButton sentences={checkVoice(lang, isReplay, install.offered)} />
         <LangToggle />
       </div>
       <main style={{ position: "relative", zIndex: "1", flexGrow: "1", display: "flex", flexDirection: "column", padding: "8px 20px 20px" }}>
@@ -81,6 +84,7 @@ export function Check() {
           {t("check.howItWorks")}
           <ChevronRightIcon size={20} />
         </Link>
+        <KeepOnPhone offered={install.offered} platform={install.platform} />
       </main>
     </Screen>
   );

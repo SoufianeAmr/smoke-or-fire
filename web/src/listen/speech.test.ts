@@ -25,7 +25,7 @@ const noFires = { ...json(halifax), noFiresInRange: true, nearestFire: null, clo
 
 /** Everything the app can say, in both languages, across screens and states. */
 const everything = LANGS.flatMap((lang) => [
-  ...voice.checkVoice(lang, true), ...voice.checkVoice(lang, false), ...voice.q1Voice(lang), ...voice.q2Voice(lang), ...voice.locationVoice(lang),
+  ...voice.checkVoice(lang, true, true), ...voice.checkVoice(lang, false, false), ...voice.q1Voice(lang), ...voice.q2Voice(lang), ...voice.locationVoice(lang),
   ...voice.loadingVoice(lang), ...voice.emergencyVoice(lang), ...voice.howVoice(lang), ...voice.locationOffVoice(lang), ...voice.noDataVoice(lang),
   ...[moncton, bridgetown, westDalhousie, miramichi, charlottetown, halifax, noFires, { ...moncton, aqhi: null }].flatMap((d) => verdictView(json(d), lang).voice),
   ...voice.leaveVoice(lang, { kind: "where" }),
@@ -58,16 +58,28 @@ describe("the scripts", () => {
   test("a value never splits a sentence: an address with “St.”, a label with a question mark", () => {
     const near = voice.leaveVoice("en", { kind: "near", name: "NSCC Annapolis Valley Campus", address: "295 Commercial St., Middleton", take: TAKE.en });
     expect(near).toContain("The reception centre is NSCC Annapolis Valley Campus, 295 Commercial St., Middleton.");
-    expect(voice.checkVoice("en", false)).toContain("If officials told you to leave your home, tap the button further down that says: Told to leave your home? What to do.");
-    expect(voice.checkVoice("fr", false)).toContain(`Si les autorités vous ont demandé de quitter votre maison, touchez le bouton plus bas${NBSP}: On vous demande de partir${NBSP}? Que faire.`);
+    expect(voice.checkVoice("en", false, true)).toContain("If officials told you to leave your home, tap the button further down that says: Told to leave your home? What to do.");
+    expect(voice.checkVoice("fr", false, true)).toContain(`Si les autorités vous ont demandé de quitter votre maison, touchez le bouton plus bas${NBSP}: On vous demande de partir${NBSP}? Que faire.`);
   });
 });
 
 describe("screens", () => {
   test("Check: the replay line comes first, only in replay", () => {
-    expect(voice.checkVoice("en", true).slice(0, 3)).toEqual(["Right now, the app is showing a replay of August 25, 2025.", "Hello.", "This app tells you, in about a minute, if the smoke you smell comes from a known fire."]);
-    expect(voice.checkVoice("en", false)[0]).toBe("Hello.");
-    expect(voice.checkVoice("fr", true)[0]).toBe("En ce moment, l’application montre une reprise du 25 août 2025.");
+    expect(voice.checkVoice("en", true, true).slice(0, 3)).toEqual(["Right now, the app is showing a replay of August 25, 2025.", "Hello.", "This app tells you, in about a minute, if the smoke you smell comes from a known fire."]);
+    expect(voice.checkVoice("en", false, true)[0]).toBe("Hello.");
+    expect(voice.checkVoice("fr", true, true)[0]).toBe("En ce moment, l’application montre une reprise du 25 août 2025.");
+  });
+
+  test("Check ends with Add to home screen, naming the link as on screen; not when the link is hidden", () => {
+    expect(voice.checkVoice("en", false, true).at(-1)).toBe("To keep this app on your phone, tap: Add to home screen.");
+    expect(voice.checkVoice("fr", true, true).at(-1)).toBe(`Pour garder cette application sur votre téléphone, touchez${NBSP}: Ajouter à l’écran d’accueil.`);
+    for (const lang of LANGS) {
+      for (const replay of [true, false]) {
+        const hidden = voice.checkVoice(lang, replay, false);
+        expect(hidden.at(-1)).toBe(voice.script(lang, "voice.check").at(-1)); // the 911 line
+        expect(voice.checkVoice(lang, replay, true)).toEqual([...hidden, ...voice.script(lang, "voice.check.install", { add: translate(lang, "keep.add") })]);
+      }
+    }
   });
 
   test("Q1, one sentence per utterance, in English and French", () => {

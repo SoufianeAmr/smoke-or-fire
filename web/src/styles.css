@@ -22,6 +22,9 @@ input::placeholder{color:#6B6F76}
 .haze3{animation-duration:34s;animation-delay:-4s}
 @keyframes drift{0%{transform:translate(-30px,0) scale(1)}100%{transform:translate(40px,-18px) scale(1.08)}}
 @media (prefers-reduced-motion: reduce){.haze{animation:none}}
+/* "Add to home screen" steps: a sheet at the bottom of the 480 px column, over a dimmed screen. */
+.sheet{position:fixed;inset:auto 0 0;margin:0 auto;width:100%;max-width:480px;max-height:100%;padding:0;border:0;background:transparent;color:#1A1D21;font-family:Inter,'Helvetica Neue',Arial,sans-serif}
+.sheet::backdrop{background:rgba(26,29,33,0.45)}
 
 /* 04 Emergency */
 body.emergency{background:#D92D20}

@@ -15,6 +15,7 @@
     "strings:todo": "node scripts/strings-todo.mjs",
     "strings:format": "node scripts/format-strings.mjs",
     "data:build": "node scripts/build-data.mjs",
+    "icons": "node scripts/build-icons.mjs",
     "e2e:pixels": "playwright test --project=pixels",
     "e2e:real": "playwright test -c playwright.real.config.ts"
   },

@@ -19,6 +19,13 @@ describe("strings", () => {
     expect(broken).toEqual([]);
   });
 
+  test("French has a non-breaking space inside « »", () => {
+    const nbsp = `[${String.fromCharCode(0xa0, 0x202f)}]`;
+    const broken = Object.entries(fr).filter(([, text]) => new RegExp(`«(?!${nbsp})|(?<!${nbsp})»`).test(text)).map(([key]) => key);
+    expect(Object.values(fr).some((text) => text.includes("«"))).toBe(true);
+    expect(broken).toEqual([]);
+  });
+
   test("apostrophes are curly (’), never straight", () => {
     const straight = [...Object.entries(en), ...Object.entries(fr)]
       .filter(([, text]) => text.includes("'"))

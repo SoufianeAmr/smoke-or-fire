@@ -186,12 +186,17 @@ const SCREENS: Screen[] = [
   {
     name: "Check (replay)",
     open: async () => {},
-    script: async (page, lang) => [...script(lang, "voice.check.replay"), ...script(lang, "voice.check", { leave: await text(page, 'main a[href="/leave"]') })],
+    script: async (page, lang) => [
+      ...script(lang, "voice.check.replay"),
+      ...script(lang, "voice.check", { leave: await text(page, 'main a[href="/leave"]') }),
+      ...script(lang, "voice.check.install", { add: await text(page, "main > div:last-child button") }),
+    ],
     buttons: async (page, lang) => {
       await named(page.locator('main a[href="/q1"]'), STRINGS[lang]["check.cta"], NAVY); // "the big dark blue button"
       await named(page.locator('main a[href="/leave"]'), STRINGS[lang]["leave.entry"]);
+      await named(page.getByRole("button", { name: STRINGS[lang]["keep.add"], exact: true }), STRINGS[lang]["keep.add"]);
     },
-    labels: keys("check.cta", "leave.entry"),
+    labels: keys("check.cta", "leave.entry", "keep.add"),
   },
   {
     name: "Q1",
@@ -382,6 +387,29 @@ async function stopped(page: Page, cancelsBefore: number) {
 }
 /** The recorder holds each sentence until cancelled, so a reading is still going when the test stops it. */
 const holdSentences = (page: Page) => page.evaluate(() => { (window as unknown as { __autoEnd: boolean }).__autoEnd = false; });
+
+test.describe("Listen: Check opened from the home screen", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.addInitScript(fakeSpeech);
+    // The manifest's standalone display: Add to home screen is hidden, so the voice doesn't name it.
+    await page.addInitScript(() => {
+      const matchMedia = window.matchMedia.bind(window);
+      window.matchMedia = (query: string) => (/display-mode:\s*standalone/.test(query) ? ({ matches: true, media: query } as MediaQueryList) : matchMedia(query));
+    });
+  });
+
+  for (const lang of ["en", "fr"] as const) {
+    test(`${lang.toUpperCase()}: the script ends with the 911 line, without Add to home screen`, async ({ page }) => {
+      await start(page, lang, "live");
+      await expect(page.getByRole("button", { name: STRINGS[lang]["keep.add"], exact: true })).toHaveCount(0);
+      const expected = script(lang, "voice.check", { leave: STRINGS[lang]["leave.entry"] });
+      await listenButton(page, lang).click();
+      await expect.poll(async () => (await spoken(page)).length, { timeout: 10_000 }).toBeGreaterThanOrEqual(expected.length);
+      await expect(listenButton(page, lang)).toBeVisible({ timeout: 5_000 }); // the reading has ended
+      expect((await spoken(page)).map((u) => u.text)).toEqual(expected);
+    });
+  }
+});
 
 test.describe("Listen: stopping", () => {
   test.beforeEach(async ({ page }) => { await page.addInitScript(fakeSpeech); });
