@@ -7,6 +7,8 @@ import { Screen } from "../components/Screen";
 import { Sticky911 } from "../components/Sticky911";
 import { LangToggle } from "../components/TopBar";
 import { BackIcon, ChevronRightIcon } from "../components/icons";
+import { ListenButton } from "../listen/ListenButton";
+import { verdictSpeech } from "../listen/speech";
 import { AirQualityCard, ConfidenceCard, TwoPossibilitiesCard, VERDICT_ICONS, WhatToDoCard, WhyCard } from "../verdict/cards";
 import { VerdictMap } from "../verdict/VerdictMap";
 import { verdictView, type Variant } from "../verdict/view";
@@ -67,6 +69,8 @@ export function Verdict() {
         <p style={{ margin: "10px 0 0", fontSize: "20px", fontWeight: "500", lineHeight: "1.4", textWrap: "pretty" }}>{view.band.sub}</p>
       </section>
       <main style={{ display: "flex", flexDirection: "column", gap: "16px", padding: "16px 16px 160px" }}>
+        {/* The band's top row has no room left (New check, EN/FR): Listen starts the card list. */}
+        <ListenButton parts={verdictSpeech(view, lang)} style={{ alignSelf: "flex-start" }} />
         {view.notice && (
           // The fire is under 25 km away: follow officials, and what to do if told to leave, for this place.
           <section style={{ background: "#FFFFFF", borderRadius: "18px", padding: "18px 20px 8px", display: "flex", flexDirection: "column", gap: "4px", boxShadow: "0 1px 2px rgba(26, 29, 33, 0.06), 0 8px 24px rgba(26, 29, 33, 0.07)" }}>

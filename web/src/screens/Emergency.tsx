@@ -1,16 +1,19 @@
 // 04 · Emergency — Call 911 now (design/screens/04-emergency.html)
 import { useEffect, type CSSProperties } from "react";
 import { Link } from "react-router";
-import { useT } from "../app/state";
+import { useApp, useT } from "../app/state";
 import type { StringKey } from "../i18n";
 import { Screen } from "../components/Screen";
 import { LangToggle } from "../components/TopBar";
 import { BackIcon, ChevronRightIcon } from "../components/icons";
+import { ListenButton } from "../listen/ListenButton";
+import { emergencySpeech } from "../listen/speech";
 
 const NUMBER: CSSProperties = { flexShrink: "0", width: "30px", height: "30px", borderRadius: "50%", background: "#1A1D21", color: "#FFFFFF", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "18px", fontWeight: "700" };
 const PHONE = "M5.5 3.5h3l1.8 4.6-2.2 1.4a11 11 0 0 0 6.4 6.4l1.4-2.2 4.6 1.8v3a2 2 0 0 1-2.2 2A16.5 16.5 0 0 1 3.5 5.7a2 2 0 0 1 2-2.2z";
 
 export function Emergency() {
+  const { lang } = useApp();
   const t = useT();
   useEffect(() => {
     document.body.classList.add("emergency");
@@ -31,7 +34,10 @@ export function Emergency() {
           <Link to="/q1" aria-label={t("nav.back")} style={{ width: "56px", height: "56px", display: "flex", alignItems: "center", justifyContent: "center", color: "#FFFFFF", borderRadius: "14px" }}>
             <BackIcon size={28} />
           </Link>
-          <LangToggle on="band" />
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <ListenButton parts={emergencySpeech(lang)} />
+            <LangToggle on="band" />
+          </div>
         </div>
         <main style={{ flexGrow: "1", display: "flex", flexDirection: "column", gap: "20px", padding: "8px 20px 24px" }}>
           <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>

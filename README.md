@@ -15,6 +15,8 @@ The engine traces the air arriving at your spot backward on hourly winds, at sev
 
 When the AQHI is moderate or worse, or there is no reading and the smoke is likely or possibly from a fire, "What to do" adds Health Canada's advice on keeping windows closed (heat comes first) and taking a break from the smoke. Two buttons open a Google Maps search for libraries and community centres around the spot that was checked, rounded to about 100 m. No address is stored or looked up by the app.
 
+"Listen" (Q1, verdicts, Emergency, "If you’re told to leave") reads the screen's own strings aloud with the browser's built-in speech, in the app's language (a Canadian English or French voice when the device has one). It never starts by itself, and it's hidden when the browser can't speak.
+
 [TECH-FACTS.md](TECH-FACTS.md) has the architecture, the method, the data sources and their limits, the Moncton replay facts and the test counts. It is generated from the code, the data and actual test runs by `engine/scripts/tech_facts.py`.
 
 [VALIDATION.md](VALIDATION.md) tests the unchanged engine against 2025 reports of wildfire smoke in Maritimes communities and two quiet control days, with rules fixed before the run.

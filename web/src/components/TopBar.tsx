@@ -2,6 +2,7 @@ import type { CSSProperties } from "react";
 import { Link, useLocation, useNavigate } from "react-router";
 import { useApp, useT } from "../app/state";
 import type { Lang } from "../i18n";
+import { ListenButton } from "../listen/ListenButton";
 import { BackIcon } from "./icons";
 
 const GROUP_ON_PAGE: CSSProperties = { display: "flex", alignItems: "center", height: "44px", padding: "3px", borderRadius: "999px", background: "#FFFFFF", border: "1.5px solid #D6CDBF" };
@@ -31,8 +32,11 @@ export function LangToggle({ on = "page" }: { on?: "page" | "band" }) {
   );
 }
 
-/** Back arrow on the left, language switch on the right (screens 02–06, 08, 09). `back` is a route, or -1 for the previous screen. */
-export function TopBar({ back }: { back: string | -1 }) {
+/**
+ * Back arrow on the left, language switch on the right (screens 02–06, 08, 09). `back` is a route, or -1 for the previous
+ * screen. With `listen`, a Listen button before the language switch reads those parts aloud.
+ */
+export function TopBar({ back, listen }: { back: string | -1; listen?: string[] }) {
   const t = useT();
   const navigate = useNavigate();
   // Opened directly (a link or bookmark), there is no previous screen in the app: the link goes to Check.
@@ -43,7 +47,10 @@ export function TopBar({ back }: { back: string | -1 }) {
       <Link to={back === -1 ? "/" : back} onClick={onClick} aria-label={t("nav.back")} style={{ width: "56px", height: "56px", display: "flex", alignItems: "center", justifyContent: "center", color: "#1A1D21", borderRadius: "14px" }}>
         <BackIcon size={28} />
       </Link>
-      <LangToggle />
+      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+        {listen && <ListenButton parts={listen} />}
+        <LangToggle />
+      </div>
     </div>
   );
 }

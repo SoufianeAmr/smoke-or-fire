@@ -15,6 +15,7 @@ import { usePlaces } from "../data/places";
 import { centreOf, clockTime, directionsUrl, eventFor, isNear, kmBetween, mapLink, monthName, smsUrl, telUrl, type Centre, type EvacuationEvent, type Hours, type LatLon } from "../data/evacuation";
 import type { Lang, StringKey } from "../i18n";
 import { LeaveMap, MarkerBadge } from "../leave/LeaveMap";
+import { colon, sentence } from "../listen/speech";
 import { PlaceSearch, useLocate } from "./Location";
 
 const CARD: CSSProperties = { background: "#FFFFFF", color: "#1A1D21", borderRadius: "18px", padding: "20px", display: "flex", flexDirection: "column", gap: "14px", boxShadow: "0 1px 2px rgba(26, 29, 33, 0.06), 0 8px 24px rgba(26, 29, 33, 0.07)" };
@@ -56,10 +57,25 @@ export function Leave() {
   // The text to family carries a location only if the person shared the phone's location this session.
   const message = [t("leave.family.sms"), shared && t("leave.family.location", { mapLink: mapLink(shared) })].filter(Boolean).join(" ");
 
+  // Listen: the heading; near the fire, the registration line and the reception centre's name and address (farther away,
+  // that the evacuation doesn't apply); the grab list; then "Tell family you're OK". With no place yet, the question.
+  const reception = event && near ? centreOf(event, "reception") : null;
+  const listen = !place
+    ? [sentence(t("leave.title")), t("location.title")]
+    : [
+        sentence(t("leave.title")),
+        ...(reception ? [...(reception.register ? [sentence(t("leave.register"))] : []), sentence(`${reception.name}, ${reception.address}`)] : []),
+        ...(event && !near ? [sentence(t("leave.far", farVars(event, place, lang)))] : []),
+        `${t("leave.take.title")}${colon(lang).trimEnd()}`,
+        ...TAKE.map(([key]) => sentence(t(key))),
+        sentence(t("leave.take.noDelay")),
+        sentence(t("leave.family")),
+      ];
+
   return (
     <Screen>
       <ReplayBanner />
-      <TopBar back={-1} />
+      <TopBar back={-1} listen={listen} />
       <main style={{ flexGrow: "1", display: "flex", flexDirection: "column", gap: "16px", padding: "4px 16px 160px" }}>
         <div style={{ display: "flex", flexDirection: "column", gap: "12px", padding: "0 4px 4px" }}>
           <span style={{ width: "60px", height: "60px", borderRadius: "50%", background: "#1B2A4A", color: "#FFFFFF", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -197,6 +213,15 @@ function CentreCard({ centre, origin }: { centre: Centre; origin?: LatLon }) {
  *  some place names start with a sounded h, which keeps "de". */
 const ofTown = (town: string) => (/^([aeiouyàâäéèêëîïôöùûü]|halifax\b)/i.test(town) ? `d’${town}` : `de ${town}`);
 
+/** "This evacuation was for people near the Long Lake fire in Annapolis County, 159 km from Moncton." */
+const farVars = (event: EvacuationEvent, place: Place, lang: Lang) => ({
+  fire: event.fire.name,
+  area: event.area[lang],
+  km: Math.round(kmBetween(place, event.fire)),
+  town: place.name,
+  ofTown: ofTown(place.name),
+});
+
 /** Away from an active event (it doesn't apply), or none active (live): where officials announce centres, and 211. */
 function Elsewhere({ place, event, live }: { place: Place; event: EvacuationEvent | null; live: boolean }) {
   const { lang } = useApp();
@@ -218,13 +243,7 @@ function Elsewhere({ place, event, live }: { place: Place; event: EvacuationEven
     </a>
   );
   const links = [...(live && inMoncton(place) ? [MONCTON] : []), ...(PROVINCE_LINKS[place.province] ?? [])];
-  const far = event && {
-    fire: event.fire.name,
-    area: event.area[lang],
-    km: Math.round(kmBetween(place, event.fire)),
-    town: place.name,
-    ofTown: ofTown(place.name),
-  };
+  const far = event && farVars(event, place, lang);
   return (
     <section style={CARD}>
       {far && <p style={{ ...BODY, fontWeight: "700" }}>{t("leave.far", far)}</p>}

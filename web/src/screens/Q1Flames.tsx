@@ -1,18 +1,20 @@
 // 02 · Question 1 — Do you see flames? (design/screens/02-q1-flames.html)
 import { Link } from "react-router";
-import { useT } from "../app/state";
+import { useApp, useT } from "../app/state";
 import { ReplayBanner } from "../components/ReplayBanner";
 import { Screen } from "../components/Screen";
 import { Sticky911 } from "../components/Sticky911";
 import { TopBar } from "../components/TopBar";
 import { FlameIcon } from "../components/icons";
+import { q1Speech } from "../listen/speech";
 
 export function Q1Flames() {
+  const { lang } = useApp();
   const t = useT();
   return (
     <Screen>
       <ReplayBanner />
-      <TopBar back="/" />
+      <TopBar back="/" listen={q1Speech(lang)} />
       <main className="q1-main" style={{ flexGrow: "1", display: "flex", flexDirection: "column", gap: "28px", padding: "12px 16px 152px" }}>
         <div className="q1-head" style={{ display: "flex", flexDirection: "column", gap: "10px", padding: "0 4px" }}>
           <p style={{ margin: "0", fontSize: "18px", fontWeight: "600", color: "#4F5561" }}>{t("q1.step")}</p>

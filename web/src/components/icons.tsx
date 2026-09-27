@@ -94,6 +94,20 @@ export const CoffeeIcon = ({ size, style }: IconProps) =>
 
 export const NavigationIcon = ({ size, style }: IconProps) => svg(size, <polygon points="3 11 22 2 13 21 11 13 3 11" />, style);
 
+// "Listen": path data from Lucide "volume-2" (ISC licence); Stop is a filled square.
+export const SpeakerIcon = ({ size, style }: IconProps) =>
+  svg(
+    size,
+    <>
+      <path d="M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z" />
+      <path d="M16 9a5 5 0 0 1 0 6" />
+      <path d="M19.364 18.364a9 9 0 0 0 0-12.728" />
+    </>,
+    style,
+  );
+
+export const StopIcon = ({ size, style }: IconProps) => svg(size, <rect x="6" y="6" width="12" height="12" rx="2" style={{ fill: "currentColor" }} />, style);
+
 // A break from the smoke, map searches near you: path data from Lucide "map-pin" (ISC licence).
 export const MapPinIcon = ({ size, style }: IconProps) =>
   svg(
