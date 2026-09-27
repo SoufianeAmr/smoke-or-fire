@@ -409,3 +409,11 @@ def test_a_fire_seen_only_in_cwfis_report_times_has_no_last_sighting():
     fire = get_verdict(feeds).json()["closestApproach"]["fire"]
 
     assert (fire["detections"]["total"], fire["lastSeen"], fire["lastSeenHoursAgo"]) == (1, None, None)
+
+
+def test_the_bare_address_names_the_service_and_its_endpoints():
+    client = TestClient(create_app({"live": FakeFeeds(wind=uniform_wind(270, 5))}))
+
+    response = client.get("/")
+
+    assert (response.status_code, response.json()) == (200, {"service": "Smoke or Fire? engine", "endpoints": ["/health", "/verdict"]})

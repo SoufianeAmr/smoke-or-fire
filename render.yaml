@@ -14,7 +14,8 @@ services:
     runtime: python
     plan: free
     region: virginia
-    buildCommand: pip install uv && cd engine && uv sync --frozen --no-dev
+    # env -u: a UV_PYTHON_PREFERENCE left on the service clashes with Render's UV_NO_MANAGED_PYTHON.
+    buildCommand: pip install uv && cd engine && env -u UV_PYTHON_PREFERENCE uv sync --frozen --no-dev
     startCommand: cd engine && .venv/bin/uvicorn smoke_engine.main:app --host 0.0.0.0 --port $PORT
     healthCheckPath: /health
     autoDeploy: true

@@ -248,6 +248,11 @@ def create_app(feeds_by_mode: dict, now=_utc_now, lifespan=None) -> FastAPI:
     # The web app is served from another origin; the API is public and read-only.
     app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["GET"])
 
+    @app.get("/")
+    def index():
+        """What anyone opening the bare address sees, instead of "Not Found"."""
+        return {"service": "Smoke or Fire? engine", "endpoints": ["/health", "/verdict"]}
+
     @app.get("/health")
     def health():
         feeds = {mode: f.status() for mode, f in feeds_by_mode.items() if hasattr(f, "status")}
