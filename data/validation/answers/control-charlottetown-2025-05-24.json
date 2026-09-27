@@ -1,0 +1,950 @@
+{
+ "mode": "replay",
+ "time": "2025-05-24T12:00:00Z",
+ "location": {
+  "lat": 46.24028,
+  "lon": -63.13472,
+  "name": "Charlottetown",
+  "province": "PE"
+ },
+ "verdict": "unexplained",
+ "confidence": "low",
+ "noFiresInRange": true,
+ "rules": {
+  "hoursBack": 24,
+  "highConfidenceKm": 10.0,
+  "driftingKm": 25.0,
+  "searchKm": 50.0,
+  "fireRadiusKm": 500.0,
+  "unsteadyDeg": 45.0,
+  "hotspotHours": 24,
+  "heights": [
+   "100m",
+   "925hPa",
+   "850hPa"
+  ]
+ },
+ "path": {
+  "hoursTraced": 24,
+  "stoppedAtGridEdge": false,
+  "points": [
+   {
+    "hoursAgo": 0,
+    "time": "2025-05-24T12:00:00Z",
+    "lat": 46.2403,
+    "lon": -63.1347,
+    "area": "PE",
+    "windFromDeg": 185
+   },
+   {
+    "hoursAgo": 1,
+    "time": "2025-05-24T11:00:00Z",
+    "lat": 46.0267,
+    "lon": -63.1396,
+    "area": "GULF_OF_ST_LAWRENCE",
+    "windFromDeg": 176
+   },
+   {
+    "hoursAgo": 2,
+    "time": "2025-05-24T10:00:00Z",
+    "lat": 45.8098,
+    "lon": -63.1316,
+    "area": "GULF_OF_ST_LAWRENCE",
+    "windFromDeg": 181
+   },
+   {
+    "hoursAgo": 3,
+    "time": "2025-05-24T09:00:00Z",
+    "lat": 45.581,
+    "lon": -63.1621,
+    "area": "NS",
+    "windFromDeg": 189
+   },
+   {
+    "hoursAgo": 4,
+    "time": "2025-05-24T08:00:00Z",
+    "lat": 45.3392,
+    "lon": -63.2207,
+    "area": "NS",
+    "windFromDeg": 190
+   },
+   {
+    "hoursAgo": 5,
+    "time": "2025-05-24T07:00:00Z",
+    "lat": 45.1049,
+    "lon": -63.2909,
+    "area": "NS",
+    "windFromDeg": 193
+   },
+   {
+    "hoursAgo": 6,
+    "time": "2025-05-24T06:00:00Z",
+    "lat": 44.8715,
+    "lon": -63.3815,
+    "area": "NS",
+    "windFromDeg": 198
+   },
+   {
+    "hoursAgo": 7,
+    "time": "2025-05-24T05:00:00Z",
+    "lat": 44.6128,
+    "lon": -63.5242,
+    "area": "NS",
+    "windFromDeg": 205
+   },
+   {
+    "hoursAgo": 8,
+    "time": "2025-05-24T04:00:00Z",
+    "lat": 44.3203,
+    "lon": -63.7143,
+    "area": "NS",
+    "windFromDeg": 205
+   },
+   {
+    "hoursAgo": 9,
+    "time": "2025-05-24T03:00:00Z",
+    "lat": 44.0126,
+    "lon": -63.9513,
+    "area": null,
+    "windFromDeg": 212
+   },
+   {
+    "hoursAgo": 10,
+    "time": "2025-05-24T02:00:00Z",
+    "lat": 43.719,
+    "lon": -64.2646,
+    "area": null,
+    "windFromDeg": 222
+   },
+   {
+    "hoursAgo": 11,
+    "time": "2025-05-24T01:00:00Z",
+    "lat": 43.4405,
+    "lon": -64.6469,
+    "area": null,
+    "windFromDeg": 227
+   },
+   {
+    "hoursAgo": 12,
+    "time": "2025-05-24T00:00:00Z",
+    "lat": 43.1732,
+    "lon": -65.0904,
+    "area": null,
+    "windFromDeg": 233
+   },
+   {
+    "hoursAgo": 13,
+    "time": "2025-05-23T23:00:00Z",
+    "lat": 42.9188,
+    "lon": -65.6067,
+    "area": null,
+    "windFromDeg": 239
+   },
+   {
+    "hoursAgo": 14,
+    "time": "2025-05-23T22:00:00Z",
+    "lat": 42.6863,
+    "lon": -66.1925,
+    "area": null,
+    "windFromDeg": 244
+   },
+   {
+    "hoursAgo": 15,
+    "time": "2025-05-23T21:00:00Z",
+    "lat": 42.4989,
+    "lon": -66.8239,
+    "area": null,
+    "windFromDeg": 252
+   },
+   {
+    "hoursAgo": 16,
+    "time": "2025-05-23T20:00:00Z",
+    "lat": 42.3652,
+    "lon": -67.4913,
+    "area": null,
+    "windFromDeg": 258
+   },
+   {
+    "hoursAgo": 17,
+    "time": "2025-05-23T19:00:00Z",
+    "lat": 42.2951,
+    "lon": -68.1615,
+    "area": null,
+    "windFromDeg": 266
+   },
+   {
+    "hoursAgo": 18,
+    "time": "2025-05-23T18:00:00Z",
+    "lat": 42.3128,
+    "lon": -68.8165,
+    "area": "GULF_OF_MAINE",
+    "windFromDeg": 278
+   },
+   {
+    "hoursAgo": 19,
+    "time": "2025-05-23T17:00:00Z",
+    "lat": 42.4488,
+    "lon": -69.4254,
+    "area": "GULF_OF_MAINE",
+    "windFromDeg": 295
+   },
+   {
+    "hoursAgo": 20,
+    "time": "2025-05-23T16:00:00Z",
+    "lat": 42.7245,
+    "lon": -69.9413,
+    "area": "GULF_OF_MAINE",
+    "windFromDeg": 317
+   },
+   {
+    "hoursAgo": 21,
+    "time": "2025-05-23T15:00:00Z",
+    "lat": 43.0993,
+    "lon": -70.3154,
+    "area": "GULF_OF_MAINE",
+    "windFromDeg": 332
+   },
+   {
+    "hoursAgo": 22,
+    "time": "2025-05-23T14:00:00Z",
+    "lat": 43.4643,
+    "lon": -70.5299,
+    "area": "ME",
+    "windFromDeg": 342
+   },
+   {
+    "hoursAgo": 23,
+    "time": "2025-05-23T13:00:00Z",
+    "lat": 43.7833,
+    "lon": -70.6213,
+    "area": "ME",
+    "windFromDeg": 356
+   },
+   {
+    "hoursAgo": 24,
+    "time": "2025-05-23T12:00:00Z",
+    "lat": 44.0733,
+    "lon": -70.6192,
+    "area": "ME",
+    "windFromDeg": 6
+   }
+  ],
+  "origin": {
+   "hoursAgo": 24,
+   "area": "ME",
+   "km": 634,
+   "compass": "WSW"
+  }
+ },
+ "wind": {
+  "level": "100m",
+  "model": "gfs025",
+  "steady": false,
+  "spreadDeg": 58.6,
+  "biggestShift": {
+   "time": "2025-05-23T17:00:00Z",
+   "hoursAgo": 19,
+   "fromDeg": 317,
+   "toDeg": 295
+  }
+ },
+ "closestApproach": null,
+ "nearestFire": null,
+ "heights": {
+  "chosen": "100m",
+  "agree": true,
+  "results": {
+   "100m": {
+    "verdict": "unexplained",
+    "confidence": "low",
+    "closestApproachKm": null,
+    "steady": false
+   },
+   "925hPa": {
+    "verdict": "unexplained",
+    "confidence": "low",
+    "closestApproachKm": null,
+    "steady": false
+   },
+   "850hPa": {
+    "verdict": "unexplained",
+    "confidence": "low",
+    "closestApproachKm": null,
+    "steady": false
+   }
+  },
+  "paths": {
+   "100m": {
+    "hoursTraced": 24,
+    "stoppedAtGridEdge": false,
+    "points": [
+     {
+      "hoursAgo": 0,
+      "time": "2025-05-24T12:00:00Z",
+      "lat": 46.2403,
+      "lon": -63.1347,
+      "area": "PE",
+      "windFromDeg": 185
+     },
+     {
+      "hoursAgo": 1,
+      "time": "2025-05-24T11:00:00Z",
+      "lat": 46.0267,
+      "lon": -63.1396,
+      "area": "GULF_OF_ST_LAWRENCE",
+      "windFromDeg": 176
+     },
+     {
+      "hoursAgo": 2,
+      "time": "2025-05-24T10:00:00Z",
+      "lat": 45.8098,
+      "lon": -63.1316,
+      "area": "GULF_OF_ST_LAWRENCE",
+      "windFromDeg": 181
+     },
+     {
+      "hoursAgo": 3,
+      "time": "2025-05-24T09:00:00Z",
+      "lat": 45.581,
+      "lon": -63.1621,
+      "area": "NS",
+      "windFromDeg": 189
+     },
+     {
+      "hoursAgo": 4,
+      "time": "2025-05-24T08:00:00Z",
+      "lat": 45.3392,
+      "lon": -63.2207,
+      "area": "NS",
+      "windFromDeg": 190
+     },
+     {
+      "hoursAgo": 5,
+      "time": "2025-05-24T07:00:00Z",
+      "lat": 45.1049,
+      "lon": -63.2909,
+      "area": "NS",
+      "windFromDeg": 193
+     },
+     {
+      "hoursAgo": 6,
+      "time": "2025-05-24T06:00:00Z",
+      "lat": 44.8715,
+      "lon": -63.3815,
+      "area": "NS",
+      "windFromDeg": 198
+     },
+     {
+      "hoursAgo": 7,
+      "time": "2025-05-24T05:00:00Z",
+      "lat": 44.6128,
+      "lon": -63.5242,
+      "area": "NS",
+      "windFromDeg": 205
+     },
+     {
+      "hoursAgo": 8,
+      "time": "2025-05-24T04:00:00Z",
+      "lat": 44.3203,
+      "lon": -63.7143,
+      "area": "NS",
+      "windFromDeg": 205
+     },
+     {
+      "hoursAgo": 9,
+      "time": "2025-05-24T03:00:00Z",
+      "lat": 44.0126,
+      "lon": -63.9513,
+      "area": null,
+      "windFromDeg": 212
+     },
+     {
+      "hoursAgo": 10,
+      "time": "2025-05-24T02:00:00Z",
+      "lat": 43.719,
+      "lon": -64.2646,
+      "area": null,
+      "windFromDeg": 222
+     },
+     {
+      "hoursAgo": 11,
+      "time": "2025-05-24T01:00:00Z",
+      "lat": 43.4405,
+      "lon": -64.6469,
+      "area": null,
+      "windFromDeg": 227
+     },
+     {
+      "hoursAgo": 12,
+      "time": "2025-05-24T00:00:00Z",
+      "lat": 43.1732,
+      "lon": -65.0904,
+      "area": null,
+      "windFromDeg": 233
+     },
+     {
+      "hoursAgo": 13,
+      "time": "2025-05-23T23:00:00Z",
+      "lat": 42.9188,
+      "lon": -65.6067,
+      "area": null,
+      "windFromDeg": 239
+     },
+     {
+      "hoursAgo": 14,
+      "time": "2025-05-23T22:00:00Z",
+      "lat": 42.6863,
+      "lon": -66.1925,
+      "area": null,
+      "windFromDeg": 244
+     },
+     {
+      "hoursAgo": 15,
+      "time": "2025-05-23T21:00:00Z",
+      "lat": 42.4989,
+      "lon": -66.8239,
+      "area": null,
+      "windFromDeg": 252
+     },
+     {
+      "hoursAgo": 16,
+      "time": "2025-05-23T20:00:00Z",
+      "lat": 42.3652,
+      "lon": -67.4913,
+      "area": null,
+      "windFromDeg": 258
+     },
+     {
+      "hoursAgo": 17,
+      "time": "2025-05-23T19:00:00Z",
+      "lat": 42.2951,
+      "lon": -68.1615,
+      "area": null,
+      "windFromDeg": 266
+     },
+     {
+      "hoursAgo": 18,
+      "time": "2025-05-23T18:00:00Z",
+      "lat": 42.3128,
+      "lon": -68.8165,
+      "area": "GULF_OF_MAINE",
+      "windFromDeg": 278
+     },
+     {
+      "hoursAgo": 19,
+      "time": "2025-05-23T17:00:00Z",
+      "lat": 42.4488,
+      "lon": -69.4254,
+      "area": "GULF_OF_MAINE",
+      "windFromDeg": 295
+     },
+     {
+      "hoursAgo": 20,
+      "time": "2025-05-23T16:00:00Z",
+      "lat": 42.7245,
+      "lon": -69.9413,
+      "area": "GULF_OF_MAINE",
+      "windFromDeg": 317
+     },
+     {
+      "hoursAgo": 21,
+      "time": "2025-05-23T15:00:00Z",
+      "lat": 43.0993,
+      "lon": -70.3154,
+      "area": "GULF_OF_MAINE",
+      "windFromDeg": 332
+     },
+     {
+      "hoursAgo": 22,
+      "time": "2025-05-23T14:00:00Z",
+      "lat": 43.4643,
+      "lon": -70.5299,
+      "area": "ME",
+      "windFromDeg": 342
+     },
+     {
+      "hoursAgo": 23,
+      "time": "2025-05-23T13:00:00Z",
+      "lat": 43.7833,
+      "lon": -70.6213,
+      "area": "ME",
+      "windFromDeg": 356
+     },
+     {
+      "hoursAgo": 24,
+      "time": "2025-05-23T12:00:00Z",
+      "lat": 44.0733,
+      "lon": -70.6192,
+      "area": "ME",
+      "windFromDeg": 6
+     }
+    ],
+    "origin": {
+     "hoursAgo": 24,
+     "area": "ME",
+     "km": 634,
+     "compass": "WSW"
+    }
+   },
+   "925hPa": {
+    "hoursTraced": 24,
+    "stoppedAtGridEdge": false,
+    "points": [
+     {
+      "hoursAgo": 0,
+      "time": "2025-05-24T12:00:00Z",
+      "lat": 46.2403,
+      "lon": -63.1347,
+      "area": "PE",
+      "windFromDeg": 217
+     },
+     {
+      "hoursAgo": 1,
+      "time": "2025-05-24T11:00:00Z",
+      "lat": 46.0633,
+      "lon": -63.3629,
+      "area": "GULF_OF_ST_LAWRENCE",
+      "windFromDeg": 226
+     },
+     {
+      "hoursAgo": 2,
+      "time": "2025-05-24T10:00:00Z",
+      "lat": 45.8636,
+      "lon": -63.6381,
+      "area": "NS",
+      "windFromDeg": 222
+     },
+     {
+      "hoursAgo": 3,
+      "time": "2025-05-24T09:00:00Z",
+      "lat": 45.6062,
+      "lon": -63.924,
+      "area": "NS",
+      "windFromDeg": 214
+     },
+     {
+      "hoursAgo": 4,
+      "time": "2025-05-24T08:00:00Z",
+      "lat": 45.3124,
+      "lon": -64.2195,
+      "area": "BAY_OF_FUNDY",
+      "windFromDeg": 216
+     },
+     {
+      "hoursAgo": 5,
+      "time": "2025-05-24T07:00:00Z",
+      "lat": 45.0233,
+      "lon": -64.5588,
+      "area": "NS",
+      "windFromDeg": 222
+     },
+     {
+      "hoursAgo": 6,
+      "time": "2025-05-24T06:00:00Z",
+      "lat": 44.7339,
+      "lon": -64.9331,
+      "area": "NS",
+      "windFromDeg": 223
+     },
+     {
+      "hoursAgo": 7,
+      "time": "2025-05-24T05:00:00Z",
+      "lat": 44.4397,
+      "lon": -65.3581,
+      "area": "NS",
+      "windFromDeg": 228
+     },
+     {
+      "hoursAgo": 8,
+      "time": "2025-05-24T04:00:00Z",
+      "lat": 44.1635,
+      "lon": -65.8386,
+      "area": "NS",
+      "windFromDeg": 234
+     },
+     {
+      "hoursAgo": 9,
+      "time": "2025-05-24T03:00:00Z",
+      "lat": 43.9568,
+      "lon": -66.3666,
+      "area": "GULF_OF_MAINE",
+      "windFromDeg": 248
+     },
+     {
+      "hoursAgo": 10,
+      "time": "2025-05-24T02:00:00Z",
+      "lat": 43.8282,
+      "lon": -66.9355,
+      "area": "GULF_OF_MAINE",
+      "windFromDeg": 257
+     },
+     {
+      "hoursAgo": 11,
+      "time": "2025-05-24T01:00:00Z",
+      "lat": 43.7585,
+      "lon": -67.491,
+      "area": "GULF_OF_MAINE",
+      "windFromDeg": 263
+     },
+     {
+      "hoursAgo": 12,
+      "time": "2025-05-24T00:00:00Z",
+      "lat": 43.7491,
+      "lon": -67.9751,
+      "area": "GULF_OF_MAINE",
+      "windFromDeg": 274
+     },
+     {
+      "hoursAgo": 13,
+      "time": "2025-05-23T23:00:00Z",
+      "lat": 43.8131,
+      "lon": -68.363,
+      "area": "GULF_OF_MAINE",
+      "windFromDeg": 294
+     },
+     {
+      "hoursAgo": 14,
+      "time": "2025-05-23T22:00:00Z",
+      "lat": 43.942,
+      "lon": -68.6327,
+      "area": "GULF_OF_MAINE",
+      "windFromDeg": 317
+     },
+     {
+      "hoursAgo": 15,
+      "time": "2025-05-23T21:00:00Z",
+      "lat": 44.1286,
+      "lon": -68.7391,
+      "area": "GULF_OF_MAINE",
+      "windFromDeg": 360
+     },
+     {
+      "hoursAgo": 16,
+      "time": "2025-05-23T20:00:00Z",
+      "lat": 44.3661,
+      "lon": -68.6281,
+      "area": "ME",
+      "windFromDeg": 33
+     },
+     {
+      "hoursAgo": 17,
+      "time": "2025-05-23T19:00:00Z",
+      "lat": 44.6183,
+      "lon": -68.284,
+      "area": "ME",
+      "windFromDeg": 58
+     },
+     {
+      "hoursAgo": 18,
+      "time": "2025-05-23T18:00:00Z",
+      "lat": 44.7391,
+      "lon": -67.7283,
+      "area": "ME",
+      "windFromDeg": 93
+     },
+     {
+      "hoursAgo": 19,
+      "time": "2025-05-23T17:00:00Z",
+      "lat": 44.6125,
+      "lon": -67.0772,
+      "area": "GULF_OF_MAINE",
+      "windFromDeg": 122
+     },
+     {
+      "hoursAgo": 20,
+      "time": "2025-05-23T16:00:00Z",
+      "lat": 44.2749,
+      "lon": -66.6206,
+      "area": "GULF_OF_MAINE",
+      "windFromDeg": 151
+     },
+     {
+      "hoursAgo": 21,
+      "time": "2025-05-23T15:00:00Z",
+      "lat": 43.8712,
+      "lon": -66.4056,
+      "area": "GULF_OF_MAINE",
+      "windFromDeg": 168
+     },
+     {
+      "hoursAgo": 22,
+      "time": "2025-05-23T14:00:00Z",
+      "lat": 43.4516,
+      "lon": -66.3693,
+      "area": "GULF_OF_MAINE",
+      "windFromDeg": 185
+     },
+     {
+      "hoursAgo": 23,
+      "time": "2025-05-23T13:00:00Z",
+      "lat": 42.9815,
+      "lon": -66.5142,
+      "area": null,
+      "windFromDeg": 199
+     },
+     {
+      "hoursAgo": 24,
+      "time": "2025-05-23T12:00:00Z",
+      "lat": 42.4428,
+      "lon": -66.8468,
+      "area": null,
+      "windFromDeg": 209
+     }
+    ],
+    "origin": {
+     "hoursAgo": 24,
+     "area": null,
+     "km": 515,
+     "compass": "SW"
+    }
+   },
+   "850hPa": {
+    "hoursTraced": 24,
+    "stoppedAtGridEdge": false,
+    "points": [
+     {
+      "hoursAgo": 0,
+      "time": "2025-05-24T12:00:00Z",
+      "lat": 46.2403,
+      "lon": -63.1347,
+      "area": "PE",
+      "windFromDeg": 209
+     },
+     {
+      "hoursAgo": 1,
+      "time": "2025-05-24T11:00:00Z",
+      "lat": 45.9382,
+      "lon": -63.3868,
+      "area": "GULF_OF_ST_LAWRENCE",
+      "windFromDeg": 211
+     },
+     {
+      "hoursAgo": 2,
+      "time": "2025-05-24T10:00:00Z",
+      "lat": 45.6187,
+      "lon": -63.6888,
+      "area": "NS",
+      "windFromDeg": 215
+     },
+     {
+      "hoursAgo": 3,
+      "time": "2025-05-24T09:00:00Z",
+      "lat": 45.3006,
+      "lon": -64.0557,
+      "area": "BAY_OF_FUNDY",
+      "windFromDeg": 222
+     },
+     {
+      "hoursAgo": 4,
+      "time": "2025-05-24T08:00:00Z",
+      "lat": 45.0044,
+      "lon": -64.4911,
+      "area": "NS",
+      "windFromDeg": 230
+     },
+     {
+      "hoursAgo": 5,
+      "time": "2025-05-24T07:00:00Z",
+      "lat": 44.7282,
+      "lon": -65.0042,
+      "area": "NS",
+      "windFromDeg": 236
+     },
+     {
+      "hoursAgo": 6,
+      "time": "2025-05-24T06:00:00Z",
+      "lat": 44.4648,
+      "lon": -65.5653,
+      "area": "NS",
+      "windFromDeg": 237
+     },
+     {
+      "hoursAgo": 7,
+      "time": "2025-05-24T05:00:00Z",
+      "lat": 44.2151,
+      "lon": -66.1762,
+      "area": "BAY_OF_FUNDY",
+      "windFromDeg": 243
+     },
+     {
+      "hoursAgo": 8,
+      "time": "2025-05-24T04:00:00Z",
+      "lat": 44.0127,
+      "lon": -66.8108,
+      "area": "GULF_OF_MAINE",
+      "windFromDeg": 249
+     },
+     {
+      "hoursAgo": 9,
+      "time": "2025-05-24T03:00:00Z",
+      "lat": 43.8788,
+      "lon": -67.4202,
+      "area": "GULF_OF_MAINE",
+      "windFromDeg": 257
+     },
+     {
+      "hoursAgo": 10,
+      "time": "2025-05-24T02:00:00Z",
+      "lat": 43.812,
+      "lon": -68.0133,
+      "area": "GULF_OF_MAINE",
+      "windFromDeg": 266
+     },
+     {
+      "hoursAgo": 11,
+      "time": "2025-05-24T01:00:00Z",
+      "lat": 43.8051,
+      "lon": -68.5911,
+      "area": "GULF_OF_MAINE",
+      "windFromDeg": 273
+     },
+     {
+      "hoursAgo": 12,
+      "time": "2025-05-24T00:00:00Z",
+      "lat": 43.8468,
+      "lon": -69.118,
+      "area": "GULF_OF_MAINE",
+      "windFromDeg": 281
+     },
+     {
+      "hoursAgo": 13,
+      "time": "2025-05-23T23:00:00Z",
+      "lat": 43.9396,
+      "lon": -69.5885,
+      "area": "ME",
+      "windFromDeg": 291
+     },
+     {
+      "hoursAgo": 14,
+      "time": "2025-05-23T22:00:00Z",
+      "lat": 44.0645,
+      "lon": -69.9818,
+      "area": "ME",
+      "windFromDeg": 297
+     },
+     {
+      "hoursAgo": 15,
+      "time": "2025-05-23T21:00:00Z",
+      "lat": 44.1762,
+      "lon": -70.2676,
+      "area": "ME",
+      "windFromDeg": 301
+     },
+     {
+      "hoursAgo": 16,
+      "time": "2025-05-23T20:00:00Z",
+      "lat": 44.2794,
+      "lon": -70.4533,
+      "area": "ME",
+      "windFromDeg": 317
+     },
+     {
+      "hoursAgo": 17,
+      "time": "2025-05-23T19:00:00Z",
+      "lat": 44.3708,
+      "lon": -70.5434,
+      "area": "ME",
+      "windFromDeg": 343
+     },
+     {
+      "hoursAgo": 18,
+      "time": "2025-05-23T18:00:00Z",
+      "lat": 44.4491,
+      "lon": -70.5211,
+      "area": "ME",
+      "windFromDeg": 42
+     },
+     {
+      "hoursAgo": 19,
+      "time": "2025-05-23T17:00:00Z",
+      "lat": 44.5289,
+      "lon": -70.3446,
+      "area": "ME",
+      "windFromDeg": 70
+     },
+     {
+      "hoursAgo": 20,
+      "time": "2025-05-23T16:00:00Z",
+      "lat": 44.5902,
+      "lon": -69.9516,
+      "area": "ME",
+      "windFromDeg": 84
+     },
+     {
+      "hoursAgo": 21,
+      "time": "2025-05-23T15:00:00Z",
+      "lat": 44.5506,
+      "lon": -69.3369,
+      "area": "ME",
+      "windFromDeg": 103
+     },
+     {
+      "hoursAgo": 22,
+      "time": "2025-05-23T14:00:00Z",
+      "lat": 44.3878,
+      "lon": -68.6862,
+      "area": "ME",
+      "windFromDeg": 114
+     },
+     {
+      "hoursAgo": 23,
+      "time": "2025-05-23T13:00:00Z",
+      "lat": 44.1333,
+      "lon": -68.1146,
+      "area": "GULF_OF_MAINE",
+      "windFromDeg": 128
+     },
+     {
+      "hoursAgo": 24,
+      "time": "2025-05-23T12:00:00Z",
+      "lat": 43.7788,
+      "lon": -67.636,
+      "area": "GULF_OF_MAINE",
+      "windFromDeg": 146
+     }
+    ],
+    "origin": {
+     "hoursAgo": 24,
+     "area": "GULF_OF_MAINE",
+     "km": 447,
+     "compass": "SW"
+    }
+   }
+  }
+ },
+ "forward": null,
+ "aqhi": {
+  "value": 1.46,
+  "display": "1",
+  "segments": 1,
+  "category": "low",
+  "observedAt": "2025-05-24T12:00:00Z",
+  "station": {
+   "id": "BAARG",
+   "nameEn": "Charlottetown",
+   "nameFr": "Charlottetown",
+   "km": 0
+  }
+ },
+ "sources": {
+  "cwfis": {
+   "ok": true,
+   "checkedAt": null,
+   "newestDetection": null
+  },
+  "firms": {
+   "ok": true,
+   "checkedAt": null,
+   "newestDetection": null,
+   "satellitesUsed": [],
+   "countsByLatencyClass": {
+    "URT": 0,
+    "RT": 0,
+    "NRT": 0,
+    "SP": 0
+   }
+  },
+  "checkedMinutesAgo": null,
+  "newestDetection": null
+ }
+}

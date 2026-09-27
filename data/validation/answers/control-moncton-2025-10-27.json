@@ -1,0 +1,954 @@
+{
+ "mode": "replay",
+ "time": "2025-10-27T12:00:00Z",
+ "location": {
+  "lat": 46.09948,
+  "lon": -64.7998,
+  "name": "Moncton",
+  "province": "NB"
+ },
+ "verdict": "unexplained",
+ "confidence": "low",
+ "noFiresInRange": true,
+ "rules": {
+  "hoursBack": 24,
+  "highConfidenceKm": 10.0,
+  "driftingKm": 25.0,
+  "searchKm": 50.0,
+  "fireRadiusKm": 500.0,
+  "unsteadyDeg": 45.0,
+  "hotspotHours": 24,
+  "heights": [
+   "100m",
+   "925hPa",
+   "850hPa"
+  ]
+ },
+ "path": {
+  "hoursTraced": 24,
+  "stoppedAtGridEdge": false,
+  "points": [
+   {
+    "hoursAgo": 0,
+    "time": "2025-10-27T12:00:00Z",
+    "lat": 46.0995,
+    "lon": -64.7998,
+    "area": "NB",
+    "windFromDeg": 20
+   },
+   {
+    "hoursAgo": 1,
+    "time": "2025-10-27T11:00:00Z",
+    "lat": 46.3072,
+    "lon": -64.7048,
+    "area": "NB",
+    "windFromDeg": 14
+   },
+   {
+    "hoursAgo": 2,
+    "time": "2025-10-27T10:00:00Z",
+    "lat": 46.4912,
+    "lon": -64.6557,
+    "area": "GULF_OF_ST_LAWRENCE",
+    "windFromDeg": 6
+   },
+   {
+    "hoursAgo": 3,
+    "time": "2025-10-27T09:00:00Z",
+    "lat": 46.6381,
+    "lon": -64.6011,
+    "area": "GULF_OF_ST_LAWRENCE",
+    "windFromDeg": 25
+   },
+   {
+    "hoursAgo": 4,
+    "time": "2025-10-27T08:00:00Z",
+    "lat": 46.7386,
+    "lon": -64.4938,
+    "area": "GULF_OF_ST_LAWRENCE",
+    "windFromDeg": 49
+   },
+   {
+    "hoursAgo": 5,
+    "time": "2025-10-27T07:00:00Z",
+    "lat": 46.8033,
+    "lon": -64.3698,
+    "area": "GULF_OF_ST_LAWRENCE",
+    "windFromDeg": 57
+   },
+   {
+    "hoursAgo": 6,
+    "time": "2025-10-27T06:00:00Z",
+    "lat": 46.8421,
+    "lon": -64.2547,
+    "area": "PE",
+    "windFromDeg": 70
+   },
+   {
+    "hoursAgo": 7,
+    "time": "2025-10-27T05:00:00Z",
+    "lat": 46.8833,
+    "lon": -64.1335,
+    "area": "PE",
+    "windFromDeg": 58
+   },
+   {
+    "hoursAgo": 8,
+    "time": "2025-10-27T04:00:00Z",
+    "lat": 46.9431,
+    "lon": -64.0164,
+    "area": "PE",
+    "windFromDeg": 48
+   },
+   {
+    "hoursAgo": 9,
+    "time": "2025-10-27T03:00:00Z",
+    "lat": 47.0029,
+    "lon": -63.9164,
+    "area": "GULF_OF_ST_LAWRENCE",
+    "windFromDeg": 49
+   },
+   {
+    "hoursAgo": 10,
+    "time": "2025-10-27T02:00:00Z",
+    "lat": 47.0607,
+    "lon": -63.8429,
+    "area": "GULF_OF_ST_LAWRENCE",
+    "windFromDeg": 31
+   },
+   {
+    "hoursAgo": 11,
+    "time": "2025-10-27T01:00:00Z",
+    "lat": 47.1135,
+    "lon": -63.8072,
+    "area": "GULF_OF_ST_LAWRENCE",
+    "windFromDeg": 14
+   },
+   {
+    "hoursAgo": 12,
+    "time": "2025-10-27T00:00:00Z",
+    "lat": 47.1486,
+    "lon": -63.8115,
+    "area": "GULF_OF_ST_LAWRENCE",
+    "windFromDeg": 329
+   },
+   {
+    "hoursAgo": 13,
+    "time": "2025-10-26T23:00:00Z",
+    "lat": 47.1696,
+    "lon": -63.8629,
+    "area": "GULF_OF_ST_LAWRENCE",
+    "windFromDeg": 287
+   },
+   {
+    "hoursAgo": 14,
+    "time": "2025-10-26T22:00:00Z",
+    "lat": 47.1827,
+    "lon": -63.9483,
+    "area": "GULF_OF_ST_LAWRENCE",
+    "windFromDeg": 279
+   },
+   {
+    "hoursAgo": 15,
+    "time": "2025-10-26T21:00:00Z",
+    "lat": 47.1925,
+    "lon": -64.0482,
+    "area": "GULF_OF_ST_LAWRENCE",
+    "windFromDeg": 278
+   },
+   {
+    "hoursAgo": 16,
+    "time": "2025-10-26T20:00:00Z",
+    "lat": 47.2028,
+    "lon": -64.1599,
+    "area": "GULF_OF_ST_LAWRENCE",
+    "windFromDeg": 278
+   },
+   {
+    "hoursAgo": 17,
+    "time": "2025-10-26T19:00:00Z",
+    "lat": 47.2132,
+    "lon": -64.2861,
+    "area": "GULF_OF_ST_LAWRENCE",
+    "windFromDeg": 277
+   },
+   {
+    "hoursAgo": 18,
+    "time": "2025-10-26T18:00:00Z",
+    "lat": 47.2221,
+    "lon": -64.43,
+    "area": "GULF_OF_ST_LAWRENCE",
+    "windFromDeg": 274
+   },
+   {
+    "hoursAgo": 19,
+    "time": "2025-10-26T17:00:00Z",
+    "lat": 47.2287,
+    "lon": -64.5872,
+    "area": "GULF_OF_ST_LAWRENCE",
+    "windFromDeg": 273
+   },
+   {
+    "hoursAgo": 20,
+    "time": "2025-10-26T16:00:00Z",
+    "lat": 47.2348,
+    "lon": -64.7506,
+    "area": "GULF_OF_ST_LAWRENCE",
+    "windFromDeg": 273
+   },
+   {
+    "hoursAgo": 21,
+    "time": "2025-10-26T15:00:00Z",
+    "lat": 47.2465,
+    "lon": -64.9171,
+    "area": "GULF_OF_ST_LAWRENCE",
+    "windFromDeg": 279
+   },
+   {
+    "hoursAgo": 22,
+    "time": "2025-10-26T14:00:00Z",
+    "lat": 47.2685,
+    "lon": -65.0883,
+    "area": "NB",
+    "windFromDeg": 283
+   },
+   {
+    "hoursAgo": 23,
+    "time": "2025-10-26T13:00:00Z",
+    "lat": 47.2959,
+    "lon": -65.2621,
+    "area": "NB",
+    "windFromDeg": 283
+   },
+   {
+    "hoursAgo": 24,
+    "time": "2025-10-26T12:00:00Z",
+    "lat": 47.3216,
+    "lon": -65.4358,
+    "area": "NB",
+    "windFromDeg": 281
+   }
+  ],
+  "origin": {
+   "hoursAgo": 24,
+   "area": "NB",
+   "km": 144,
+   "compass": "NNW"
+  }
+ },
+ "wind": {
+  "level": "100m",
+  "model": "gfs025",
+  "steady": false,
+  "spreadDeg": 65.6,
+  "biggestShift": {
+   "time": "2025-10-27T01:00:00Z",
+   "hoursAgo": 11,
+   "fromDeg": 329,
+   "toDeg": 14
+  }
+ },
+ "closestApproach": null,
+ "nearestFire": null,
+ "heights": {
+  "chosen": "100m",
+  "agree": true,
+  "results": {
+   "100m": {
+    "verdict": "unexplained",
+    "confidence": "low",
+    "closestApproachKm": null,
+    "steady": false
+   },
+   "925hPa": {
+    "verdict": "unexplained",
+    "confidence": "low",
+    "closestApproachKm": null,
+    "steady": false
+   },
+   "850hPa": {
+    "verdict": "unexplained",
+    "confidence": "low",
+    "closestApproachKm": null,
+    "steady": false
+   }
+  },
+  "paths": {
+   "100m": {
+    "hoursTraced": 24,
+    "stoppedAtGridEdge": false,
+    "points": [
+     {
+      "hoursAgo": 0,
+      "time": "2025-10-27T12:00:00Z",
+      "lat": 46.0995,
+      "lon": -64.7998,
+      "area": "NB",
+      "windFromDeg": 20
+     },
+     {
+      "hoursAgo": 1,
+      "time": "2025-10-27T11:00:00Z",
+      "lat": 46.3072,
+      "lon": -64.7048,
+      "area": "NB",
+      "windFromDeg": 14
+     },
+     {
+      "hoursAgo": 2,
+      "time": "2025-10-27T10:00:00Z",
+      "lat": 46.4912,
+      "lon": -64.6557,
+      "area": "GULF_OF_ST_LAWRENCE",
+      "windFromDeg": 6
+     },
+     {
+      "hoursAgo": 3,
+      "time": "2025-10-27T09:00:00Z",
+      "lat": 46.6381,
+      "lon": -64.6011,
+      "area": "GULF_OF_ST_LAWRENCE",
+      "windFromDeg": 25
+     },
+     {
+      "hoursAgo": 4,
+      "time": "2025-10-27T08:00:00Z",
+      "lat": 46.7386,
+      "lon": -64.4938,
+      "area": "GULF_OF_ST_LAWRENCE",
+      "windFromDeg": 49
+     },
+     {
+      "hoursAgo": 5,
+      "time": "2025-10-27T07:00:00Z",
+      "lat": 46.8033,
+      "lon": -64.3698,
+      "area": "GULF_OF_ST_LAWRENCE",
+      "windFromDeg": 57
+     },
+     {
+      "hoursAgo": 6,
+      "time": "2025-10-27T06:00:00Z",
+      "lat": 46.8421,
+      "lon": -64.2547,
+      "area": "PE",
+      "windFromDeg": 70
+     },
+     {
+      "hoursAgo": 7,
+      "time": "2025-10-27T05:00:00Z",
+      "lat": 46.8833,
+      "lon": -64.1335,
+      "area": "PE",
+      "windFromDeg": 58
+     },
+     {
+      "hoursAgo": 8,
+      "time": "2025-10-27T04:00:00Z",
+      "lat": 46.9431,
+      "lon": -64.0164,
+      "area": "PE",
+      "windFromDeg": 48
+     },
+     {
+      "hoursAgo": 9,
+      "time": "2025-10-27T03:00:00Z",
+      "lat": 47.0029,
+      "lon": -63.9164,
+      "area": "GULF_OF_ST_LAWRENCE",
+      "windFromDeg": 49
+     },
+     {
+      "hoursAgo": 10,
+      "time": "2025-10-27T02:00:00Z",
+      "lat": 47.0607,
+      "lon": -63.8429,
+      "area": "GULF_OF_ST_LAWRENCE",
+      "windFromDeg": 31
+     },
+     {
+      "hoursAgo": 11,
+      "time": "2025-10-27T01:00:00Z",
+      "lat": 47.1135,
+      "lon": -63.8072,
+      "area": "GULF_OF_ST_LAWRENCE",
+      "windFromDeg": 14
+     },
+     {
+      "hoursAgo": 12,
+      "time": "2025-10-27T00:00:00Z",
+      "lat": 47.1486,
+      "lon": -63.8115,
+      "area": "GULF_OF_ST_LAWRENCE",
+      "windFromDeg": 329
+     },
+     {
+      "hoursAgo": 13,
+      "time": "2025-10-26T23:00:00Z",
+      "lat": 47.1696,
+      "lon": -63.8629,
+      "area": "GULF_OF_ST_LAWRENCE",
+      "windFromDeg": 287
+     },
+     {
+      "hoursAgo": 14,
+      "time": "2025-10-26T22:00:00Z",
+      "lat": 47.1827,
+      "lon": -63.9483,
+      "area": "GULF_OF_ST_LAWRENCE",
+      "windFromDeg": 279
+     },
+     {
+      "hoursAgo": 15,
+      "time": "2025-10-26T21:00:00Z",
+      "lat": 47.1925,
+      "lon": -64.0482,
+      "area": "GULF_OF_ST_LAWRENCE",
+      "windFromDeg": 278
+     },
+     {
+      "hoursAgo": 16,
+      "time": "2025-10-26T20:00:00Z",
+      "lat": 47.2028,
+      "lon": -64.1599,
+      "area": "GULF_OF_ST_LAWRENCE",
+      "windFromDeg": 278
+     },
+     {
+      "hoursAgo": 17,
+      "time": "2025-10-26T19:00:00Z",
+      "lat": 47.2132,
+      "lon": -64.2861,
+      "area": "GULF_OF_ST_LAWRENCE",
+      "windFromDeg": 277
+     },
+     {
+      "hoursAgo": 18,
+      "time": "2025-10-26T18:00:00Z",
+      "lat": 47.2221,
+      "lon": -64.43,
+      "area": "GULF_OF_ST_LAWRENCE",
+      "windFromDeg": 274
+     },
+     {
+      "hoursAgo": 19,
+      "time": "2025-10-26T17:00:00Z",
+      "lat": 47.2287,
+      "lon": -64.5872,
+      "area": "GULF_OF_ST_LAWRENCE",
+      "windFromDeg": 273
+     },
+     {
+      "hoursAgo": 20,
+      "time": "2025-10-26T16:00:00Z",
+      "lat": 47.2348,
+      "lon": -64.7506,
+      "area": "GULF_OF_ST_LAWRENCE",
+      "windFromDeg": 273
+     },
+     {
+      "hoursAgo": 21,
+      "time": "2025-10-26T15:00:00Z",
+      "lat": 47.2465,
+      "lon": -64.9171,
+      "area": "GULF_OF_ST_LAWRENCE",
+      "windFromDeg": 279
+     },
+     {
+      "hoursAgo": 22,
+      "time": "2025-10-26T14:00:00Z",
+      "lat": 47.2685,
+      "lon": -65.0883,
+      "area": "NB",
+      "windFromDeg": 283
+     },
+     {
+      "hoursAgo": 23,
+      "time": "2025-10-26T13:00:00Z",
+      "lat": 47.2959,
+      "lon": -65.2621,
+      "area": "NB",
+      "windFromDeg": 283
+     },
+     {
+      "hoursAgo": 24,
+      "time": "2025-10-26T12:00:00Z",
+      "lat": 47.3216,
+      "lon": -65.4358,
+      "area": "NB",
+      "windFromDeg": 281
+     }
+    ],
+    "origin": {
+     "hoursAgo": 24,
+     "area": "NB",
+     "km": 144,
+     "compass": "NNW"
+    }
+   },
+   "925hPa": {
+    "hoursTraced": 24,
+    "stoppedAtGridEdge": false,
+    "points": [
+     {
+      "hoursAgo": 0,
+      "time": "2025-10-27T12:00:00Z",
+      "lat": 46.0995,
+      "lon": -64.7998,
+      "area": "NB",
+      "windFromDeg": 40
+     },
+     {
+      "hoursAgo": 1,
+      "time": "2025-10-27T11:00:00Z",
+      "lat": 46.3756,
+      "lon": -64.4457,
+      "area": "GULF_OF_ST_LAWRENCE",
+      "windFromDeg": 42
+     },
+     {
+      "hoursAgo": 2,
+      "time": "2025-10-27T10:00:00Z",
+      "lat": 46.6004,
+      "lon": -64.1425,
+      "area": "PE",
+      "windFromDeg": 43
+     },
+     {
+      "hoursAgo": 3,
+      "time": "2025-10-27T09:00:00Z",
+      "lat": 46.7683,
+      "lon": -63.8997,
+      "area": "GULF_OF_ST_LAWRENCE",
+      "windFromDeg": 47
+     },
+     {
+      "hoursAgo": 4,
+      "time": "2025-10-27T08:00:00Z",
+      "lat": 46.8793,
+      "lon": -63.7028,
+      "area": "GULF_OF_ST_LAWRENCE",
+      "windFromDeg": 55
+     },
+     {
+      "hoursAgo": 5,
+      "time": "2025-10-27T07:00:00Z",
+      "lat": 46.9476,
+      "lon": -63.5175,
+      "area": "GULF_OF_ST_LAWRENCE",
+      "windFromDeg": 68
+     },
+     {
+      "hoursAgo": 6,
+      "time": "2025-10-27T06:00:00Z",
+      "lat": 46.998,
+      "lon": -63.3378,
+      "area": "GULF_OF_ST_LAWRENCE",
+      "windFromDeg": 67
+     },
+     {
+      "hoursAgo": 7,
+      "time": "2025-10-27T05:00:00Z",
+      "lat": 47.0612,
+      "lon": -63.1845,
+      "area": "GULF_OF_ST_LAWRENCE",
+      "windFromDeg": 51
+     },
+     {
+      "hoursAgo": 8,
+      "time": "2025-10-27T04:00:00Z",
+      "lat": 47.1258,
+      "lon": -63.0757,
+      "area": "GULF_OF_ST_LAWRENCE",
+      "windFromDeg": 44
+     },
+     {
+      "hoursAgo": 9,
+      "time": "2025-10-27T03:00:00Z",
+      "lat": 47.1625,
+      "lon": -63.016,
+      "area": "GULF_OF_ST_LAWRENCE",
+      "windFromDeg": 54
+     },
+     {
+      "hoursAgo": 10,
+      "time": "2025-10-27T02:00:00Z",
+      "lat": 47.1801,
+      "lon": -62.9911,
+      "area": "GULF_OF_ST_LAWRENCE",
+      "windFromDeg": 19
+     },
+     {
+      "hoursAgo": 11,
+      "time": "2025-10-27T01:00:00Z",
+      "lat": 47.1924,
+      "lon": -63.0012,
+      "area": "GULF_OF_ST_LAWRENCE",
+      "windFromDeg": 299
+     },
+     {
+      "hoursAgo": 12,
+      "time": "2025-10-27T00:00:00Z",
+      "lat": 47.1971,
+      "lon": -63.0484,
+      "area": "GULF_OF_ST_LAWRENCE",
+      "windFromDeg": 268
+     },
+     {
+      "hoursAgo": 13,
+      "time": "2025-10-26T23:00:00Z",
+      "lat": 47.1877,
+      "lon": -63.1375,
+      "area": "GULF_OF_ST_LAWRENCE",
+      "windFromDeg": 257
+     },
+     {
+      "hoursAgo": 14,
+      "time": "2025-10-26T22:00:00Z",
+      "lat": 47.162,
+      "lon": -63.2579,
+      "area": "GULF_OF_ST_LAWRENCE",
+      "windFromDeg": 249
+     },
+     {
+      "hoursAgo": 15,
+      "time": "2025-10-26T21:00:00Z",
+      "lat": 47.1261,
+      "lon": -63.391,
+      "area": "GULF_OF_ST_LAWRENCE",
+      "windFromDeg": 248
+     },
+     {
+      "hoursAgo": 16,
+      "time": "2025-10-26T20:00:00Z",
+      "lat": 47.0925,
+      "lon": -63.5388,
+      "area": "GULF_OF_ST_LAWRENCE",
+      "windFromDeg": 255
+     },
+     {
+      "hoursAgo": 17,
+      "time": "2025-10-26T19:00:00Z",
+      "lat": 47.0669,
+      "lon": -63.7056,
+      "area": "GULF_OF_ST_LAWRENCE",
+      "windFromDeg": 259
+     },
+     {
+      "hoursAgo": 18,
+      "time": "2025-10-26T18:00:00Z",
+      "lat": 47.0496,
+      "lon": -63.8899,
+      "area": "GULF_OF_ST_LAWRENCE",
+      "windFromDeg": 265
+     },
+     {
+      "hoursAgo": 19,
+      "time": "2025-10-26T17:00:00Z",
+      "lat": 47.0448,
+      "lon": -64.0915,
+      "area": "GULF_OF_ST_LAWRENCE",
+      "windFromDeg": 271
+     },
+     {
+      "hoursAgo": 20,
+      "time": "2025-10-26T16:00:00Z",
+      "lat": 47.0471,
+      "lon": -64.3062,
+      "area": "GULF_OF_ST_LAWRENCE",
+      "windFromDeg": 271
+     },
+     {
+      "hoursAgo": 21,
+      "time": "2025-10-26T15:00:00Z",
+      "lat": 47.0544,
+      "lon": -64.5233,
+      "area": "GULF_OF_ST_LAWRENCE",
+      "windFromDeg": 275
+     },
+     {
+      "hoursAgo": 22,
+      "time": "2025-10-26T14:00:00Z",
+      "lat": 47.0775,
+      "lon": -64.7426,
+      "area": "GULF_OF_ST_LAWRENCE",
+      "windFromDeg": 283
+     },
+     {
+      "hoursAgo": 23,
+      "time": "2025-10-26T13:00:00Z",
+      "lat": 47.1206,
+      "lon": -64.9693,
+      "area": "GULF_OF_ST_LAWRENCE",
+      "windFromDeg": 289
+     },
+     {
+      "hoursAgo": 24,
+      "time": "2025-10-26T12:00:00Z",
+      "lat": 47.183,
+      "lon": -65.2071,
+      "area": "NB",
+      "windFromDeg": 294
+     }
+    ],
+    "origin": {
+     "hoursAgo": 24,
+     "area": "NB",
+     "km": 124,
+     "compass": "NNW"
+    }
+   },
+   "850hPa": {
+    "hoursTraced": 24,
+    "stoppedAtGridEdge": false,
+    "points": [
+     {
+      "hoursAgo": 0,
+      "time": "2025-10-27T12:00:00Z",
+      "lat": 46.0995,
+      "lon": -64.7998,
+      "area": "NB",
+      "windFromDeg": 62
+     },
+     {
+      "hoursAgo": 1,
+      "time": "2025-10-27T11:00:00Z",
+      "lat": 46.2806,
+      "lon": -64.2728,
+      "area": "GULF_OF_ST_LAWRENCE",
+      "windFromDeg": 65
+     },
+     {
+      "hoursAgo": 2,
+      "time": "2025-10-27T10:00:00Z",
+      "lat": 46.4041,
+      "lon": -63.7813,
+      "area": "PE",
+      "windFromDeg": 76
+     },
+     {
+      "hoursAgo": 3,
+      "time": "2025-10-27T09:00:00Z",
+      "lat": 46.4736,
+      "lon": -63.353,
+      "area": "PE",
+      "windFromDeg": 76
+     },
+     {
+      "hoursAgo": 4,
+      "time": "2025-10-27T08:00:00Z",
+      "lat": 46.5187,
+      "lon": -63.0201,
+      "area": "GULF_OF_ST_LAWRENCE",
+      "windFromDeg": 80
+     },
+     {
+      "hoursAgo": 5,
+      "time": "2025-10-27T07:00:00Z",
+      "lat": 46.5361,
+      "lon": -62.7534,
+      "area": "GULF_OF_ST_LAWRENCE",
+      "windFromDeg": 88
+     },
+     {
+      "hoursAgo": 6,
+      "time": "2025-10-27T06:00:00Z",
+      "lat": 46.5114,
+      "lon": -62.5282,
+      "area": "GULF_OF_ST_LAWRENCE",
+      "windFromDeg": 110
+     },
+     {
+      "hoursAgo": 7,
+      "time": "2025-10-27T05:00:00Z",
+      "lat": 46.4525,
+      "lon": -62.3423,
+      "area": "PE",
+      "windFromDeg": 120
+     },
+     {
+      "hoursAgo": 8,
+      "time": "2025-10-27T04:00:00Z",
+      "lat": 46.3886,
+      "lon": -62.2071,
+      "area": "PE",
+      "windFromDeg": 129
+     },
+     {
+      "hoursAgo": 9,
+      "time": "2025-10-27T03:00:00Z",
+      "lat": 46.3205,
+      "lon": -62.1213,
+      "area": "GULF_OF_ST_LAWRENCE",
+      "windFromDeg": 149
+     },
+     {
+      "hoursAgo": 10,
+      "time": "2025-10-27T02:00:00Z",
+      "lat": 46.2419,
+      "lon": -62.0764,
+      "area": "GULF_OF_ST_LAWRENCE",
+      "windFromDeg": 167
+     },
+     {
+      "hoursAgo": 11,
+      "time": "2025-10-27T01:00:00Z",
+      "lat": 46.1617,
+      "lon": -62.0658,
+      "area": "GULF_OF_ST_LAWRENCE",
+      "windFromDeg": 185
+     },
+     {
+      "hoursAgo": 12,
+      "time": "2025-10-27T00:00:00Z",
+      "lat": 46.085,
+      "lon": -62.0902,
+      "area": "GULF_OF_ST_LAWRENCE",
+      "windFromDeg": 199
+     },
+     {
+      "hoursAgo": 13,
+      "time": "2025-10-26T23:00:00Z",
+      "lat": 46.0063,
+      "lon": -62.1432,
+      "area": "GULF_OF_ST_LAWRENCE",
+      "windFromDeg": 210
+     },
+     {
+      "hoursAgo": 14,
+      "time": "2025-10-26T22:00:00Z",
+      "lat": 45.9307,
+      "lon": -62.2219,
+      "area": "GULF_OF_ST_LAWRENCE",
+      "windFromDeg": 222
+     },
+     {
+      "hoursAgo": 15,
+      "time": "2025-10-26T21:00:00Z",
+      "lat": 45.8588,
+      "lon": -62.3283,
+      "area": "GULF_OF_ST_LAWRENCE",
+      "windFromDeg": 229
+     },
+     {
+      "hoursAgo": 16,
+      "time": "2025-10-26T20:00:00Z",
+      "lat": 45.7882,
+      "lon": -62.4513,
+      "area": "GULF_OF_ST_LAWRENCE",
+      "windFromDeg": 232
+     },
+     {
+      "hoursAgo": 17,
+      "time": "2025-10-26T19:00:00Z",
+      "lat": 45.7191,
+      "lon": -62.58,
+      "area": "GULF_OF_ST_LAWRENCE",
+      "windFromDeg": 233
+     },
+     {
+      "hoursAgo": 18,
+      "time": "2025-10-26T18:00:00Z",
+      "lat": 45.6572,
+      "lon": -62.7191,
+      "area": "GULF_OF_ST_LAWRENCE",
+      "windFromDeg": 243
+     },
+     {
+      "hoursAgo": 19,
+      "time": "2025-10-26T17:00:00Z",
+      "lat": 45.6156,
+      "lon": -62.8921,
+      "area": "NS",
+      "windFromDeg": 259
+     },
+     {
+      "hoursAgo": 20,
+      "time": "2025-10-26T16:00:00Z",
+      "lat": 45.5851,
+      "lon": -63.1061,
+      "area": "NS",
+      "windFromDeg": 258
+     },
+     {
+      "hoursAgo": 21,
+      "time": "2025-10-26T15:00:00Z",
+      "lat": 45.5525,
+      "lon": -63.3474,
+      "area": "NS",
+      "windFromDeg": 260
+     },
+     {
+      "hoursAgo": 22,
+      "time": "2025-10-26T14:00:00Z",
+      "lat": 45.521,
+      "lon": -63.6004,
+      "area": "NS",
+      "windFromDeg": 260
+     },
+     {
+      "hoursAgo": 23,
+      "time": "2025-10-26T13:00:00Z",
+      "lat": 45.4857,
+      "lon": -63.8648,
+      "area": "NS",
+      "windFromDeg": 258
+     },
+     {
+      "hoursAgo": 24,
+      "time": "2025-10-26T12:00:00Z",
+      "lat": 45.4437,
+      "lon": -64.1495,
+      "area": "NS",
+      "windFromDeg": 258
+     }
+    ],
+    "origin": {
+     "hoursAgo": 24,
+     "area": "NS",
+     "km": 89,
+     "compass": "SE"
+    }
+   }
+  }
+ },
+ "forward": null,
+ "aqhi": {
+  "value": 1.0,
+  "display": "1",
+  "segments": 1,
+  "category": "low",
+  "observedAt": "2025-10-27T12:00:00Z",
+  "station": {
+   "id": "DADHJ",
+   "nameEn": "Moncton",
+   "nameFr": "Moncton",
+   "km": 2
+  }
+ },
+ "sources": {
+  "cwfis": {
+   "ok": true,
+   "checkedAt": null,
+   "newestDetection": null
+  },
+  "firms": {
+   "ok": true,
+   "checkedAt": null,
+   "newestDetection": "2025-10-26T06:48:00Z",
+   "satellitesUsed": [],
+   "countsByLatencyClass": {
+    "URT": 0,
+    "RT": 0,
+    "NRT": 0,
+    "SP": 0
+   }
+  },
+  "checkedMinutesAgo": null,
+  "newestDetection": {
+   "time": "2025-10-26T06:48:00Z",
+   "hoursAgo": 29,
+   "minutesAgo": 1752
+  }
+ }
+}

@@ -22,8 +22,9 @@ from scripts import build_demo
 from smoke_engine.app import create_app
 from smoke_engine.feeds import sources
 from smoke_engine.feeds.replay import REPLAY_DIR, ReplayFeeds
-from smoke_engine.fires import BURNING_STAGES, FIRE_RADIUS_KM
+from smoke_engine.fires import BURNING_STAGES, CLUSTER_KM, FIRE_RADIUS_KM, HOTSPOT_HOURS
 from smoke_engine.geo import distance_km
+from smoke_engine.places import FIRE_NAME_WITHIN_KM, _fire_names
 from smoke_engine.verdict import SEARCH_KM
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -159,12 +160,78 @@ def answer(case: dict, p: dict) -> dict:
 def fire_label(fire: dict | None) -> str | None:
     if fire is None:
         return None
-    return f"{fire['name'] or 'near ' + fire['nearCommunity']} ({fire['province']})"
+    return f"{fire['name'] or 'near ' + fire['nearCommunity']}, {fire['province']}"
+
+
+# Known heat sources that are not wildfires, named when a fire the air passed sits within SITE_KM of one.
+SITES = [
+    {"name": "the Irving Oil refinery in east Saint John", "lat": 45.27889, "lon": -66.0125,
+     "source": "https://en.wikipedia.org/wiki/Irving_Oil_Refinery"},
+]
+SITE_KM = 2.0
+# NASA FIRMS `type`: 0 presumed vegetation fire, 1 active volcano, 2 other static land source, 3 offshore.
+FIRMS_TYPES = {"0": "vegetation fire", "1": "volcano", "2": "static land source", "3": "offshore"}
+
+
+def _firms_rows(case: dict):
+    """Every row of the case's FIRMS files, with its acquisition time (UTC)."""
+    for f in sorted((replay_dir(case) / "firms").glob("*.csv")):
+        for r in csv.DictReader(io.StringIO(f.read_text(encoding="utf-8"))):
+            hhmm = int(r["acq_time"])
+            acquired = datetime.fromisoformat(f"{r['acq_date']}T00:00:00+00:00") + timedelta(hours=hhmm // 100, minutes=hhmm % 100)
+            yield r, acquired
+
+
+def firms_types(case: dict, fire: dict | None, at: datetime) -> dict[str, int]:
+    """NASA's own label for its detections within 5 km of the fire in the 24 hours before the check, counted by type."""
+    counts: dict[str, int] = {}
+    if fire is None:
+        return counts
+    for r, t in _firms_rows(case):
+        if at - timedelta(hours=HOTSPOT_HOURS) < t <= at and distance_km(
+            fire["lat"], fire["lon"], float(r["latitude"]), float(r["longitude"])) <= CLUSTER_KM:
+            counts[r["type"]] = counts.get(r["type"], 0) + 1
+    return counts
+
+
+def site(fire: dict | None) -> dict | None:
+    if fire is None:
+        return None
+    return next((s for s in SITES if distance_km(fire["lat"], fire["lon"], s["lat"], s["lon"]) <= SITE_KM), None)
+
+
+def named_fire(case: dict, at: datetime) -> dict | None:
+    """For a report naming a fire on the public list (data/places/fire-names.json): its newest record up to the check.
+
+    The newest NASA detection and the newest Canadian hotspot report within 10 km of it, and how many of
+    Canada's active fire records lie within 10 km.
+    """
+    entry = next((f for f in _fire_names() if f["year"] == at.year and f["name"] in case["source"].get("fire", "")), None)
+    if entry is None:
+        return None
+    near = lambda lat, lon: distance_km(entry["lat"], entry["lon"], lat, lon) <= FIRE_NAME_WITHIN_KM  # noqa: E731
+    firms = [t for r, t in _firms_rows(case) if t <= at and near(float(r["latitude"]), float(r["longitude"]))]
+    spots = [
+        _time(f["properties"]["rep_date"])
+        for f in json.loads((replay_dir(case) / "hotspots.json").read_text(encoding="utf-8"))["features"]
+        if _time(f["properties"]["rep_date"]) <= at and near(f["properties"]["lat"], f["properties"]["lon"])
+    ]
+    records = [
+        f for f in json.loads((replay_dir(case) / "active-fires.json").read_text(encoding="utf-8"))["features"]
+        if near(f["properties"]["latitude"], f["properties"]["longitude"])
+    ]
+    return {
+        "name": entry["name"],
+        "newestFirms": _iso(max(firms)) if firms else None,
+        "newestCwfisReport": _iso(max(spots)) if spots else None,
+        "fireRecords": len(records),
+    }
 
 
 def row(case: dict, body: dict) -> dict:
     approach = body["closestApproach"]
     nearest = body["nearestFire"]
+    at = _time(body["time"])
     # The air's path includes its start, your own spot: a fire there is near the path too.
     to_path = ([approach["km"]] if approach else []) + ([nearest["km"]] if nearest else [])
     closest_to_path = min(to_path) if to_path else None
@@ -172,6 +239,8 @@ def row(case: dict, body: dict) -> dict:
         match = body["verdict"] in ("drifting", "unclear")
     else:
         match = body["verdict"] == "unexplained" and (closest_to_path is None or closest_to_path > SEARCH_KM)
+    fire = approach["fire"] if approach else None
+    known = site(fire)
     return {
         "id": case["id"],
         "kind": case["kind"],
@@ -180,7 +249,9 @@ def row(case: dict, body: dict) -> dict:
         "verdict": body["verdict"],
         "confidence": body["confidence"],
         "closestKm": approach["km"] if approach else None,
-        "fire": fire_label(approach["fire"]) if approach else None,
+        "fire": fire_label(fire),
+        "fireFirmsTypes": firms_types(case, fire, at),
+        "fireSite": known["name"] if known else None,
         "nearestFire": fire_label(nearest),
         "nearestFireKm": nearest["km"] if nearest else None,
         "noFiresInRange": body["noFiresInRange"],
@@ -188,7 +259,9 @@ def row(case: dict, body: dict) -> dict:
         "forwardClosestKm": body["forward"]["closestKm"] if body["forward"] else None,
         "chosenHeight": body["heights"]["chosen"],
         "heights": {h: r["closestApproachKm"] for h, r in body["heights"]["results"].items()},
+        "windSteady": body["wind"]["steady"],
         "aqhi": body["aqhi"]["display"] if body["aqhi"] else None,
+        "reportedFire": named_fire(case, at) if case["kind"] == "event" else None,
         "match": match,
     }
 
@@ -227,18 +300,57 @@ def yes_no(value: bool | None) -> str:
     return "—" if value is None else ("yes" if value else "no")
 
 
+MONTHS = ["Jan.", "Feb.", "March", "April", "May", "June", "July", "Aug.", "Sept.", "Oct.", "Nov.", "Dec."]
+
+
+def day_words(t: datetime) -> str:
+    return f"{MONTHS[t.month - 1]} {t.day}"
+
+
+def _day(case: dict) -> str:
+    return day_words(datetime.fromisoformat(case["date"]))
+
+
 def miss_sentence(case: dict, r: dict) -> str:
-    said = f"{VERDICT_WORDS[r['verdict']].lower()}, {r['confidence']} confidence"
-    if case["kind"] == "event":
-        blamed = f" The report says the smoke came from {case['source']['fire']}." if case["source"].get("fire") else ""
-        if r["noFiresInRange"]:
-            why = f"no fire was burning within {FIRE_RADIUS_KM:g} km of {case['place']} in the recorded data"
-        elif r["closestKm"] is None:
-            why = f"the traced air passed no fire; the nearest fire, {r['nearestFire']}, was {r['nearestFireKm']} km away"
-        else:
-            why = f"the traced air came no closer than {r['closestKm']} km to a fire ({r['fire']})"
-        return f"{case['place']} on {case['date']}: the engine said {said}, because {why}.{blamed}"
-    return f"{case['place']} on {case['date']} (control): the engine said {said}; the closest fire to the air's path was {r['closestKm'] or r['nearestFireKm']} km away."
+    said = f"{VERDICT_WORDS[r['verdict']].lower()}"
+    if case["kind"] == "control":
+        return (f"{case['place']}, {_day(case)} (control): {said}, though the closest fire to the air's path was "
+                f"{r['closestKm'] or r['nearestFireKm']} km away.")
+    text = f"{case['place']}, {_day(case)}: {said}."
+    named = r["reportedFire"]
+    if named:
+        seen = [(_time(named[k]), who) for k, who in (("newestFirms", "NASA"), ("newestCwfisReport", "a Canadian hotspot report"))
+                if named[k]]
+        one_day = len({t.date() for t, _ in seen}) == 1
+        newest = " and ".join(f"{t:%H:%M} UTC{'' if one_day else ' on ' + day_words(t)} ({who})" for t, who in seen)
+        when = (f"{newest}{' on ' + day_words(seen[0][0]) if one_day else ''}, more than {HOTSPOT_HOURS} hours before "
+                "the check") if seen else "no time at all"
+        text += (f" The report blames the {named['name']} fire, but its newest detections in the recording are from "
+                 f"{when}, and Canada's active fire list {'has no record' if not named['fireRecords'] else 'has a record'} "
+                 "for it, so the engine did not count it as burning.")
+    elif case["source"].get("fire"):
+        text += f" The report blames {case['source']['fire']}."
+    if r["noFiresInRange"]:
+        text += f" No fire was burning within {FIRE_RADIUS_KM:g} km."
+    elif r["closestKm"] is None:
+        text += f" The traced air passed no fire; the nearest was {r['nearestFireKm']} km away."
+    else:
+        text += f" The closest the traced air came to any fire was {r['closestKm']} km."
+    return text
+
+
+def wrong_fire_sentence(cases_: list[dict], rows: list[dict]) -> str:
+    """Matches whose fire is a known heat source that NASA labels a static land source, not a vegetation fire."""
+    where = [f"{c['place']} on {_day(c)} ({r['closestKm']} km)" for c, r in zip(cases_, rows)]
+    labels = [f"{r['fireFirmsTypes'].get('2', 0)} of {sum(r['fireFirmsTypes'].values())}" for r in rows]
+    one = len(rows) == 1
+    count = ["One match is", "Two matches are", "Three matches are", "Four matches are", "Five matches are"][len(rows) - 1]
+    sites = " or ".join(sorted({r["fireSite"] for r in rows}))
+    return (f"{count} right by the rules but for the wrong reason: in "
+            f"{' and '.join(where)}, the “fire” the air passed is {sites}. NASA labels most of its "
+            f"detections there ({', and '.join(labels)}) a “{FIRMS_TYPES['2']}” (industrial heat), not a "
+            f"vegetation fire; the engine does not read that label. The {'report blames' if one else 'reports blame'} "
+            f"{' and '.join(c['source']['fire'] for c in cases_)}.")
 
 
 def under_control(records: list[dict]) -> str:
@@ -247,7 +359,13 @@ def under_control(records: list[dict]) -> str:
     stages = {r["stage"] for r in records}
     kind = "under control" if stages == {"UC"} else f"at stage {', '.join(sorted(map(str, stages)))}"
     return (f"{len(records)} fire {'record' if len(records) == 1 else 'records'} {kind}, which the engine does not "
-            f"count, the closest {records[0]['km']:g} km away.")
+            f"count, the closest {records[0]['km']:.0f} km away.")
+
+
+def fire_cell(r: dict) -> str:
+    if r["fire"]:
+        return r["fire"] + (" †" if r["fireSite"] else "")
+    return "none within 500 km" if r["noFiresInRange"] else "—"
 
 
 def cite(s: dict) -> str:
@@ -260,6 +378,7 @@ def document(p: dict, rows: list[dict], checks: dict) -> str:
     events = [r for r in rows if r["kind"] == "event"]
     ctrls = [r for r in rows if r["kind"] == "control"]
     misses = [r for r in rows if not r["match"]]
+    wrong = [r for r in rows if r["match"] and r["kind"] == "event" and r["fireSite"]]
     rules, ct = p["rules"], p["checkTime"]
 
     lines = [
@@ -297,7 +416,7 @@ def document(p: dict, rows: list[dict], checks: dict) -> str:
         lines.append(
             f"| {event} | {source} | {r['place']} | {r['time'][:16].replace('T', ' ')} | "
             f"{VERDICT_WORDS[r['verdict']]} | {r['confidence'].capitalize()} | {cell(r['closestKm'])} | "
-            f"{r['fire'] or ('none within 500 km' if r['noFiresInRange'] else '—')} | {yes_no(r['forwardAgrees'])} | "
+            f"{fire_cell(r)} | {yes_no(r['forwardAgrees'])} | "
             f"{'yes' if r['match'] else 'no'} |"
         )
     lines += [
@@ -305,10 +424,12 @@ def document(p: dict, rows: list[dict], checks: dict) -> str:
         "Closest km is how close the air's path, traced back 24 hours, came to that fire. The forward trace follows "
         "the fire's smoke forward to the time of the check; it agrees when the smoke came within 25 km of the place. "
         "It never changes the verdict.",
+        *([f"† {SITES[0]['name'][0].upper() + SITES[0]['name'][1:]}, not a wildfire: see Misses."] if wrong else []),
         "",
         "## Misses",
         "",
-        " ".join(miss_sentence(by_id[r["id"]], r) for r in misses) if misses else "None.",
+        " ".join([miss_sentence(by_id[r["id"]], r) for r in misses]
+                 + ([wrong_fire_sentence([by_id[r["id"]] for r in wrong], wrong)] if wrong else [])) or "None.",
         "",
         "## Events",
         "",
@@ -317,22 +438,34 @@ def document(p: dict, rows: list[dict], checks: dict) -> str:
     ]
     for case in (c for c in cases(p) if c["kind"] == "event"):
         lines.append(f"- **{case['place']}, {case['province']}, {case['date']}.** {cite(case['source'])}")
-        lines += [f"  Also: {cite(s)}" for s in case.get("more", [])]
+        lines += [
+            f"  Same article: “{s['quote']}”" if s["url"] == case["source"]["url"] else f"  Also: {cite(s)}"
+            for s in case.get("more", [])
+        ]
     lines += ["", "Found but not run:", ""]
     lines += [f"- {n['report']}. {n['why']}" for n in p["notRun"]]
     lines += ["", "## Controls", "", rules["controlDay"], ""]
     for c in checks["controls"]:
         case = by_id[c["id"]]
         firms = sum(v["rows"] for v in c["firms"].values())
+        start, end = _time(c["recording"]["from"]), _time(c["recording"]["to"])
+        station_km = c["aqhi"]["stationKm"]
         lines.append(
-            f"- **{c['place']}, {case['date']}.** Over the recording ({c['recording']['from']} to "
-            f"{c['recording']['to']}), within 500 km: {c['firmsWithin500Km']} of the {firms} NASA satellite detections "
-            f"in the region, {c['cwfisHotspotsWithin500Km']} of the {c['cwfisHotspots']} Canadian hotspots, and "
-            f"{c['burningFireRecordsWithin500Km']} of the {c['burningFireRecords']} fire records out of control or being "
-            f"held. {under_control(c['otherFireRecordsWithin500Km'])} Highest AQHI at {c['aqhi']['stationName']} "
-            f"({c['aqhi']['stationKm']:g} km away): {c['aqhi']['max']:g}. {case['why']}"
+            f"- **{c['place']}, {case['date']}.** From {day_words(start)} 00:00 to {day_words(end)} 00:00 UTC, within "
+            f"500 km: {c['firmsWithin500Km']} NASA satellite detections ({firms} in the whole region), "
+            f"{c['cwfisHotspotsWithin500Km']} Canadian hotspots ({c['cwfisHotspots']} in the whole area fetched), "
+            f"{c['burningFireRecordsWithin500Km']} fire records out of control or being held "
+            f"({c['burningFireRecords']} in the whole area). {under_control(c['otherFireRecordsWithin500Km'])} "
+            f"Highest AQHI at the {c['aqhi']['stationName']} station "
+            f"({'under 1 km' if station_km < 1 else f'{station_km:.0f} km'} away): {c['aqhi']['max']:g}. {case['why']}"
         )
-    lines += ["", f"Checked on {checks['checkedAt']}, before the engine ran.", ""]
+    lines += [
+        "",
+        f"Checked on {checks['checkedAt']}, before the engine ran. With no fire within {FIRE_RADIUS_KM:g} km the engine "
+        "can only answer unexplained smoke, so these controls show that it does not invent a fire on a quiet day; they "
+        "cannot test a close call.",
+        "",
+    ]
     return "\n".join(lines)
 
 

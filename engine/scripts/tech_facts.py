@@ -18,7 +18,7 @@ from pathlib import Path
 
 from fastapi.testclient import TestClient
 
-from scripts import build_demo, build_places
+from scripts import build_demo, build_places, validate
 from smoke_engine import aqhi, detections, fires, forward, places, trajectory, verdict, wind
 from smoke_engine.app import HOURS_BACK, REPLAY_TIME, create_app
 from smoke_engine.feeds import live, sources
@@ -155,6 +155,17 @@ def merges() -> dict:
     return {"twins": twins, "same_satellite": same, "total": twins + same}
 
 
+# --- Validation on real events ------------------------------------------------------------------------
+
+def validation() -> dict:
+    """The validation table in VALIDATION.md, re-run: every saved answer must still be the engine's answer."""
+    p = validate.plan()
+    for case in validate.cases(p):
+        if validate.answer(case, p) != load(f"data/validation/answers/{case['id']}.json"):
+            raise SystemExit(f"data/validation/answers/{case['id']}.json is not the engine's current answer: run scripts.validate first")
+    return {"plan": p, "rows": load("data/validation/results.json")["rows"], "commit": validate.plan_commit()}
+
+
 # --- Tests ------------------------------------------------------------------------------------------
 
 def _run(command: list[str], cwd: Path, env: dict | None = None) -> None:
@@ -195,7 +206,43 @@ def outcome(counts: dict) -> str:
 
 # --- The document ---------------------------------------------------------------------------------
 
-def document(arch: dict, data: dict, place, body: dict, merged: dict, tests: dict, ran_at: str) -> str:
+def validation_lines(v: dict) -> list[str]:
+    events = [r for r in v["rows"] if r["kind"] == "event"]
+    controls = [r for r in v["rows"] if r["kind"] == "control"]
+    check = v["plan"]["checkTime"]
+    return [
+        "## Validation on real events",
+        "",
+        f"From [VALIDATION.md](VALIDATION.md): the engine, unchanged, on {len(events)} days in 2025 with a public report of "
+        f"wildfire smoke in a named Maritimes community, and {len(controls)} control days with no smoke report and nothing "
+        f"detected within {num(fires.FIRE_RADIUS_KM)} km. Each check ran at {check['utc']} UTC, {check['local']}, on the "
+        f"date of the report, from that date's own recording in `data/replay/`. Rules, events and controls were committed "
+        f"in `{v['commit']}`, before any run.",
+        "",
+        f"- Reported smoke events matched (drifting or unclear): {sum(r['match'] for r in events)} of {len(events)}.",
+        f"- Controls matched (unexplained, no fire within {num(verdict.SEARCH_KM)} km of the path): "
+        f"{sum(r['match'] for r in controls)} of {len(controls)}.",
+        "",
+        "| Case | Verdict | Confidence | Closest km | Fire | `forward.agrees` | Match |",
+        "|---|---|---|---|---|---|---|",
+        *(
+            f"| {r['place']}, {r['time'][:10]}{' (control)' if r['kind'] == 'control' else ''} | {r['verdict']} | "
+            f"{r['confidence'].capitalize()} | {validate.cell(r['closestKm'])} | {validate.fire_cell(r)} | "
+            f"{validate.cell(None if r['forwardAgrees'] is None else str(r['forwardAgrees']).lower())} | "
+            f"{'yes' if r['match'] else 'no'} |"
+            for r in v["rows"]
+        ),
+        "",
+        *(
+            f"† {site['name'][0].upper() + site['name'][1:]} ({site['lat']}, {site['lon']}), not a wildfire: NASA "
+            f"labels most of its detections type 2, “static land source”, and the engine does not read FIRMS's `type` field."
+            for site in validate.SITES if any(r["fireSite"] == site["name"] for r in v["rows"])
+        ),
+        "",
+    ]
+
+
+def document(arch: dict, data: dict, place, body: dict, merged: dict, tests: dict, ran_at: str, valid: dict) -> str:
     heights = wind.HEIGHTS
     step_hours = num(trajectory.STEP_S / 3600)
     lat_range = f"{num(wind.GRID_LAT_MIN)}°N to {num(wind.GRID_LAT_MAX)}°N"
@@ -312,7 +359,8 @@ def document(arch: dict, data: dict, place, body: dict, merged: dict, tests: dic
         f"fetched every {span(live.FIRMS_REFRESH_EVERY)}. Replay: the archive files "
         f"{listed(f'`{k}` ({v} rows)' for k, v in data['firms_rows'].items())}. | Needs a MAP_KEY; without one, live "
         f"verdicts use CWFIS alone. When the last good fetch is {span(live.FIRMS_MAX_AGE)} old, FIRMS counts as down. "
-        f"{listed(f'`{k}`: {v}' for k, v in data['firms_missing'].items())}. |",
+        f"{listed(f'`{k}`: {v}' for k, v in data['firms_missing'].items())}. The `type` field (vegetation fire, "
+        "static land source, offshore) is not read: an industrial heat source counts as a fire (see VALIDATION.md). |",
         f"| NRCan CWFIS | Active fire records (national ID, stage of control, size, position, validity period) and "
         f"satellite hotspots (fields `{sources.HOTSPOT_FIELDS}`). Replay: {data['active_fires']} active fire rows and "
         f"{data['hotspots']} hotspots. | Hotspots carry only a report time (`rep_date`), never used as when a satellite "
@@ -368,6 +416,7 @@ def document(arch: dict, data: dict, place, body: dict, merged: dict, tests: dic
         f"- AQHI: {aq['display']} ({aq['category'].replace('_', ' ')}) at {aq['station']['nameEn']} "
         f"(station {aq['station']['id']}, {aq['station']['km']} km away), observed {aq['observedAt']}.",
         "",
+        *validation_lines(valid),
         "## Tests",
         "",
         f"From an actual run on {ran_at}:",
@@ -388,9 +437,10 @@ def document(arch: dict, data: dict, place, body: dict, merged: dict, tests: dic
 def main() -> None:
     ran_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
     place, body = moncton()
+    valid = validation()
     with tempfile.TemporaryDirectory() as tmp:
         tests = test_counts(Path(tmp))
-    OUT.write_text(document(architecture(), data_facts(), place, body, merges(), tests, ran_at), encoding="utf-8")
+    OUT.write_text(document(architecture(), data_facts(), place, body, merges(), tests, ran_at, valid), encoding="utf-8")
     print(f"{OUT.name}: engine {outcome(tests['engine'])}; web unit {outcome(tests['unit'])}; browser {outcome(tests['browser'])}")
 
 

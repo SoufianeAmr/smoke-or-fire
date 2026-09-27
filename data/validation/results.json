@@ -1,0 +1,218 @@
+{
+ "rows": [
+  {
+   "id": "moncton-2025-08-24",
+   "kind": "event",
+   "place": "Moncton, NB",
+   "time": "2025-08-24T12:00:00Z",
+   "verdict": "drifting",
+   "confidence": "medium",
+   "closestKm": 3,
+   "fire": "near Midwood, NB",
+   "fireFirmsTypes": {
+    "2": 2,
+    "0": 1
+   },
+   "fireSite": "the Irving Oil refinery in east Saint John",
+   "nearestFire": "near Fontaine, NB",
+   "nearestFireKm": 85,
+   "noFiresInRange": false,
+   "forwardAgrees": true,
+   "forwardClosestKm": 2,
+   "chosenHeight": "850hPa",
+   "heights": {
+    "100m": 35,
+    "925hPa": 4,
+    "850hPa": 3
+   },
+   "windSteady": true,
+   "aqhi": "2",
+   "reportedFire": {
+    "name": "Long Lake",
+    "newestFirms": "2025-08-24T08:21:00Z",
+    "newestCwfisReport": "2025-08-24T08:22:00Z",
+    "fireRecords": 0
+   },
+   "match": true
+  },
+  {
+   "id": "moncton-2025-08-25",
+   "kind": "event",
+   "place": "Moncton, NB",
+   "time": "2025-08-25T12:00:00Z",
+   "verdict": "drifting",
+   "confidence": "low",
+   "closestKm": 19,
+   "fire": "Long Lake, NS",
+   "fireFirmsTypes": {
+    "0": 296
+   },
+   "fireSite": null,
+   "nearestFire": "near Fontaine, NB",
+   "nearestFireKm": 85,
+   "noFiresInRange": false,
+   "forwardAgrees": true,
+   "forwardClosestKm": 2,
+   "chosenHeight": "100m",
+   "heights": {
+    "100m": 19,
+    "925hPa": 32,
+    "850hPa": 46
+   },
+   "windSteady": true,
+   "aqhi": "10+",
+   "reportedFire": {
+    "name": "Long Lake",
+    "newestFirms": "2025-08-25T01:43:00Z",
+    "newestCwfisReport": "2025-08-25T07:00:00Z",
+    "fireRecords": 0
+   },
+   "match": true
+  },
+  {
+   "id": "halifax-2025-08-26",
+   "kind": "event",
+   "place": "Halifax, NS",
+   "time": "2025-08-26T12:00:00Z",
+   "verdict": "unexplained",
+   "confidence": "low",
+   "closestKm": 205,
+   "fire": "near Fowlies Mill, NB",
+   "fireFirmsTypes": {},
+   "fireSite": null,
+   "nearestFire": "near Fowlies Mill, NB",
+   "nearestFireKm": 290,
+   "noFiresInRange": false,
+   "forwardAgrees": false,
+   "forwardClosestKm": 266,
+   "chosenHeight": "100m",
+   "heights": {
+    "100m": 205,
+    "925hPa": 259,
+    "850hPa": 332
+   },
+   "windSteady": false,
+   "aqhi": "2",
+   "reportedFire": {
+    "name": "Long Lake",
+    "newestFirms": "2025-08-25T01:43:00Z",
+    "newestCwfisReport": "2025-08-25T07:00:00Z",
+    "fireRecords": 0
+   },
+   "match": false
+  },
+  {
+   "id": "charlottetown-2025-08-14",
+   "kind": "event",
+   "place": "Charlottetown, PE",
+   "time": "2025-08-14T12:00:00Z",
+   "verdict": "drifting",
+   "confidence": "high",
+   "closestKm": 9,
+   "fire": "Long Lake, NS",
+   "fireFirmsTypes": {
+    "0": 82
+   },
+   "fireSite": null,
+   "nearestFire": "near Tankville, NB",
+   "nearestFireKm": 125,
+   "noFiresInRange": false,
+   "forwardAgrees": true,
+   "forwardClosestKm": 4,
+   "chosenHeight": "100m",
+   "heights": {
+    "100m": 9,
+    "925hPa": 15,
+    "850hPa": 16
+   },
+   "windSteady": true,
+   "aqhi": "3",
+   "reportedFire": null,
+   "match": true
+  },
+  {
+   "id": "fredericton-2025-08-16",
+   "kind": "event",
+   "place": "Fredericton, NB",
+   "time": "2025-08-16T12:00:00Z",
+   "verdict": "unclear",
+   "confidence": "low",
+   "closestKm": 2,
+   "fire": "near Grandview Industrial Park, NB",
+   "fireFirmsTypes": {
+    "2": 4,
+    "0": 1
+   },
+   "fireSite": "the Irving Oil refinery in east Saint John",
+   "nearestFire": "near Grandview Industrial Park, NB",
+   "nearestFireKm": 90,
+   "noFiresInRange": false,
+   "forwardAgrees": true,
+   "forwardClosestKm": 4,
+   "chosenHeight": "100m",
+   "heights": {
+    "100m": 2,
+    "925hPa": 34,
+    "850hPa": 100
+   },
+   "windSteady": false,
+   "aqhi": "1",
+   "reportedFire": null,
+   "match": true
+  },
+  {
+   "id": "control-charlottetown-2025-05-24",
+   "kind": "control",
+   "place": "Charlottetown, PE",
+   "time": "2025-05-24T12:00:00Z",
+   "verdict": "unexplained",
+   "confidence": "low",
+   "closestKm": null,
+   "fire": null,
+   "fireFirmsTypes": {},
+   "fireSite": null,
+   "nearestFire": null,
+   "nearestFireKm": null,
+   "noFiresInRange": true,
+   "forwardAgrees": null,
+   "forwardClosestKm": null,
+   "chosenHeight": "100m",
+   "heights": {
+    "100m": null,
+    "925hPa": null,
+    "850hPa": null
+   },
+   "windSteady": false,
+   "aqhi": "1",
+   "reportedFire": null,
+   "match": true
+  },
+  {
+   "id": "control-moncton-2025-10-27",
+   "kind": "control",
+   "place": "Moncton, NB",
+   "time": "2025-10-27T12:00:00Z",
+   "verdict": "unexplained",
+   "confidence": "low",
+   "closestKm": null,
+   "fire": null,
+   "fireFirmsTypes": {},
+   "fireSite": null,
+   "nearestFire": null,
+   "nearestFireKm": null,
+   "noFiresInRange": true,
+   "forwardAgrees": null,
+   "forwardClosestKm": null,
+   "chosenHeight": "100m",
+   "heights": {
+    "100m": null,
+    "925hPa": null,
+    "850hPa": null
+   },
+   "windSteady": false,
+   "aqhi": "1",
+   "reportedFire": null,
+   "match": true
+  }
+ ]
+}
