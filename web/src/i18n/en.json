@@ -273,7 +273,6 @@
   "why.traced.body.gridEdge": "Using hourly winds, we followed the air arriving in {town} backward, one hour at a time, until it left the area our wind data covers.",
   "why.reached": "It reached {town} from {from}, to the {direction}.",
   "why.reached.noArea": "It reached {town} from the {direction}.",
-  "why.gridEdge": "Our wind data ends there.",
   "why.passed": "It passed {km} km from an active fire",
   "why.over": "About {h} hours ago, that air was over {fire}.",
   "why.over.one": "About 1 hour ago, that air was over {fire}.",

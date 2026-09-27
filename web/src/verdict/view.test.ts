@@ -340,8 +340,16 @@ describe("Why item 1: the air traced back", () => {
     expect(verdictView(inside, "en").why.items[0].body).toBe("Using hourly winds, we followed the air arriving in Moncton backward, one hour at a time.");
   });
 
-  test("off 7a, says where the air came from, then that the wind data ends there (Halifax replay)", () => {
-    expect(verdictView(json(halifax), "en").why.items[0].body).toMatch(/^It reached Halifax from .+\. Our wind data ends there\.$/);
+  test("uses the grid-edge sentence on every screen when the path reached the grid edge (Halifax, Miramichi replays)", () => {
+    expect([verdictView(json(halifax), "en").why.items[0].body, verdictView(json(miramichi), "fr").why.items[0].body]).toEqual([
+      "Using hourly winds, we followed the air arriving in Halifax backward, one hour at a time, until it left the area our wind data covers.",
+      "Grâce aux vents horaires, nous avons suivi à rebours l’air qui arrive à Miramichi, une heure à la fois, jusqu’à ce qu’il quitte la zone couverte par nos données de vent.",
+    ]);
+  });
+
+  test("off 7a, says where the air came from when the path stayed inside the grid (Halifax replay)", () => {
+    const inside = { ...json(halifax), path: { ...json(halifax).path, stoppedAtGridEdge: false } };
+    expect(verdictView(inside, "en").why.items[0].body).toMatch(/^It reached Halifax from .+\.$/);
   });
 });
 

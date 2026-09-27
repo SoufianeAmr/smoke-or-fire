@@ -273,7 +273,6 @@
   "why.traced.body.gridEdge": "Grâce aux vents horaires, nous avons suivi à rebours l’air qui arrive à {town}, une heure à la fois, jusqu’à ce qu’il quitte la zone couverte par nos données de vent.",
   "why.reached": "Il est arrivé à {town} en venant {from} ({direction}).",
   "why.reached.noArea": "Il est arrivé à {town} en venant {direction}.",
-  "why.gridEdge": "Nos données de vent s’arrêtent là.",
   "why.passed": "Il est passé à {km} km d’un feu actif",
   "why.over": "Il y a environ {h} heures, cet air se trouvait au-dessus {fire}.",
   "why.over.one": "Il y a environ 1 heure, cet air se trouvait au-dessus {fire}.",
