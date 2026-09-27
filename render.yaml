@@ -7,7 +7,9 @@
 # The engine reads ../data, and Render hides files outside a service's root directory,
 # so the service root is the repo root and the commands run inside engine/.
 # The disk is wiped on every deploy: after one, live wind takes a few minutes to load
-# (/verdict?mode=live answers 503 until then). buildFilter skips deploys for web-only changes.
+# (/verdict?mode=live answers 503 until then). buildFilter skips deploys for web-only changes:
+# Render applies it only to a service managed by this Blueprint. A service created on its own
+# needs the same paths under Settings → Build & Deploy → Build Filters.
 services:
   - type: web
     name: smoke-or-fire-engine
@@ -22,8 +24,7 @@ services:
     buildFilter:
       paths:
         - engine/**
-        - data/places/**
-        - data/replay/**
+        - data/**
         - render.yaml
     envVars:
       - key: PYTHON_VERSION
