@@ -199,14 +199,32 @@ describe("the leave screen", () => {
   });
 });
 
-test("the voice: Canadian first, then any in the language; within those a natural voice, then the device's default; never a novelty voice", () => {
+describe("the voice", () => {
   const v = (name: string, lang: string, isDefault = false) => ({ name, lang, default: isDefault });
-  const voices = [v("Albert", "en-US"), v("Google US English", "en-US"), v("Microsoft Linda - English (Canada)", "en-CA"), v("Google English (Canada) Natural", "en-CA"), v("Thomas", "fr_FR", true), v("Amélie", "fr-CA")];
-  expect(voice.pickVoice(voices, "en")?.name).toBe("Google English (Canada) Natural");
-  expect(voice.pickVoice(voices.filter((x) => !x.name.includes("Natural")), "en")?.name).toBe("Microsoft Linda - English (Canada)");
-  expect(voice.pickVoice([v("Albert", "en-US"), v("Samantha", "en-US"), v("Samantha (Enhanced)", "en-US")], "en")?.name).toBe("Samantha (Enhanced)");
-  expect(voice.pickVoice([v("Albert", "en-US"), v("Daniel", "en-GB", true), v("Karen", "en-AU")], "en")?.name).toBe("Daniel");
-  expect(voice.pickVoice([v("Albert", "en-US"), v("Zarvox", "en-US")], "en")).toBeNull();
-  expect(voice.pickVoice(voices, "fr")?.name).toBe("Amélie");
-  expect(voice.pickVoice([v("Thomas", "fr_FR"), v("Google français", "fr-FR")], "fr")?.name).toBe("Google français");
+
+  test("English: the most natural voice first, whatever the locale, then en-CA; ties to the device's default", () => {
+    const linda = v("Microsoft Linda - English (Canada)", "en-CA");
+    // A natural voice beats a plain Canadian one…
+    expect(voice.pickVoice([linda, v("Google US English", "en-US")], "en")?.name).toBe("Google US English");
+    expect(voice.pickVoice([linda, v("Samantha (Enhanced)", "en_US")], "en")?.name).toBe("Samantha (Enhanced)");
+    // …a natural Canadian voice beats a natural one elsewhere…
+    expect(voice.pickVoice([v("Google US English", "en-US"), v("Microsoft Clara Online (Natural) - English (Canada)", "en-CA")], "en")?.name).toBe("Microsoft Clara Online (Natural) - English (Canada)");
+    // …and with no natural voice, en-CA comes first, then the device's default.
+    expect(voice.pickVoice([v("Daniel", "en-GB", true), linda], "en")?.name).toBe("Microsoft Linda - English (Canada)");
+    expect(voice.pickVoice([v("Karen", "en-AU"), v("Daniel", "en-GB", true)], "en")?.name).toBe("Daniel");
+  });
+
+  test("French: a natural fr-CA voice first, then any fr-CA, then a natural French one", () => {
+    const amelie = v("Amélie", "fr-CA");
+    const google = v("Google français", "fr-FR");
+    expect(voice.pickVoice([google, amelie, v("Amélie (Enhanced)", "fr-CA")], "fr")?.name).toBe("Amélie (Enhanced)");
+    expect(voice.pickVoice([google, amelie], "fr")?.name).toBe("Amélie"); // any fr-CA before a natural fr-FR
+    expect(voice.pickVoice([v("Thomas", "fr_FR", true), google], "fr")?.name).toBe("Google français");
+    expect(voice.pickVoice([v("Thomas", "fr_FR")], "fr")?.name).toBe("Thomas");
+  });
+
+  test("never a novelty voice, and nothing when the language has no voice", () => {
+    expect(voice.pickVoice([v("Albert", "en-US"), v("Zarvox", "en-US")], "en")).toBeNull();
+    expect(voice.pickVoice([v("Google US English", "en-US")], "fr")).toBeNull();
+  });
 });

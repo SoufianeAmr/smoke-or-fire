@@ -13,8 +13,9 @@ const STRINGS: Record<Lang, Record<string, string>> = {
   fr: JSON.parse(readFileSync(new URL("../src/i18n/fr.json", import.meta.url), "utf8")),
 };
 const LABEL = { en: { play: "Listen", stop: "Stop" }, fr: { play: "Écouter", stop: "Arrêter" } };
-// The recorder's voices include a plain and a natural Canadian voice for each language, and a novelty voice.
-const VOICE = { en: "Google English (Canada) Natural", fr: "Amélie (Enhanced)" };
+// The recorder's voices: in English, a plain Canadian voice and a natural US one (the natural one is used); in French, a
+// plain and a natural Canadian voice and a natural France one (the natural Canadian one is used); and a novelty voice.
+const VOICE = { en: "Google US English", fr: "Amélie (Enhanced)" };
 const NAVY = "rgb(27, 42, 74)";
 const RED = "rgb(217, 45, 32)";
 const WHITE = "rgb(255, 255, 255)";
@@ -42,8 +43,8 @@ function fakeSpeech() {
     constructor(text: string) { this.text = text; }
   }
   const voices = [
-    { lang: "en-US", name: "Albert" }, { lang: "en-US", name: "Google US English" }, { lang: "en-CA", name: "Microsoft Linda - English (Canada)" },
-    { lang: "en-CA", name: "Google English (Canada) Natural" }, { lang: "fr-FR", name: "Google français" }, { lang: "fr-CA", name: "Amélie" }, { lang: "fr-CA", name: "Amélie (Enhanced)" },
+    { lang: "en-US", name: "Albert" }, { lang: "en-CA", name: "Microsoft Linda - English (Canada)" }, { lang: "en-US", name: "Google US English" },
+    { lang: "fr-FR", name: "Google français" }, { lang: "fr-CA", name: "Amélie" }, { lang: "fr-CA", name: "Amélie (Enhanced)" },
   ];
   Object.defineProperty(window, "SpeechSynthesisUtterance", { value: Utterance, configurable: true, writable: true });
   Object.defineProperty(window, "speechSynthesis", {
@@ -352,7 +353,7 @@ for (const lang of ["en", "fr"] as const) {
         const said = await spoken(page);
         expect(said.map((u) => u.text)).toEqual(expected);
 
-        // One sentence per utterance, the natural Canadian voice, rate 0.95, pitch 1, full volume, ~300 ms between sentences.
+        // One sentence per utterance, the voice picked for the language, rate 0.95, pitch 1, full volume, ~300 ms between sentences.
         expect(said.map(({ lang: l, rate, pitch, volume, voice }) => ({ l, rate, pitch, volume, voice }))).toEqual(said.map(() => ({ l: `${lang}-CA`, rate: 0.95, pitch: 1, volume: 1, voice: VOICE[lang] })));
         for (let i = 1; i < said.length; i++) expect(said[i].at - said[i - 1].end).toBeGreaterThanOrEqual(290);
         // Phone numbers spelled out; never "safe"; nothing against calling 911.
@@ -467,7 +468,7 @@ test.describe("Listen: stopping", () => {
     await expect(listenButton(page, "en")).toBeVisible(); // the new screen's own Listen, not playing
   });
 
-  test("switching language stops it; the next reading is in French, with the Canadian French voice", async ({ page }) => {
+  test("switching language stops it; the next reading is in French, with the natural Canadian French voice", async ({ page }) => {
     await start(page, "en");
     await page.goto("/q1");
     await page.evaluate(() => { (window as unknown as { __autoEnd: boolean }).__autoEnd = false; });

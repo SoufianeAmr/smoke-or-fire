@@ -13,12 +13,16 @@ const NOVELTY = /^(albert|bad news|bahh|bells|boing|bubbles|cellos|deranged|good
 type Voice = { lang: string; name: string; default?: boolean };
 
 /**
- * The most natural installed voice for the language: Canadian first (en-CA, fr-CA), then any English or French voice;
- * within each, a natural voice ("Enhanced", "Premium", "Natural", "Neural", "Google"), then the device's default.
+ * The installed voice to use. A natural voice is one whose name says so ("Enhanced", "Premium", "Natural", "Neural",
+ * "Google"). English: the most natural first, whatever the locale, then en-CA. French: a natural fr-CA voice first,
+ * then any fr-CA, then a natural French one. Ties go to the device's default voice.
  */
 export function pickVoice<V extends Voice>(voices: V[], lang: Lang): V | null {
   const tag = (v: V) => v.lang.replace("_", "-").toLowerCase();
-  const rank = (v: V) => (tag(v) === LOCALE[lang].toLowerCase() ? 4 : 0) + (NATURAL.test(v.name) ? 2 : 0) + (v.default ? 1 : 0);
+  const natural = (v: V) => NATURAL.test(v.name);
+  const canadian = (v: V) => tag(v) === LOCALE[lang].toLowerCase();
+  const rank = (v: V) =>
+    (lang === "en" ? (natural(v) ? 4 : 0) + (canadian(v) ? 2 : 0) : (canadian(v) ? 4 : 0) + (natural(v) ? 2 : 0)) + (v.default ? 1 : 0);
   const candidates = voices.filter((v) => tag(v).split("-")[0] === lang && !NOVELTY.test(v.name));
   return candidates.reduce<V | null>((best, v) => (best === null || rank(v) > rank(best) ? v : best), null);
 }
