@@ -55,51 +55,74 @@ async function replayCheck(page: Page, town: string, lang: "en" | "fr" = "en") {
   await expect(page).toHaveURL(/\/verdict$/, { timeout: 10_000 });
 }
 
-for (const lang of ["en", "fr"] as const) {
+/** Each screen of a demo has its Listen button. */
+const listen = (page: Page, lang: "en" | "fr") => expect(page.getByRole("button", { name: lang === "en" ? "Listen" : "Écouter", exact: true })).toBeVisible();
+
+async function scenario1(page: Page, lang: "en" | "fr") {
   const l = L[lang];
-
-  test(`Scenario 1 (${lang.toUpperCase()}): Replay → I smell smoke → No → Haze everywhere → Moncton → drifting verdict`, async ({ page }) => {
-    await start(page, "replay", lang);
-    await page.getByRole("link", { name: l.cta }).click();
-    await page.getByRole("link", { name: l.no }).click();
-    await page.getByRole("link", { name: l.haze }).click();
-    await page.getByLabel(l.town).fill("Monc");
-    await page.getByRole("option", { name: /^Moncton,/ }).click();
-    await expect(page).toHaveURL(/\/verdict$/, { timeout: 10_000 });
-    await expect(page.getByText(l.drifting)).toBeVisible();
-    await expect(page.getByRole("heading", { level: 1 })).toHaveText(l.headline);
-  });
-
-  test(`Scenario 2 (${lang.toUpperCase()}): Replay → I smell smoke → Yes → Emergency → Told to leave → Bridgetown → centres → Get directions`, async ({ page }) => {
-    await start(page, "replay", lang);
-    await page.getByRole("link", { name: l.cta }).click();
-    await page.getByRole("link", { name: l.yes }).click();
-    await expect(page.getByRole("heading", { name: l.emergency })).toBeVisible();
-    await page.getByRole("link", { name: l.entry }).click();
-
-    await expect(page).toHaveURL(/\/leave$/);
-    await expect(page.getByRole("heading", { level: 1 })).toHaveText(l.title);
-    await expect(page.getByRole("heading", { name: l.where })).toBeVisible(); // "I smell smoke" started a new check: no place yet
-    await page.getByLabel(l.town).fill("Bridge");
-    await page.getByRole("option", { name: /^Bridgetown,/ }).click();
-
-    await expect(page.getByRole("heading", { name: l.near })).toBeVisible();
-    await expect(page.getByText(l.banner)).toBeVisible();
-    await expect(page.getByRole("heading", { name: l.where })).toHaveCount(0);
-    // In replay the phone is not in Bridgetown: the route starts there.
-    const reception = page.locator("section[aria-labelledby=reception-h]").getByRole("link", { name: l.directions });
-    const comfort = page.locator("section[aria-labelledby=comfort-h]").getByRole("link", { name: l.directions });
-    await expect(reception).toHaveAttribute("href", directions("295 Commercial St., Middleton, NS", BRIDGETOWN));
-    await expect(comfort).toHaveAttribute("href", directions("31 Bay Rd., Bridgetown, NS", BRIDGETOWN));
-    await expect(reception).toHaveAttribute("target", "_blank");
-    await expect(reception).toBeVisible();
-
-    if (lang === "en") {
-      await page.getByRole("link", { name: "Back" }).click();
-      await expect(page.getByRole("heading", { name: l.emergency })).toBeVisible();
-    }
-  });
+  await start(page, "replay", lang);
+  await listen(page, lang);
+  await page.getByRole("link", { name: l.cta }).click();
+  await listen(page, lang);
+  await page.getByRole("link", { name: l.no }).click();
+  await listen(page, lang);
+  await page.getByRole("link", { name: l.haze }).click();
+  await listen(page, lang);
+  await page.getByLabel(l.town).fill("Monc");
+  await page.getByRole("option", { name: /^Moncton,/ }).click();
+  await expect(page).toHaveURL(/\/verdict$/, { timeout: 10_000 });
+  await expect(page.getByText(l.drifting)).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(l.headline);
+  await listen(page, lang);
 }
+
+async function scenario2(page: Page, lang: "en" | "fr") {
+  const l = L[lang];
+  await start(page, "replay", lang);
+  await page.getByRole("link", { name: l.cta }).click();
+  await page.getByRole("link", { name: l.yes }).click();
+  await expect(page.getByRole("heading", { name: l.emergency })).toBeVisible();
+  await listen(page, lang);
+  await page.getByRole("link", { name: l.entry }).click();
+
+  await expect(page).toHaveURL(/\/leave$/);
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(l.title);
+  await expect(page.getByRole("heading", { name: l.where })).toBeVisible(); // "I smell smoke" started a new check: no place yet
+  await listen(page, lang);
+  await page.getByLabel(l.town).fill("Bridge");
+  await page.getByRole("option", { name: /^Bridgetown,/ }).click();
+
+  await expect(page.getByRole("heading", { name: l.near })).toBeVisible();
+  await expect(page.getByText(l.banner)).toBeVisible();
+  await expect(page.getByRole("heading", { name: l.where })).toHaveCount(0);
+  await listen(page, lang);
+  // In replay the phone is not in Bridgetown: the route starts there.
+  const reception = page.locator("section[aria-labelledby=reception-h]").getByRole("link", { name: l.directions });
+  const comfort = page.locator("section[aria-labelledby=comfort-h]").getByRole("link", { name: l.directions });
+  await expect(reception).toHaveAttribute("href", directions("295 Commercial St., Middleton, NS", BRIDGETOWN));
+  await expect(comfort).toHaveAttribute("href", directions("31 Bay Rd., Bridgetown, NS", BRIDGETOWN));
+  await expect(reception).toHaveAttribute("target", "_blank");
+  await reception.scrollIntoViewIfNeeded();
+  await expect(reception).toBeVisible();
+
+  if (lang === "en") {
+    await page.getByRole("link", { name: "Back" }).click();
+    await expect(page.getByRole("heading", { name: l.emergency })).toBeVisible();
+  }
+}
+
+for (const lang of ["en", "fr"] as const) {
+  test(`Scenario 1 (${lang.toUpperCase()}): Replay → I smell smoke → No → Haze everywhere → Moncton → drifting verdict`, ({ page }) => scenario1(page, lang));
+  test(`Scenario 2 (${lang.toUpperCase()}): Replay → I smell smoke → Yes → Emergency → Told to leave → Bridgetown → centres → Get directions`, ({ page }) => scenario2(page, lang));
+}
+
+test.describe("the demo scenarios on a small phone, 375 × 667", () => {
+  test.use({ viewport: { width: 375, height: 667 } });
+  for (const lang of ["en", "fr"] as const) {
+    test(`Scenario 1 (${lang.toUpperCase()}) at 375 × 667`, ({ page }) => scenario1(page, lang));
+    test(`Scenario 2 (${lang.toUpperCase()}) at 375 × 667`, ({ page }) => scenario2(page, lang));
+  }
+});
 
 // Verdicts with the fire under 25 km away: a notice under the band links to this screen, for that town.
 for (const [town, lang] of [["Bridgetown", "en"], ["West Dalhousie", "en"], ["Bridgetown", "fr"]] as const) {

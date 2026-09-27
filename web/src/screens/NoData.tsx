@@ -1,18 +1,20 @@
 // 09b · We can't check the air right now (design/screens/09b-error-no-data.html)
 import { useNavigate } from "react-router";
-import { useT } from "../app/state";
+import { useApp, useT } from "../app/state";
+import { noDataVoice } from "../listen/speech";
 import { ReplayBanner } from "../components/ReplayBanner";
 import { Screen } from "../components/Screen";
 import { Sticky911 } from "../components/Sticky911";
 import { TopBar } from "../components/TopBar";
 
 export function NoData() {
+  const { lang } = useApp();
   const t = useT();
   const navigate = useNavigate();
   return (
     <Screen>
       <ReplayBanner />
-      <TopBar back="/location" />
+      <TopBar back="/location" listen={noDataVoice(lang)} />
       <main className="nodata-main" style={{ flexGrow: "1", display: "flex", flexDirection: "column", gap: "16px", padding: "4px 16px 152px" }}>
         <div className="nodata-head" style={{ display: "flex", flexDirection: "column", gap: "10px", padding: "0 4px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>

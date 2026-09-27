@@ -5,6 +5,8 @@ import { useApp, useT } from "../app/state";
 import { Screen } from "../components/Screen";
 import { LangToggle } from "../components/TopBar";
 import { ChevronRightIcon, DoorOpenIcon } from "../components/icons";
+import { ListenButton } from "../listen/ListenButton";
+import { checkVoice } from "../listen/speech";
 
 const SEGMENT: CSSProperties = { minHeight: "56px", border: "0", borderRadius: "14px", font: "inherit", fontSize: "18px", fontWeight: "700", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", cursor: "pointer" };
 const SELECTED: CSSProperties = { background: "#FFFFFF", color: "#1B2A4A", boxShadow: "inset 0 0 0 2px #1B2A4A" };
@@ -19,7 +21,7 @@ const ReplayIcon = () => (
 );
 
 export function Check() {
-  const { mode, setMode, reset } = useApp();
+  const { mode, lang, setMode, reset } = useApp();
   const t = useT();
   const isReplay = mode === "replay";
 
@@ -30,7 +32,8 @@ export function Check() {
         <div className="haze haze2" style={{ width: "380px", height: "260px", left: "120px", top: "360px", background: "#DDD6CC", opacity: "0.7" }} />
         <div className="haze haze3" style={{ width: "420px", height: "240px", left: "-60px", top: "560px", background: "#E9E1D5", opacity: "0.8" }} />
       </div>
-      <div style={{ position: "relative", zIndex: "1", display: "flex", alignItems: "center", justifyContent: "flex-end", padding: "8px 12px 0 4px", height: "68px" }}>
+      <div style={{ position: "relative", zIndex: "1", display: "flex", alignItems: "center", justifyContent: "flex-end", gap: "8px", padding: "8px 12px 0 4px", height: "68px" }}>
+        <ListenButton sentences={checkVoice(lang, isReplay)} />
         <LangToggle />
       </div>
       <main style={{ position: "relative", zIndex: "1", flexGrow: "1", display: "flex", flexDirection: "column", padding: "8px 20px 20px" }}>

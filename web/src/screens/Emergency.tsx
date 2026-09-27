@@ -7,7 +7,7 @@ import { Screen } from "../components/Screen";
 import { LangToggle } from "../components/TopBar";
 import { BackIcon, ChevronRightIcon } from "../components/icons";
 import { ListenButton } from "../listen/ListenButton";
-import { emergencySpeech } from "../listen/speech";
+import { emergencyVoice } from "../listen/speech";
 
 const NUMBER: CSSProperties = { flexShrink: "0", width: "30px", height: "30px", borderRadius: "50%", background: "#1A1D21", color: "#FFFFFF", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "18px", fontWeight: "700" };
 const PHONE = "M5.5 3.5h3l1.8 4.6-2.2 1.4a11 11 0 0 0 6.4 6.4l1.4-2.2 4.6 1.8v3a2 2 0 0 1-2.2 2A16.5 16.5 0 0 1 3.5 5.7a2 2 0 0 1 2-2.2z";
@@ -35,7 +35,7 @@ export function Emergency() {
             <BackIcon size={28} />
           </Link>
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <ListenButton parts={emergencySpeech(lang)} />
+            <ListenButton sentences={emergencyVoice(lang)} />
             <LangToggle on="band" />
           </div>
         </div>

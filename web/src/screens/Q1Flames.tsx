@@ -6,7 +6,7 @@ import { Screen } from "../components/Screen";
 import { Sticky911 } from "../components/Sticky911";
 import { TopBar } from "../components/TopBar";
 import { FlameIcon } from "../components/icons";
-import { q1Speech } from "../listen/speech";
+import { q1Voice } from "../listen/speech";
 
 export function Q1Flames() {
   const { lang } = useApp();
@@ -14,7 +14,7 @@ export function Q1Flames() {
   return (
     <Screen>
       <ReplayBanner />
-      <TopBar back="/" listen={q1Speech(lang)} />
+      <TopBar back="/" listen={q1Voice(lang)} />
       <main className="q1-main" style={{ flexGrow: "1", display: "flex", flexDirection: "column", gap: "28px", padding: "12px 16px 152px" }}>
         <div className="q1-head" style={{ display: "flex", flexDirection: "column", gap: "10px", padding: "0 4px" }}>
           <p style={{ margin: "0", fontSize: "18px", fontWeight: "600", color: "#4F5561" }}>{t("q1.step")}</p>

@@ -1,63 +1,77 @@
-// What "Listen" reads on each screen: only strings already on that screen, in the app's language. The only glue added
-// is punctuation, so each part ends as a sentence and the voice pauses between parts. Pure: no React, no DOM.
-import { translate, type Lang, type StringKey } from "../i18n";
-import type { VerdictView } from "../verdict/view";
-
-const NBSP = String.fromCharCode(0xa0);
+// "Listen", the guided voice: what each screen says aloud. The scripts are the voice.* strings (spoken, separate from
+// the on-screen text); their {…} values come from the screen. Pure: no React, no DOM.
+import { translate, type Lang, type StringKey, type Vars } from "../i18n";
 
 /** The voice's language: Canadian English or French. */
 export const LOCALE: Record<Lang, string> = { en: "en-CA", fr: "fr-CA" };
 
-/** A Canadian voice for the language if the device has one (en-CA, fr-CA), else any English or French voice. */
-export function pickVoice<V extends { lang: string }>(voices: V[], lang: Lang): V | null {
+// Voices that sound like a person: the good ones say so in their names.
+const NATURAL = /enhanced|premium|natural|neural|google/i;
+// macOS novelty voices, never used to read a warning.
+const NOVELTY = /^(albert|bad news|bahh|bells|boing|bubbles|cellos|deranged|good news|hysterical|jester|junior|organ|pipe organ|ralph|superstar|trinoids|whisper|wobble|zarvox)\b/i;
+
+type Voice = { lang: string; name: string; default?: boolean };
+
+/**
+ * The most natural installed voice for the language: Canadian first (en-CA, fr-CA), then any English or French voice;
+ * within each, a natural voice ("Enhanced", "Premium", "Natural", "Neural", "Google"), then the device's default.
+ */
+export function pickVoice<V extends Voice>(voices: V[], lang: Lang): V | null {
   const tag = (v: V) => v.lang.replace("_", "-").toLowerCase();
-  return voices.find((v) => tag(v) === LOCALE[lang].toLowerCase()) ?? voices.find((v) => tag(v).split("-")[0] === lang) ?? null;
+  const rank = (v: V) => (tag(v) === LOCALE[lang].toLowerCase() ? 4 : 0) + (NATURAL.test(v.name) ? 2 : 0) + (v.default ? 1 : 0);
+  const candidates = voices.filter((v) => tag(v).split("-")[0] === lang && !NOVELTY.test(v.name));
+  return candidates.reduce<V | null>((best, v) => (best === null || rank(v) > rank(best) ? v : best), null);
 }
 
-/** ": " in English, " : " with a no-break space in French. */
-export const colon = (lang: Lang) => (lang === "fr" ? `${NBSP}: ` : ": ");
+/** Sentences: split after . ? or ! followed by a space. */
+const sentences = (text: string) => text.split(/(?<=[.?!])\s+(?=\S)/).filter((s) => s.trim() !== "");
+const fill = (text: string, vars: Vars) => text.replace(/\{(\w+)\}/g, (match, name) => (name in vars ? String(vars[name]) : match));
 
-/** A part ends with punctuation, so the voice pauses: "Likely from the Long Lake fire" → "…fire.". */
-export const sentence = (text: string) => (/[.?!:]$/.test(text.trim()) ? text.trim() : `${text.trim()}.`);
-
-/** After a colon, a word starts in lower case ("No flames in sight" → "no flames in sight"); "I see flames" keeps its "I". */
-export const afterColon = (text: string, lang: Lang) => (/^\p{Lu}\p{Ll}/u.test(text) ? text.charAt(0).toLocaleLowerCase(lang) + text.slice(1) : text);
-
-/** A label in capitals is read as words, not letters: "DRIFTING SMOKE" → "Drifting smoke". */
-export const sentenceCase = (text: string, lang: Lang) => {
-  const lower = text.toLocaleLowerCase(lang);
-  return lower.charAt(0).toLocaleUpperCase(lang) + lower.slice(1);
-};
-
-/** Q1: the question, then each answer as "Yes: I see flames." */
-export function q1Speech(lang: Lang): string[] {
-  const t = (key: StringKey) => translate(lang, key);
-  const answer = (word: StringKey, sub: StringKey) => sentence(`${t(word)}${colon(lang)}${afterColon(t(sub), lang)}`);
-  return [t("q1.title"), answer("q1.yes", "q1.yesSub"), answer("q1.no", "q1.noSub")];
+/**
+ * A script as sentences, one per utterance. The template is split before its values are filled in, so a value never
+ * splits a sentence: an address ("295 Commercial St., Middleton") or a label with a question mark ("Told to leave your
+ * home? What to do").
+ */
+export function script(lang: Lang, key: StringKey, vars: Vars = {}): string[] {
+  return sentences(translate(lang, key)).map((sentence) => fill(sentence, vars));
 }
 
-/** The 911 bar as it's written: "Call 911 if you see: flames, smoke column, or dark smoke." */
-export function call911Speech(lang: Lang): string {
-  const t = (key: StringKey) => translate(lang, key);
-  const tiles = (["sticky.flames", "sticky.column", "sticky.dark"] as const).map((key) => afterColon(t(key), lang));
-  return sentence(`${t("sticky.title")} ${new Intl.ListFormat(lang, { style: "long", type: "disjunction" }).format(tiles)}`);
-}
+/** "159 kilometres", "one kilometre", "less than one kilometre". */
+export const spokenKm = (km: number, lang: Lang) => (km < 1 ? translate(lang, "voice.km.under") : km === 1 ? translate(lang, "voice.km.one") : translate(lang, "voice.km", { km }));
 
-/** Verdict (7a–7d): label, headline, subline, the confidence sentence, the first What to do line, then the 911 bar. */
-export function verdictSpeech(view: VerdictView, lang: Lang): string[] {
-  return [
-    sentence(sentenceCase(view.band.label, lang)),
-    sentence(view.band.headline),
-    sentence(view.band.sub),
-    sentence(view.confidence.text),
-    sentence(view.todo.general),
-    call911Speech(lang),
-  ];
-}
+/** After a colon, or inside a list, a word starts in lower case ("Medication" → "medication"); "I" and "ID" stay. */
+export const lowerFirst = (text: string, lang: Lang) => (/^\p{Lu}\p{Ll}/u.test(text) ? text.charAt(0).toLocaleLowerCase(lang) + text.slice(1) : text);
 
-/** Emergency: "Call 911 now", the subline, then "Tell the dispatcher:" and its four items. */
-export function emergencySpeech(lang: Lang): string[] {
-  const t = (key: StringKey) => translate(lang, key);
-  const items = ([1, 2, 3, 4] as const).map((n) => sentence(`${t(`emergency.tell${n}.lead`)} ${t(`emergency.tell${n}`)}`));
-  return [sentence(t("emergency.title")), sentence(t("emergency.sub")), `${t("emergency.tell")}${colon(lang).trimEnd()}`, ...items];
+export const checkVoice = (lang: Lang, replay: boolean) => [
+  ...(replay ? script(lang, "voice.check.replay") : []),
+  ...script(lang, "voice.check", { leave: translate(lang, "leave.entry") }),
+];
+export const q1Voice = (lang: Lang) => script(lang, "voice.q1");
+export const q2Voice = (lang: Lang) => script(lang, "voice.q2");
+export const locationVoice = (lang: Lang) => script(lang, "voice.location");
+export const loadingVoice = (lang: Lang) => script(lang, "voice.loading");
+export const emergencyVoice = (lang: Lang) => script(lang, "voice.emergency");
+export const howVoice = (lang: Lang) => script(lang, "voice.how");
+export const locationOffVoice = (lang: Lang) => script(lang, "voice.locationOff");
+export const noDataVoice = (lang: Lang) => script(lang, "voice.noData");
+
+/** What the leave screen shows: no place yet; the centres near the event; the event far away; or no event (live). */
+export type LeaveState =
+  | { kind: "where" }
+  | { kind: "near"; name: string; address: string; take: string[] }
+  | { kind: "far"; fire: string; km: number; town: string; ofTown: string; links: boolean; call211: boolean }
+  | { kind: "none"; links: boolean; call211: boolean };
+
+export function leaveVoice(lang: Lang, state: LeaveState): string[] {
+  if (state.kind === "where") return script(lang, "voice.leave.where");
+  const call211 = state.kind !== "near" && state.call211 ? script(lang, "voice.leave.211") : [];
+  if (state.kind === "near") {
+    const list = new Intl.ListFormat(lang, { style: "long", type: "conjunction" }).format(state.take.map((item) => lowerFirst(item, lang)));
+    return [...script(lang, "voice.leave.intro"), ...script(lang, "voice.leave.near", { name: state.name, address: state.address, list })];
+  }
+  if (state.kind === "far") {
+    const far = script(lang, "voice.leave.far", { fire: translate(lang, "fire.the.named", { name: state.fire }), distance: spokenKm(state.km, lang), town: state.town, ofTown: state.ofTown });
+    return [...far, ...(state.links ? script(lang, "voice.leave.far.links") : []), ...call211];
+  }
+  return [...script(lang, "voice.leave.intro"), ...(state.links ? script(lang, "voice.leave.none.links") : []), ...call211];
 }

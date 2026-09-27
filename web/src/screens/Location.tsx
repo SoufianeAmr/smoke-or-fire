@@ -12,6 +12,7 @@ import { ChevronRightIcon } from "../components/icons";
 import { circleBox, textBox } from "../map/labels";
 import { Basemap, USER_XY, frameProjection } from "../map/basemap";
 import type { StringKey } from "../i18n";
+import { locationVoice } from "../listen/speech";
 
 export function PlaceSearch({ id, places, query, setQuery, choose, href = "/loading" }: { id: string; places: Place[]; query: string; setQuery: (q: string) => void; choose: (p: Place) => void; href?: string }) {
   const t = useT();
@@ -88,7 +89,7 @@ export function Location() {
   return (
     <Screen>
       <ReplayBanner />
-      <TopBar back="/q2" />
+      <TopBar back="/q2" listen={locationVoice(lang)} />
       <main style={{ flexGrow: "1", display: "flex", flexDirection: "column", gap: "16px", padding: "4px 16px 152px" }}>
         <div style={{ display: "flex", flexDirection: "column", gap: "8px", padding: "0 4px" }}>
           <h1 style={{ margin: "0", fontSize: "34px", fontWeight: "800", lineHeight: "1.12", letterSpacing: "-0.02em" }}>{t("location.title")}</h1>

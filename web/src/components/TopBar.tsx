@@ -34,7 +34,7 @@ export function LangToggle({ on = "page" }: { on?: "page" | "band" }) {
 
 /**
  * Back arrow on the left, language switch on the right (screens 02–06, 08, 09). `back` is a route, or -1 for the previous
- * screen. With `listen`, a Listen button before the language switch reads those parts aloud.
+ * screen. With `listen`, a Listen button before the language switch says those sentences aloud.
  */
 export function TopBar({ back, listen }: { back: string | -1; listen?: string[] }) {
   const t = useT();
@@ -48,7 +48,7 @@ export function TopBar({ back, listen }: { back: string | -1; listen?: string[] 
         <BackIcon size={28} />
       </Link>
       <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-        {listen && <ListenButton parts={listen} />}
+        {listen && <ListenButton sentences={listen} />}
         <LangToggle />
       </div>
     </div>

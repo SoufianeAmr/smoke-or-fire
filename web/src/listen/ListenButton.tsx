@@ -1,5 +1,5 @@
-// "Listen": reads the screen's own strings aloud with the browser's built-in speech (speechSynthesis), in the app's
-// language. It never starts by itself; tap again to stop. Hidden when the browser can't speak.
+// "Listen": the screen's guided voice, with the browser's built-in speech (speechSynthesis), in the app's language.
+// It never starts by itself; tap again to stop. Hidden when the browser can't speak.
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
 import { useApp, useT } from "../app/state";
 import { SpeakerIcon, StopIcon } from "../components/icons";
@@ -8,23 +8,31 @@ import { LOCALE, pickVoice } from "./speech";
 // Outlined navy, as the other secondary buttons: red stays for Call 911. White inside, so it also reads on a red screen.
 const OUTLINED: CSSProperties = { minHeight: "56px", display: "flex", alignItems: "center", gap: "6px", padding: "0 12px 0 10px", borderRadius: "18px", border: "2px solid #1B2A4A", background: "#FFFFFF", color: "#1B2A4A", fontFamily: "inherit", fontSize: "18px", fontWeight: "700", lineHeight: "1.2", cursor: "pointer" };
 
+/** A short breath between sentences, as a person reading aloud would take. */
+const PAUSE_MS = 300;
+
 export const canSpeak = () => typeof window !== "undefined" && !!window.speechSynthesis && typeof window.SpeechSynthesisUtterance === "function";
 
-/** `parts` are read in order, one utterance each (a long single utterance can stop partway in some browsers). */
-export function ListenButton({ parts, style }: { parts: string[]; style?: CSSProperties }) {
+/** `sentences` are read in order, one utterance each, with a pause between them. */
+export function ListenButton({ sentences, style }: { sentences: string[]; style?: CSSProperties }) {
   const { lang } = useApp();
   const t = useT();
   const [supported] = useState(canSpeak);
   const [speaking, setSpeaking] = useState(false);
   const run = useRef(0); // the current reading; events from a stopped one are ignored
+  const pause = useRef<number | undefined>(undefined);
+  const current = useRef<SpeechSynthesisUtterance | null>(null); // held so Chrome can't collect it before its end event
 
   const stop = useCallback(() => {
     run.current++;
+    window.clearTimeout(pause.current);
     window.speechSynthesis.cancel();
     setSpeaking(false);
   }, []);
-  // Leaving the screen or switching language stops the reading: what was queued is for the old screen or language.
-  useEffect(() => (supported ? stop : undefined), [supported, stop, lang]);
+  // Leaving the screen, switching language, or the screen changing what it shows (the leave screen's "Change", Check's
+  // Live/Replay) stops the reading: it was for what's no longer there. Keyed on the text: screens rebuild the array.
+  const script = sentences.join("\n");
+  useEffect(() => (supported ? stop : undefined), [supported, stop, lang, script]);
   // Some browsers load their voices on first ask.
   useEffect(() => { if (supported) window.speechSynthesis.getVoices(); }, [supported]);
   // Tapping Call 911 (or any phone number) stops the reading, so it never talks over a call; so does leaving the
@@ -47,21 +55,34 @@ export function ListenButton({ parts, style }: { parts: string[]; style?: CSSPro
 
   const listen = () => {
     if (speaking) return stop();
+    if (sentences.length === 0) return;
     const synth = window.speechSynthesis;
     synth.cancel();
     const id = ++run.current;
-    const done = () => { if (run.current === id) setSpeaking(false); };
     const voice = pickVoice(synth.getVoices(), lang);
-    parts.forEach((text, i) => {
-      const utterance = new SpeechSynthesisUtterance(text);
+    const say = (i: number) => {
+      if (run.current !== id) return;
+      if (i >= sentences.length) {
+        setSpeaking(false);
+        return;
+      }
+      const utterance = new SpeechSynthesisUtterance(sentences[i]);
       utterance.lang = LOCALE[lang];
       utterance.voice = voice;
-      utterance.rate = 0.9;
+      utterance.rate = 0.95;
+      utterance.pitch = 1;
       utterance.volume = 1;
-      // Only the last part settles the button: after a part fails, the browser still reads the rest.
-      if (i === parts.length - 1) utterance.onend = utterance.onerror = done;
+      // Next sentence after a pause; one that fails is skipped. Some browsers send both error and end: act once.
+      let settled = false;
+      utterance.onend = utterance.onerror = () => {
+        if (settled || run.current !== id) return;
+        settled = true;
+        pause.current = window.setTimeout(() => say(i + 1), PAUSE_MS);
+      };
+      current.current = utterance;
       synth.speak(utterance);
-    });
+    };
+    say(0); // the first sentence starts inside the tap, as iOS requires
     setSpeaking(true);
   };
 

@@ -11,6 +11,7 @@ import { TopBar } from "../components/TopBar";
 import { circleBox, textBox } from "../map/labels";
 import { Basemap, USER_XY, frameProjection, round } from "../map/basemap";
 import type { StringKey } from "../i18n";
+import { loadingVoice } from "../listen/speech";
 
 // The screen shows at least until the hour counter reaches 24 (80% of its 4.8 s animation).
 const MIN_SHOW_MS = 3900;
@@ -57,7 +58,7 @@ export function Loading() {
   return (
     <Screen>
       <ReplayBanner />
-      <TopBar back="/location" />
+      <TopBar back="/location" listen={loadingVoice(lang)} />
       <main aria-live="polite" style={{ flexGrow: "1", display: "flex", flexDirection: "column", gap: "16px", padding: "4px 16px 152px" }}>
         <div style={{ display: "flex", flexDirection: "column", gap: "8px", padding: "0 4px" }}>
           <h1 style={{ margin: "0", fontSize: "34px", fontWeight: "800", lineHeight: "1.12", letterSpacing: "-0.02em", textWrap: "balance" }}>{t("loading.title")}</h1>

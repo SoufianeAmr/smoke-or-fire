@@ -1,8 +1,9 @@
 // 03 · Question 2 — What best describes it? (design/screens/03-q2-describe.html, 03-fr-q2-describe.html)
 import type { CSSProperties, ReactNode } from "react";
 import { Link } from "react-router";
-import { useT } from "../app/state";
+import { useApp, useT } from "../app/state";
 import type { StringKey } from "../i18n";
+import { q2Voice } from "../listen/speech";
 import { ReplayBanner } from "../components/ReplayBanner";
 import { Screen } from "../components/Screen";
 import { Sticky911 } from "../components/Sticky911";
@@ -27,11 +28,12 @@ function Option({ to, style, iconColor, icon, title, sub }: { to: string; style:
 }
 
 export function Q2Describe() {
+  const { lang } = useApp();
   const t = useT();
   return (
     <Screen>
       <ReplayBanner />
-      <TopBar back="/q1" />
+      <TopBar back="/q1" listen={q2Voice(lang)} />
       <main style={{ flexGrow: "1", display: "flex", flexDirection: "column", gap: "12px", padding: "4px 16px 152px" }}>
         <div style={{ display: "flex", flexDirection: "column", gap: "10px", padding: "0 4px" }}>
           <p style={{ margin: "0", fontSize: "18px", fontWeight: "600", color: "#4F5561" }}>{t("q2.step")}</p>

@@ -15,7 +15,7 @@ import { usePlaces } from "../data/places";
 import { centreOf, clockTime, directionsUrl, eventFor, isNear, kmBetween, mapLink, monthName, smsUrl, telUrl, type Centre, type EvacuationEvent, type Hours, type LatLon } from "../data/evacuation";
 import type { Lang, StringKey } from "../i18n";
 import { LeaveMap, MarkerBadge } from "../leave/LeaveMap";
-import { colon, sentence } from "../listen/speech";
+import { leaveVoice } from "../listen/speech";
 import { PlaceSearch, useLocate } from "./Location";
 
 const CARD: CSSProperties = { background: "#FFFFFF", color: "#1A1D21", borderRadius: "18px", padding: "20px", display: "flex", flexDirection: "column", gap: "14px", boxShadow: "0 1px 2px rgba(26, 29, 33, 0.06), 0 8px 24px rgba(26, 29, 33, 0.07)" };
@@ -48,6 +48,8 @@ const PROVINCE_LINKS: Record<string, Official[]> = {
 const MONCTON: Official = ["leave.link.moncton", "leave.link.moncton.host", "leave.link.moncton.url"];
 // The City of Moncton, as the town search and "Use my location" name it.
 const inMoncton = (place: Place) => place.name === "Moncton" && place.province === "NB";
+/** Where officials announce centres for this place: the City of Moncton's alerts first (live), then the province's. */
+const officialLinks = (place: Place, live: boolean): Official[] => [...(live && inMoncton(place) ? [MONCTON] : []), ...(PROVINCE_LINKS[place.province] ?? [])];
 
 export function Leave() {
   const { mode, lang, place, setPlace, shared } = useApp();
@@ -57,20 +59,20 @@ export function Leave() {
   // The text to family carries a location only if the person shared the phone's location this session.
   const message = [t("leave.family.sms"), shared && t("leave.family.location", { mapLink: mapLink(shared) })].filter(Boolean).join(" ");
 
-  // Listen: the heading; near the fire, the registration line and the reception centre's name and address (farther away,
-  // that the evacuation doesn't apply); the grab list; then "Tell family you're OK". With no place yet, the question.
+  // Listen: the guided voice for what this screen shows. The 211 line and the official links are said only when shown.
   const reception = event && near ? centreOf(event, "reception") : null;
-  const listen = !place
-    ? [sentence(t("leave.title")), t("location.title")]
-    : [
-        sentence(t("leave.title")),
-        ...(reception ? [...(reception.register ? [sentence(t("leave.register"))] : []), sentence(`${reception.name}, ${reception.address}`)] : []),
-        ...(event && !near ? [sentence(t("leave.far", farVars(event, place, lang)))] : []),
-        `${t("leave.take.title")}${colon(lang).trimEnd()}`,
-        ...TAKE.map(([key]) => sentence(t(key))),
-        sentence(t("leave.take.noDelay")),
-        sentence(t("leave.family")),
-      ];
+  const links = place ? officialLinks(place, mode === "live") : [];
+  const call211 = !!place && !!PROVINCE_LINKS[place.province];
+  const listen = leaveVoice(
+    lang,
+    !place
+      ? { kind: "where" }
+      : reception
+        ? { kind: "near", name: reception.name, address: reception.address, take: TAKE.map(([key]) => t(key)) }
+        : event && !near
+          ? { kind: "far", ...farVars(event, place, lang), links: links.length > 0, call211 }
+          : { kind: "none", links: links.length > 0, call211 },
+  );
 
   return (
     <Screen>
@@ -242,7 +244,7 @@ function Elsewhere({ place, event, live }: { place: Place; event: EvacuationEven
       </svg>
     </a>
   );
-  const links = [...(live && inMoncton(place) ? [MONCTON] : []), ...(PROVINCE_LINKS[place.province] ?? [])];
+  const links = officialLinks(place, live);
   const far = event && farVars(event, place, lang);
   return (
     <section style={CARD}>
