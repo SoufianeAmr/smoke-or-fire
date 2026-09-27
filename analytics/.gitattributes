@@ -1,0 +1,2 @@
+# Raw data: keep the bytes exactly as downloaded or copied (no line-ending conversion), so sha256 in the manifests holds.
+data/** -text

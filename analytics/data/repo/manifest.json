@@ -1,0 +1,230 @@
+{
+  "about": "Repo files copied unchanged into analytics/data/repo/ by scripts/copy_repo_data.py. sha256 and bytes are of the copy; gitBlob is the source's object id at gitCommit.",
+  "copiedAt": "2026-09-27T12:46:27Z",
+  "files": {
+    "replay_2025-08-25/firms/MODIS_SP.csv": {
+      "copiedFrom": "data/replay/moncton-2025-08-25/firms/MODIS_SP.csv",
+      "gitCommit": "23d998a1d06f5859b770c1e1c3b431398ab6f751",
+      "clean": true,
+      "gitBlob": "859c93b61cd7819369eb11186a2f2a8a1de65dcb",
+      "bytes": 5322,
+      "sha256": "3971c4a400e8a8c7aa83b8eafd4e50850d20615a0797b16199a31927644295bf",
+      "rows": 65,
+      "what": "NASA FIRMS area API, MODIS_SP, bbox -72,41,-56,51, 2 days from 2025-08-24: the Aug 25 replay's NASA detections"
+    },
+    "replay_2025-08-25/firms/VIIRS_NOAA20_SP.csv": {
+      "copiedFrom": "data/replay/moncton-2025-08-25/firms/VIIRS_NOAA20_SP.csv",
+      "gitCommit": "23d998a1d06f5859b770c1e1c3b431398ab6f751",
+      "clean": true,
+      "gitBlob": "c5e8f7641e8e813a55a1a87dd842f2de74d838e4",
+      "bytes": 21492,
+      "sha256": "13e7ed5ca7d2e929f9e93ccef903e6a648fb526a905f35a9fd4512f3ceb0ebf4",
+      "rows": 263,
+      "what": "NASA FIRMS area API, VIIRS_NOAA20_SP, bbox -72,41,-56,51, 2 days from 2025-08-24: the Aug 25 replay's NASA detections"
+    },
+    "replay_2025-08-25/firms/VIIRS_SNPP_SP.csv": {
+      "copiedFrom": "data/replay/moncton-2025-08-25/firms/VIIRS_SNPP_SP.csv",
+      "gitCommit": "23d998a1d06f5859b770c1e1c3b431398ab6f751",
+      "clean": true,
+      "gitBlob": "5243516c6dae59e71681c981754913894667a6eb",
+      "bytes": 16281,
+      "sha256": "767697a7ec759a913e7b9942e37520bfb401f90871e52ef3039d6e2972b9e795",
+      "rows": 205,
+      "what": "NASA FIRMS area API, VIIRS_SNPP_SP, bbox -72,41,-56,51, 2 days from 2025-08-24: the Aug 25 replay's NASA detections"
+    },
+    "replay_2025-08-25/hotspots.json": {
+      "copiedFrom": "data/replay/moncton-2025-08-25/hotspots.json",
+      "gitCommit": "23d998a1d06f5859b770c1e1c3b431398ab6f751",
+      "clean": true,
+      "gitBlob": "729f65331a9dd06110a839ed8e3c26aecceb5a27",
+      "bytes": 129338,
+      "sha256": "023e1e95b1e8eb41500cc4dd5c6a86c154157c49c7bf520715afd340701a57e7",
+      "rows": 530,
+      "what": "CWFIS public:hotspots GeoJSON: the Aug 25 replay's Canadian hotspots (rep_date is a report time)"
+    },
+    "replay_2025-08-25/manifest.json": {
+      "copiedFrom": "data/replay/moncton-2025-08-25/manifest.json",
+      "gitCommit": "23d998a1d06f5859b770c1e1c3b431398ab6f751",
+      "clean": true,
+      "gitBlob": "70291bbe4a41dc6cdb952231505eed924588a3d7",
+      "bytes": 13255,
+      "sha256": "2e494351f9bf2efa9d01e6666f6040b767587c54ddfaa2efb32ce9d02c9f5b8c",
+      "what": "The Aug 25 replay recording's own manifest: sources, URLs (FIRMS key masked), download times, rows"
+    },
+    "demo/bathurst.json": {
+      "copiedFrom": "data/demo/bathurst.json",
+      "gitCommit": "23d998a1d06f5859b770c1e1c3b431398ab6f751",
+      "clean": true,
+      "gitBlob": "cccdf280c5ae186b21922690f76e1e9d56eb8b61",
+      "bytes": 45624,
+      "sha256": "14feb77c1c55ef4d1408f69ef4b9d748399cd9b0ac03264652088556e965dfe5",
+      "what": "The engine's saved replay answer for Bathurst, NB at 2025-08-25T12:00:00Z"
+    },
+    "demo/bridgetown.json": {
+      "copiedFrom": "data/demo/bridgetown.json",
+      "gitCommit": "23d998a1d06f5859b770c1e1c3b431398ab6f751",
+      "clean": true,
+      "gitBlob": "01882ce3fe065157971146cf42d87ceb2fde932d",
+      "bytes": 45796,
+      "sha256": "3a061ac83c153783b2106a08d2978d1f9af1cc2e8b1d826c6aa9ce52a10659ca",
+      "what": "The engine's saved replay answer for Lawrencetown, NS at 2025-08-25T12:00:00Z"
+    },
+    "demo/charlottetown.json": {
+      "copiedFrom": "data/demo/charlottetown.json",
+      "gitCommit": "23d998a1d06f5859b770c1e1c3b431398ab6f751",
+      "clean": true,
+      "gitBlob": "a8690b6ba8a24d171754616415d400498b79a444",
+      "bytes": 45825,
+      "sha256": "59c2f0869960b8493bd8511f5552eafcbdcb9a20e07bd3417f567b1f365b0988",
+      "what": "The engine's saved replay answer for Charlottetown, PE at 2025-08-25T12:00:00Z"
+    },
+    "demo/dieppe.json": {
+      "copiedFrom": "data/demo/dieppe.json",
+      "gitCommit": "23d998a1d06f5859b770c1e1c3b431398ab6f751",
+      "clean": true,
+      "gitBlob": "0a96b07b9b6f2a82340cf77c3cc1c16d91f4ea75",
+      "bytes": 47426,
+      "sha256": "8e3ae16bea30e161385b7a577c1ac3d4694b495d88b0081086ed2ab22ea6e063",
+      "what": "The engine's saved replay answer for Dieppe, NB at 2025-08-25T12:00:00Z"
+    },
+    "demo/edmundston.json": {
+      "copiedFrom": "data/demo/edmundston.json",
+      "gitCommit": "23d998a1d06f5859b770c1e1c3b431398ab6f751",
+      "clean": true,
+      "gitBlob": "65d2d448941ab74abfdcbb731bafa45adb75328f",
+      "bytes": 50767,
+      "sha256": "a7ba886dbe4adbb592d7da7b1a440207db6620827db85640e613dccdeb02cde0",
+      "what": "The engine's saved replay answer for Edmundston, NB at 2025-08-25T12:00:00Z"
+    },
+    "demo/fredericton.json": {
+      "copiedFrom": "data/demo/fredericton.json",
+      "gitCommit": "23d998a1d06f5859b770c1e1c3b431398ab6f751",
+      "clean": true,
+      "gitBlob": "144633ca309a8e5776e01cdec4fbe844291f06a3",
+      "bytes": 48212,
+      "sha256": "533a48f770fc687273ad681575b0e5d057c29f20fe133f580ec3b8460a937a7b",
+      "what": "The engine's saved replay answer for Fredericton, NB at 2025-08-25T12:00:00Z"
+    },
+    "demo/halifax.json": {
+      "copiedFrom": "data/demo/halifax.json",
+      "gitCommit": "23d998a1d06f5859b770c1e1c3b431398ab6f751",
+      "clean": true,
+      "gitBlob": "f7a279d508291da661df360ea4b33591b7150f2e",
+      "bytes": 41636,
+      "sha256": "0d2a8b84d6aac226fdb575613ae1c89fecb1cfde1e5a2b9d769c57e7f0b0f6af",
+      "what": "The engine's saved replay answer for Halifax, NS at 2025-08-25T12:00:00Z"
+    },
+    "demo/index.json": {
+      "copiedFrom": "data/demo/index.json",
+      "gitCommit": "23d998a1d06f5859b770c1e1c3b431398ab6f751",
+      "clean": true,
+      "gitBlob": "525d670b388146ad0cab093ac1adc13cf7dbdf89",
+      "bytes": 4230,
+      "sha256": "b2afcb0d261bc08c8678e34377150740f2ae3f4a01c169524afc65c08c3425c7",
+      "rows": 14,
+      "what": "Index of the replay towns and their verdicts, as the web app bundles them"
+    },
+    "demo/miramichi.json": {
+      "copiedFrom": "data/demo/miramichi.json",
+      "gitCommit": "23d998a1d06f5859b770c1e1c3b431398ab6f751",
+      "clean": true,
+      "gitBlob": "68cb7d3e3a5d7e5254f5f7c8328fb57c905707f9",
+      "bytes": 47324,
+      "sha256": "97c235a9358f2f6c972bc7b5aebf1a01941bce773fcfe0c8e535e0456b259ed2",
+      "what": "The engine's saved replay answer for Miramichi, NB at 2025-08-25T12:00:00Z"
+    },
+    "demo/moncton.json": {
+      "copiedFrom": "data/demo/moncton.json",
+      "gitCommit": "23d998a1d06f5859b770c1e1c3b431398ab6f751",
+      "clean": true,
+      "gitBlob": "0fc69ca0f1f9fc59ce8db809c12a7fa104e53afe",
+      "bytes": 48458,
+      "sha256": "391a198bd8a6f89cf12f9cddcf690cc6a2fd5afa3b08a2a550ce14f2f6d6e951",
+      "what": "The engine's saved replay answer for Moncton, NB at 2025-08-25T12:00:00Z"
+    },
+    "demo/sackville.json": {
+      "copiedFrom": "data/demo/sackville.json",
+      "gitCommit": "23d998a1d06f5859b770c1e1c3b431398ab6f751",
+      "clean": true,
+      "gitBlob": "13c91635e224fa4d28d2eddc3cfca8b807b96a82",
+      "bytes": 47659,
+      "sha256": "2de4ba8cab0b060b60b28999717152f8bc6d46fd073129b0910242c2bdfddcd7",
+      "what": "The engine's saved replay answer for Tantramar, NB at 2025-08-25T12:00:00Z"
+    },
+    "demo/saint-john.json": {
+      "copiedFrom": "data/demo/saint-john.json",
+      "gitCommit": "23d998a1d06f5859b770c1e1c3b431398ab6f751",
+      "clean": true,
+      "gitBlob": "09dfa0238b2eb59940b71f8043201c4a857a64c0",
+      "bytes": 46864,
+      "sha256": "cab3eaa26afdbbc58f24e0efbfefad89e995ad2c04068e76b5a02ff6fdf2983f",
+      "what": "The engine's saved replay answer for Saint John, BAY_OF_FUNDY at 2025-08-25T12:00:00Z"
+    },
+    "demo/sussex.json": {
+      "copiedFrom": "data/demo/sussex.json",
+      "gitCommit": "23d998a1d06f5859b770c1e1c3b431398ab6f751",
+      "clean": true,
+      "gitBlob": "14ac94656d611963ef8191a74573230878b2e625",
+      "bytes": 48100,
+      "sha256": "c55af9c8143044904383e17ee9e1b506ae6815c2dbbc85c95a77718ed8b88cdc",
+      "what": "The engine's saved replay answer for Sussex, NB at 2025-08-25T12:00:00Z"
+    },
+    "demo/truro.json": {
+      "copiedFrom": "data/demo/truro.json",
+      "gitCommit": "23d998a1d06f5859b770c1e1c3b431398ab6f751",
+      "clean": true,
+      "gitBlob": "7f4c74e6e98ec2fc41f244565f1676cbd896ba2c",
+      "bytes": 43997,
+      "sha256": "4f592c1b8afa2a2b9ea271b8b2d5df2e8428a45a66a6104df4000333e1636005",
+      "what": "The engine's saved replay answer for Truro, NS at 2025-08-25T12:00:00Z"
+    },
+    "demo/west-dalhousie.json": {
+      "copiedFrom": "data/demo/west-dalhousie.json",
+      "gitCommit": "23d998a1d06f5859b770c1e1c3b431398ab6f751",
+      "clean": true,
+      "gitBlob": "65f533685473b4d2aaed89bf1a90f72337a2bfc3",
+      "bytes": 45796,
+      "sha256": "cb16913670abbb6f9da48ebc090f650d67e0edd3dedd6bcbe57cdf303a250f88",
+      "what": "The engine's saved replay answer for Lawrencetown, NS at 2025-08-25T12:00:00Z"
+    },
+    "validation/results.json": {
+      "copiedFrom": "data/validation/results.json",
+      "gitCommit": "23d998a1d06f5859b770c1e1c3b431398ab6f751",
+      "clean": true,
+      "gitBlob": "050590321a59638bc69d63d363a0c668bd8228b2",
+      "bytes": 4835,
+      "sha256": "6510ba26eac6f99472b6e26a03006ef283a7f805704cdb3bd4cf16e80e90708a",
+      "rows": 7,
+      "what": "The validation table's rows, as engine/scripts/validate.py wrote them"
+    },
+    "VALIDATION.md": {
+      "copiedFrom": "VALIDATION.md",
+      "gitCommit": "23d998a1d06f5859b770c1e1c3b431398ab6f751",
+      "clean": true,
+      "gitBlob": "4693bf3f812a1629aa44354f88c4d9bb4b2130da",
+      "bytes": 10987,
+      "sha256": "1160817081332cdef828dfe4f833fed416fba559144bf7b6ef2ae5a8543b9ccf",
+      "rows": 7,
+      "what": "Validation on reported smoke events and control days: rules, results table, misses"
+    },
+    "TECH-FACTS.md": {
+      "copiedFrom": "TECH-FACTS.md",
+      "gitCommit": "23d998a1d06f5859b770c1e1c3b431398ab6f751",
+      "clean": true,
+      "gitBlob": "b5b03b1d48f9bf3fa60986b2f923016c1e63e9b0",
+      "bytes": 11139,
+      "sha256": "cd764c0889eac55c35d69ecc0de54b2d87f1d6476751e5c1f0e5e2df67e64a2b",
+      "what": "Written by engine/scripts/tech_facts.py: the engine's merge counts and the refinery point, among others"
+    },
+    "places/fire-names.json": {
+      "copiedFrom": "data/places/fire-names.json",
+      "gitCommit": "23d998a1d06f5859b770c1e1c3b431398ab6f751",
+      "clean": true,
+      "gitBlob": "c8295f1d711956aeca244a098d3631c99b273c31",
+      "bytes": 755,
+      "sha256": "fdfb6c623fa9f97731a7c01cbc3accd57c6931b83b283350410937bacda10d61",
+      "rows": 1,
+      "what": "Public fire names, with the Long Lake fire point"
+    }
+  }
+}

@@ -1,0 +1,6 @@
+name: smoke-or-fire-data-room
+channels:
+  - snowflake
+dependencies:
+  - pydeck
+  - altair

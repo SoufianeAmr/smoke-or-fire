@@ -1,0 +1,9 @@
+# Snowflake key-pair login and any other secret: never committed.
+.env
+.env.*
+*.p8
+*.pem
+.venv/
+__pycache__/
+set_rsa_key.sql
+*.pub

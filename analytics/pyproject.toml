@@ -1,0 +1,13 @@
+[project]
+name = "smoke-or-fire-analytics"
+version = "0.1.0"
+description = "Snowflake data room for the 2025 Maritimes fire season: FIRMS detections, replay verdicts and validation"
+requires-python = ">=3.12"
+dependencies = [
+    "cryptography>=43",
+    "httpx>=0.28",
+    "snowflake-connector-python>=3.12",
+]
+
+[tool.uv]
+package = false
