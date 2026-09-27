@@ -1,4 +1,4 @@
-﻿// "Listen", the guided voice on every screen. The browser's speech is replaced by a recorder that ends each sentence
+// "Listen", the guided voice on every screen. The browser's speech is replaced by a recorder that ends each sentence
 // after 10 ms, so the tests see exactly what is said, in order, with the pause between sentences. Each script comes from
 // the strings file (voice.*); its {…} values are read from the screen, and every button it names is on the screen.
 import { expect, test, type Locator, type Page, type Route } from "@playwright/test";
