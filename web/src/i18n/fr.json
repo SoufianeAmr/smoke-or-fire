@@ -363,7 +363,7 @@
   "how.nrcan": "Ressources naturelles Canada (RNCan)",
   "how.nrcan.body": "Feux actifs et points chauds détectés par satellite",
   "how.firms": "NASA FIRMS",
-  "how.firms.body": "Détections de feux par satellite (VIIRS et MODIS), certaines disponibles moins d’une minute après le passage du satellite",
+  "how.firms.body": "Détections de feux par satellite (VIIRS et MODIS), plusieurs fois par jour, au passage des satellites",
   "how.eccc": "Environnement et Changement climatique Canada (ECCC)",
   "how.eccc.body": "Cote air santé",
   "how.openMeteo": "Open-Meteo",

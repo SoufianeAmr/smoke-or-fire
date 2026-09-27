@@ -363,7 +363,7 @@
   "how.nrcan": "Natural Resources Canada (NRCan)",
   "how.nrcan.body": "Active fires and satellite hotspots",
   "how.firms": "NASA FIRMS",
-  "how.firms.body": "Satellite fire detections (VIIRS and MODIS), some available less than a minute after the satellite passes over",
+  "how.firms.body": "Satellite fire detections (VIIRS and MODIS), several times a day as satellites pass over",
   "how.eccc": "Environment and Climate Change Canada (ECCC)",
   "how.eccc.body": "Air Quality Health Index",
   "how.openMeteo": "Open-Meteo",
