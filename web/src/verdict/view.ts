@@ -3,6 +3,10 @@ import { translate, type Lang, type StringKey, type Vars } from "../i18n";
 import type { AqhiCategory, Confidence, Fire, LastSeen, VerdictJson } from "./types";
 
 const NBSP = String.fromCharCode(0xa0); // no-break space: keeps a fire's name on one line in French
+const NBH = String.fromCharCode(0x2011); // no-break hyphen
+
+/** A satellite's name on one line: "NOAA‑20", "Suomi NPP", "Sentinel‑3A" never break at the hyphen or space. */
+const unbroken = (satellite: string) => satellite.replace(/-/g, NBH).replace(/ /g, NBSP);
 
 export type Variant = "7a" | "7b" | "7c" | "7d";
 export type AreaWide = { lead: string; text: string };
@@ -168,7 +172,7 @@ export function verdictView(json: VerdictJson, lang: Lang): VerdictView {
     fireLabel: fire ? fireTitle(fire) : null,
     approachLabel: variant === "7a" && approach ? hours(approach.hoursAgo, "map.hoursAgo.one", "map.hoursAgo", "map.hoursAgo.under") : null,
     approachKm: variant === "7c" && approach ? t("unit.km", { km: approach.km }) : null,
-    badge: newest ? t(newest.latencyClass === "URT" ? "badge.seenBy.urt" : "badge.seenBy", { satellite: newest.satellite!, time: ago(newest) }) : null,
+    badge: newest ? t(newest.latencyClass === "URT" ? "badge.seenBy.urt" : "badge.seenBy", { satellite: unbroken(newest.satellite!), time: ago(newest) }) : null,
     edgeLabel: (h, code) => {
       const ago = hours(h, "map.hoursAgo.one", "map.hoursAgo", "map.hoursAgo.under");
       const where = area(code, "short");
@@ -242,13 +246,19 @@ export function verdictView(json: VerdictJson, lang: Lang): VerdictView {
   const reached = originFrom
     ? t("why.reached", { town, from: originFrom, direction: compassWord(json.path.origin.compass, "word") })
     : t("why.reached.noArea", { town, direction: compassWord(json.path.origin.compass, "from") });
-  const edge = json.path.stoppedAtGridEdge ? " " + t("why.gridEdge") : "";
-  const traced = { title: t("why.traced", { n: json.path.hoursTraced }), body: (variant === "7a" ? t("why.traced.body", { town }) : reached) + edge };
+  const edge = json.path.stoppedAtGridEdge;
+  const traced = {
+    title: t("why.traced", { n: json.path.hoursTraced }),
+    body:
+      variant === "7a"
+        ? t(edge ? "why.traced.body.gridEdge" : "why.traced.body", { town })
+        : reached + (edge ? " " + t("why.gridEdge") : ""),
+  };
   // The fire's newest satellite observation (the engine never uses a CWFIS report time for it); without
   // one, the official-list sentence only for a fire with a CWFIS record, else nothing.
   const seen = (f: Fire) =>
     f.lastSeen?.satellite
-      ? t("why.seenBy", { satellite: f.lastSeen.satellite, time: ago(f.lastSeen) })
+      ? t("why.seenBy", { satellite: unbroken(f.lastSeen.satellite), time: ago(f.lastSeen) })
       : f.lastSeenHoursAgo !== null
         ? t(f.lastSeenHoursAgo <= 1 ? "why.seen.one" : "why.seen", { n: f.lastSeenHoursAgo })
         : f.cwfisIds.length > 0 ? t("why.onList") : "";
@@ -260,7 +270,7 @@ export function verdictView(json: VerdictJson, lang: Lang): VerdictView {
   const satellitesLine = (f: Fire) => {
     const { bySource, satellites } = f.detections;
     if (bySource.FIRMS + bySource.both === 0 || satellites.length === 0) return null;
-    const list = new Intl.ListFormat(lang, { style: "long", type: "conjunction" }).format(satellites);
+    const list = new Intl.ListFormat(lang, { style: "long", type: "conjunction" }).format(satellites.map(unbroken));
     return t(satellites.length === 1 ? "why.satellites.one" : "why.satellites", { n: satellites.length, list });
   };
   const passed = { title: t("why.passed", { km: approach?.km ?? 0 }), body: "", detail: variant === "7a" || variant === "7c" ? satellitesLine(fire!) : null };
@@ -272,15 +282,29 @@ export function verdictView(json: VerdictJson, lang: Lang): VerdictView {
         : variant === "7b"
           ? { title: t("why.noneNear"), body: t("why.noneNear.body", { km: json.rules.searchKm, nearest: fire!.name ?? firePlain(fire!), distance: fire!.km }) }
           : { title: t("why.noneInRegion"), body: t("why.noneInRegion.body", { km: json.rules.fireRadiusKm }) };
+  // When the three heights disagree on 7a and 7c, the steady-wind item gives way to how close each
+  // height came: 100 m is "near the ground", 925 and 850 hPa are "higher up" (pressure levels are never named on screen).
+  const km = (height: "100m" | "925hPa" | "850hPa") => json.heights.results[height]?.closestApproachKm ?? null;
+  const heightsKm = [km("100m"), km("925hPa"), km("850hPa")];
+  const heightsItem =
+    (variant === "7a" || variant === "7c") && !json.heights.agree && heightsKm.every((k) => k !== null)
+      ? {
+          title: t("why.heights"),
+          body: t("why.heights.body", { km100: heightsKm[0]!, km925: heightsKm[1]!, km850: heightsKm[2]!, level: t(`why.level.${json.confidence}` as StringKey) }),
+        }
+      : null;
   const third =
     variant === "7b" || variant === "7d"
       ? { title: t("why.closeBy"), body: t("why.closeBy.body") }
       : json.wind.steady
-        ? { title: t("why.steady"), body: t("why.steady.body") }
+        ? heightsItem ?? { title: t("why.steady"), body: t("why.steady.body") }
         : { title: t("why.unsteady"), body: when === t("when.overnight") ? t("why.unsteady.overnight") : t("why.unsteady.body", { when }) };
   // The featured fire's smoke traced forward to the check: supporting evidence only, after item 2.
   const forward = json.forward && fire
-    ? { title: "", body: t(json.forward.agrees ? "why.forward.passed" : "why.forward.stayed", { fire: firePlain(fire), km: json.forward.closestKm }) }
+    ? {
+        title: t(json.forward.agrees ? "why.forward.title.agrees" : "why.forward.title.elsewhere"),
+        body: t(json.forward.agrees ? "why.forward.passed" : "why.forward.stayed", { fire: firePlain(fire), km: json.forward.closestKm }),
+      }
     : null;
 
   return {

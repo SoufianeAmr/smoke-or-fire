@@ -7,11 +7,13 @@ import fredericton from "../../../data/demo/fredericton.json";
 import halifax from "../../../data/demo/halifax.json";
 import miramichi from "../../../data/demo/miramichi.json";
 import moncton from "../../../data/demo/moncton.json";
+import sackville from "../../../data/demo/sackville.json";
 import type { Fire, VerdictJson } from "./types";
 import { verdictView } from "./view";
 
 const json = (data: unknown) => data as VerdictJson;
 const NBSP = String.fromCharCode(0xa0);
+const NBH = String.fromCharCode(0x2011); // no-break hyphen, as in N.‑É. and NOAA‑20
 
 describe("Moncton replay (drifting, low: the three heights disagree)", () => {
   const view = verdictView(json(moncton), "en");
@@ -40,9 +42,12 @@ describe("Moncton replay (drifting, low: the three heights disagree)", () => {
     ]);
   });
 
-  test("says how many hours were traced and that the wind data ended", () => {
-    expect(view.why.items[0].title).toBe("We traced the air back 20 hours");
-    expect(view.why.items[0].body.endsWith("Our wind data ends there.")).toBe(true);
+  test("says how many hours were traced, until the air left the area the wind data covers", () => {
+    expect([view.why.items[0].title, view.why.items[0].body, verdictView(json(moncton), "fr").why.items[0].body]).toEqual([
+      "We traced the air back 20 hours",
+      "Using hourly winds, we followed the air arriving in Moncton backward, one hour at a time, until it left the area our wind data covers.",
+      "Grâce aux vents horaires, nous avons suivi à rebours l’air qui arrive à Moncton, une heure à la fois, jusqu’à ce qu’il quitte la zone couverte par nos données de vent.",
+    ]);
   });
 
   test("keeps the design's French wording", () => {
@@ -104,15 +109,15 @@ describe("the last satellite sighting of the fire (Why item 2, map badge)", () =
 
   test("names the satellite, in minutes under an hour", () => {
     expect([verdictView(sighted40MinutesAgo, "en").why.items[1].body, verdictView(sighted40MinutesAgo, "fr").why.items[1].body]).toEqual([
-      "About 6 hours ago, that air was over the Long Lake fire. NOAA-21 saw it burning 40 minutes ago.",
-      expect.stringMatching(/ Le satellite NOAA-21 l’a vu brûler il y a 40 minutes\.$/),
+      `About 6 hours ago, that air was over the Long Lake fire. NOAA${NBH}21 saw it burning 40 minutes ago.`,
+      expect.stringMatching(new RegExp(` Le satellite NOAA${NBH}21 l’a vu brûler il y a 40 minutes\\.$`)),
     ]);
   });
 
   test("names the satellite, in hours from an hour on", () => {
     expect([verdictView(sighted5HoursAgo, "en").why.items[1].body, verdictView(sighted5HoursAgo, "fr").why.items[1].body]).toEqual([
-      "About 6 hours ago, that air was over the Long Lake fire. NOAA-20 saw it burning 5 hours ago.",
-      expect.stringMatching(/ Le satellite NOAA-20 l’a vu brûler il y a 5 heures\.$/),
+      `About 6 hours ago, that air was over the Long Lake fire. NOAA${NBH}20 saw it burning 5 hours ago.`,
+      expect.stringMatching(new RegExp(` Le satellite NOAA${NBH}20 l’a vu brûler il y a 5 heures\\.$`)),
     ]);
   });
 
@@ -137,15 +142,15 @@ describe("the last satellite sighting of the fire (Why item 2, map badge)", () =
 
   test("the map badge names the satellite of the fire’s newest detection", () => {
     expect([verdictView(sighted5HoursAgo, "en").map.badge, verdictView(sighted5HoursAgo, "fr").map.badge]).toEqual([
-      `Seen by satellite NOAA-20${NBSP}· 5 hours ago`,
-      `Vu par le satellite NOAA-20${NBSP}· il y a 5 heures`,
+      `Seen by satellite NOAA${NBH}20${NBSP}· 5 hours ago`,
+      `Vu par le satellite NOAA${NBH}20${NBSP}· il y a 5 heures`,
     ]);
   });
 
   test("the map badge says ultra real-time only for ultra real-time data", () => {
     expect([verdictView(sighted40MinutesAgo, "en").map.badge, verdictView(sighted40MinutesAgo, "fr").map.badge]).toEqual([
-      `Seen by satellite NOAA-21${NBSP}· 40 minutes ago${NBSP}· ultra real-time`,
-      `Vu par le satellite NOAA-21${NBSP}· il y a 40 minutes${NBSP}· ultra temps réel`,
+      `Seen by satellite NOAA${NBH}21${NBSP}· 40 minutes ago${NBSP}· ultra real-time`,
+      `Vu par le satellite NOAA${NBH}21${NBSP}· il y a 40 minutes${NBSP}· ultra temps réel`,
     ]);
   });
 
@@ -188,8 +193,8 @@ describe("screen 7d: when the fire data was checked", () => {
 describe("Why item 2: the satellites that saw the fire", () => {
   test("lists them when the fire has FIRMS detections (Moncton replay)", () => {
     expect([verdictView(json(moncton), "en").why.items[1].detail, verdictView(json(moncton), "fr").why.items[1].detail]).toEqual([
-      "Detected by 6 satellites in the last 24 hours: Aqua, NOAA-20, NOAA-21, Sentinel-3A, Suomi NPP, and Terra.",
-      `Détecté par 6 satellites au cours des 24 dernières heures${NBSP}: Aqua, NOAA-20, NOAA-21, Sentinel-3A, Suomi NPP et Terra.`,
+      `Detected by 6 satellites in the last 24 hours: Aqua, NOAA${NBH}20, NOAA${NBH}21, Sentinel${NBH}3A, Suomi${NBSP}NPP, and Terra.`,
+      `Détecté par 6 satellites au cours des 24 dernières heures${NBSP}: Aqua, NOAA${NBH}20, NOAA${NBH}21, Sentinel${NBH}3A, Suomi${NBSP}NPP et Terra.`,
     ]);
   });
 
@@ -198,8 +203,8 @@ describe("Why item 2: the satellites that saw the fire", () => {
     const detections = { total: 2, bySource: { FIRMS: 2, CWFIS: 0, both: 0 }, satellites: ["NOAA-20"] };
     const one = { ...data, closestApproach: { ...data.closestApproach!, fire: { ...data.closestApproach!.fire, detections } } };
     expect([verdictView(one, "en").why.items[1].detail, verdictView(one, "fr").why.items[1].detail]).toEqual([
-      "Detected by 1 satellite in the last 24 hours: NOAA-20.",
-      `Détecté par 1 satellite au cours des 24 dernières heures${NBSP}: NOAA-20.`,
+      `Detected by 1 satellite in the last 24 hours: NOAA${NBH}20.`,
+      `Détecté par 1 satellite au cours des 24 dernières heures${NBSP}: NOAA${NBH}20.`,
     ]);
   });
 
@@ -209,8 +214,6 @@ describe("Why item 2: the satellites that saw the fire", () => {
 });
 
 describe("French: the fire and the direction take the right article", () => {
-  const NBH = String.fromCharCode(0x2011); // no-break hyphen, as in N.‑É.
-
   test("de + le contracts to du, and a sentence starts with Du or D’un (Charlottetown, Miramichi replays)", () => {
     const [named, unnamed] = [verdictView(json(charlottetown), "fr"), verdictView(json(miramichi), "fr")];
     expect([named.band.sub, named.twoPossibilities!.driftingLead, unnamed.band.sub, unnamed.twoPossibilities!.driftingLead]).toEqual([
@@ -307,7 +310,7 @@ describe("Why item 3: the fire’s smoke traced forward", () => {
 
   test("comes after item 2, and is left out when no fire is featured (7d)", () => {
     expect([verdictView(json(moncton), "en").why.items.map((item) => item.title), verdictView(noFires, "en").why.items.length]).toEqual([
-      ["We traced the air back 20 hours", "It passed 19 km from an active fire", "", "The wind stayed steady"],
+      ["We traced the air back 20 hours", "It passed 19 km from an active fire", "The fire’s smoke came your way", "The three heights don’t agree"],
       3,
     ]);
   });
@@ -319,4 +322,65 @@ describe("Why item 3: the fire’s smoke traced forward", () => {
       null,
     ]);
   });
+
+  test("has a bold title: the smoke came your way when the trace agrees (Moncton), went elsewhere otherwise (Fredericton)", () => {
+    const title = (data: unknown, lang: "en" | "fr") => verdictView(json(data), lang).why.items[2].title;
+    expect([title(moncton, "en"), title(moncton, "fr"), title(fredericton, "en"), title(fredericton, "fr")]).toEqual([
+      "The fire’s smoke came your way",
+      "La fumée du feu est venue vers vous",
+      "The fire’s smoke went elsewhere",
+      "La fumée du feu est allée ailleurs",
+    ]);
+  });
+});
+
+describe("Why item 1: the air traced back", () => {
+  test("keeps the design’s sentence on 7a when the path did not reach the grid edge", () => {
+    const inside = { ...json(moncton), path: { ...json(moncton).path, stoppedAtGridEdge: false } };
+    expect(verdictView(inside, "en").why.items[0].body).toBe("Using hourly winds, we followed the air arriving in Moncton backward, one hour at a time.");
+  });
+
+  test("off 7a, says where the air came from, then that the wind data ends there (Halifax replay)", () => {
+    expect(verdictView(json(halifax), "en").why.items[0].body).toMatch(/^It reached Halifax from .+\. Our wind data ends there\.$/);
+  });
+});
+
+describe("Why: the three heights, when they disagree on 7a and 7c", () => {
+  const last = (data: unknown, lang: "en" | "fr" = "en") => {
+    const items = verdictView(json(data), lang).why.items;
+    return items[items.length - 1];
+  };
+
+  test("replaces the steady-wind item with each height’s distance and the confidence (Moncton replay)", () => {
+    expect([last(moncton), last(moncton, "fr")]).toEqual([
+      { title: "The three heights don’t agree", body: "Near the ground, the air passed 19 km from the fire; higher up, 32 and 46 km. That’s why confidence is low." },
+      {
+        title: "Les trois hauteurs ne concordent pas",
+        body: `Près du sol, l’air est passé à 19 km du feu${NBSP}; plus haut, à 32 et 46 km. C’est pourquoi la confiance est faible.`,
+      },
+    ]);
+  });
+
+  test("on the unclear screen too (Miramichi replay), and says medium when confidence is medium (Sackville replay)", () => {
+    expect([last(miramichi).body, last(sackville).body, last(sackville, "fr").body]).toEqual([
+      "Near the ground, the air passed 42 km from the fire; higher up, 59 and 59 km. That’s why confidence is low.",
+      "Near the ground, the air passed 66 km from the fire; higher up, 7 and 9 km. That’s why confidence is medium.",
+      `Près du sol, l’air est passé à 66 km du feu${NBSP}; plus haut, à 7 et 9 km. C’est pourquoi la confiance est moyenne.`,
+    ]);
+  });
+
+  test("keeps the steady-wind item when the heights agree (Bathurst replay)", () => {
+    expect(last(bathurst).title).toBe("The wind stayed steady");
+  });
+
+  test("never shows a pressure level (hPa) on any replay screen, in English or French", () => {
+    const towns = [bathurst, charlottetown, edmundston, fredericton, halifax, miramichi, moncton, sackville];
+    const shown = towns.flatMap((town) => (["en", "fr"] as const).map((lang) => JSON.stringify(verdictView(json(town), lang).why)));
+    expect(shown.filter((text) => text.includes("hPa"))).toEqual([]);
+  });
+});
+
+test("satellite names never break across lines: no plain hyphen or space inside a name (Moncton replay)", () => {
+  const view = verdictView(json(moncton), "en");
+  expect([view.why.items[1].detail, view.map.badge].filter((text) => /NOAA-|Sentinel-|Suomi NPP/.test(text ?? ""))).toEqual([]);
 });
