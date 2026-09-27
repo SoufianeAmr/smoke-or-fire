@@ -12,6 +12,7 @@ from smoke_engine.aqhi import Reading, nearest_reading
 from smoke_engine.detections import LATENCY_CLASSES, Detection, cwfis_detections, firms_detections, fuse, within
 from smoke_engine.feeds import FeedUnavailable
 from smoke_engine.fires import FIRE_RADIUS_KM, HOTSPOT_HOURS, Approach, Fire, closest_approach, known_fires
+from smoke_engine.forward import Fan, forward_fan
 from smoke_engine.geo import bearing_deg, compass, distance_km
 from smoke_engine.places import area_code, nearest_community, public_fire_name, town_name
 from smoke_engine.trajectory import UNSTEADY_ABOVE_DEG, Path, trace_back
@@ -238,6 +239,28 @@ def _approach_json(approach: Approach | None, lat: float, lon: float, arrival: d
     }
 
 
+def _forward_json(fan: Fan | None) -> dict | None:
+    """The forward trace: how close the fire's smoke came to the user, and the closest height's paths."""
+    if fan is None:
+        return None
+    closest = fan.closest
+    return {
+        "closestKm": display_km(closest.km),
+        "closestReleasedAt": _iso(closest.released_at),
+        "closestHeight": closest.height,
+        "agrees": fan.agrees,
+        "paths": [
+            {
+                "height": r.height,
+                "releasedAt": _iso(r.released_at),
+                "points": [{"lat": round(p.lat, 4), "lon": round(p.lon, 4), "time": _iso(p.time)} for p in r.path.points],
+            }
+            for r in fan.releases
+            if r.height == closest.height
+        ],
+    }
+
+
 def _utc_now() -> datetime:
     return datetime.now(timezone.utc)
 
@@ -308,6 +331,11 @@ def create_app(feeds_by_mode: dict, now=_utc_now, lifespan=None) -> FastAPI:
         results = {height: classify(km_by_height[height], paths[height].steady) for height in HEIGHTS}
         chosen = choose_height(km_by_height)
         verdict_, confidence, agree = across_heights(results, chosen)
+        nearest = min(fires, key=lambda f: distance_km(lat, lon, f.lat, f.lon), default=None)
+        # Informational only, after the verdict: the fire the verdict names (drifting, unclear), else the
+        # nearest fire, has its smoke traced forward to the check.
+        featured = approaches[chosen].fire if verdict_ in ("drifting", "unclear") else nearest
+        fan = forward_fan(winds, featured.lat, featured.lon, lat, lon, arrival) if featured else None
 
         path_json = {height: _path_json(path, lat, lon) for height, path in paths.items()}
         return {
@@ -321,9 +349,7 @@ def create_app(feeds_by_mode: dict, now=_utc_now, lifespan=None) -> FastAPI:
             "path": path_json[chosen],
             "wind": _wind_json(paths[chosen], chosen),
             "closestApproach": _approach_json(approaches[chosen], lat, lon, arrival),
-            "nearestFire": _fire_json(
-                min(fires, key=lambda f: distance_km(lat, lon, f.lat, f.lon), default=None), lat, lon, arrival
-            ),
+            "nearestFire": _fire_json(nearest, lat, lon, arrival),
             "heights": {
                 "chosen": chosen,
                 "agree": agree,
@@ -338,6 +364,7 @@ def create_app(feeds_by_mode: dict, now=_utc_now, lifespan=None) -> FastAPI:
                 },
                 "paths": path_json,
             },
+            "forward": _forward_json(fan),
             "aqhi": _aqhi_json(nearest_reading(feeds, lat, lon, arrival)),
             "sources": _sources_json(checked, fused, firms, arrival, now()),
         }

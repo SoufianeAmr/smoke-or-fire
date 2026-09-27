@@ -74,7 +74,7 @@ def test_no_fires_in_range_gives_unexplained_smoke():
 
     body = get_verdict(feeds).json()
 
-    assert (body["verdict"], body["noFiresInRange"]) == ("unexplained", True)
+    assert (body["verdict"], body["noFiresInRange"], body["forward"]) == ("unexplained", True, None)
 
 
 def test_the_place_and_where_the_air_came_from_are_described():
@@ -417,3 +417,46 @@ def test_the_bare_address_names_the_service_and_its_endpoints():
     response = client.get("/")
 
     assert (response.status_code, response.json()) == (200, {"service": "Smoke or Fire? engine", "endpoints": ["/health", "/verdict"]})
+
+
+# The forward trace: smoke leaves the featured fire every hour over the 24 hours before the check.
+# In a 5 m/s west wind, Moncton is 20 km directly downwind of the first fire and 20 km directly upwind of the second.
+FIRE_20_KM_UPWIND = hotspot(lat=46.09, lon=-64.78 - 20 / KM_PER_DEGREE_LON, seen="2025-08-25T06:00:00Z")
+FIRE_20_KM_DOWNWIND = hotspot(lat=46.09, lon=-64.78 + 20 / KM_PER_DEGREE_LON, seen="2025-08-25T06:00:00Z")
+
+
+def test_a_west_wind_carries_the_fires_smoke_east():
+    feeds = FakeFeeds(wind=uniform_wind(from_deg=270, speed_ms=5), hotspots=[FIRE_WEST_OF_MONCTON])
+
+    paths = get_verdict(feeds).json()["forward"]["paths"]
+
+    later_points = [p for path in paths for p in path["points"][1:]]
+    assert (len(paths), later_points != [], all(p["lon"] > FIRE_WEST_OF_MONCTON["lon"] for p in later_points)) == (24, True, True)
+
+
+def test_smoke_from_a_fire_20_km_upwind_passes_over_the_user_and_agrees():
+    feeds = FakeFeeds(wind=uniform_wind(from_deg=270, speed_ms=5), hotspots=[FIRE_20_KM_UPWIND])
+
+    forward = get_verdict(feeds).json()["forward"]
+
+    assert (forward["agrees"], forward["closestKm"]) == (True, 0)
+
+
+def test_smoke_from_a_fire_20_km_downwind_blows_away_from_the_user_and_does_not_agree():
+    feeds = FakeFeeds(wind=uniform_wind(from_deg=270, speed_ms=5), hotspots=[FIRE_20_KM_DOWNWIND])
+
+    body = get_verdict(feeds).json()
+
+    assert (body["nearestFire"]["km"], body["forward"]["agrees"], body["forward"]["closestKm"]) == (20, False, 20)
+
+
+@pytest.mark.parametrize("fire", [FIRE_WEST_OF_MONCTON, FIRE_20_KM_UPWIND, FIRE_20_KM_DOWNWIND], ids=["drifting", "agrees", "does-not-agree"])
+def test_the_forward_trace_never_changes_the_verdict(fire, monkeypatch):
+    feeds = FakeFeeds(wind=uniform_wind(from_deg=270, speed_ms=5), hotspots=[fire])
+    with_forward = get_verdict(feeds).json()
+    monkeypatch.setattr("smoke_engine.app.forward_fan", lambda *args: None)
+
+    without_forward = get_verdict(feeds).json()
+
+    assert (with_forward.pop("forward") is not None, without_forward.pop("forward")) == (True, None)
+    assert with_forward == without_forward
