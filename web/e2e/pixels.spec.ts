@@ -12,7 +12,6 @@ const design = (file: string) => new URL(`../../design/screens/${file}`, import.
 const SCREENS: { name: string; file: string; route: string; setup?: (page: Page) => Promise<void> }[] = [
   { name: "01 Check", file: "01-check.html", route: "/?mode=replay" },
   { name: "02 Q1", file: "02-q1-flames.html", route: "/q1" },
-  { name: "03 Q2", file: "03-q2-describe.html", route: "/q2" },
   { name: "04 Emergency", file: "04-emergency.html", route: "/emergency" },
   { name: "08 How it works", file: "08-how-it-works.html", route: "/how-it-works" },
 ];

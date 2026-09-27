@@ -1,4 +1,4 @@
-// Live mode in the browser: Check → Q1 → Q2 → Location → Loading → Verdict from GET /verdict.
+// Live mode in the browser: Check → Q1 → Location → Loading → Verdict from GET /verdict.
 // The engine is answered with a real engine answer (data/demo/moncton.json), marked live.
 import { expect, test, type Page, type Route } from "@playwright/test";
 import { readFileSync } from "node:fs";
@@ -31,12 +31,11 @@ async function openLive(page: Page) {
   await page.waitForFunction(() => sessionStorage.getItem("smoke-or-fire")?.includes(`"mode":"live"`));
 }
 
-test("Live: Check → Q1 → Q2 → Location → Loading → Verdict from GET /verdict", async ({ page }) => {
+test("Live: Check → Q1 → Location → Loading → Verdict from GET /verdict", async ({ page }) => {
   const asked = await engine(page, answer);
   await openLive(page);
   await page.getByRole("link", { name: "I smell smoke" }).click();
-  await page.getByRole("link", { name: /No flames in sight/ }).click();
-  await page.getByRole("link", { name: /Haze everywhere/ }).click();
+  await page.getByRole("link", { name: /Just smoke or haze/ }).click();
 
   // Live search covers every Maritimes community, not only the replay towns.
   await page.getByLabel("Town or city").fill("Shedi");

@@ -6,15 +6,12 @@ const NBSP = String.fromCharCode(0xa0);
 const EN_SOURCE = "https://www.canada.ca/en/health-canada/services/publications/healthy-living/combine-wildfire-smoke-heat.html";
 const FR_SOURCE = "https://www.canada.ca/fr/sante-canada/services/publications/vie-saine/effets-combines-fumee-feux-foret-chaleur.html";
 
-test("Moncton replay: Check → Q1 → Q2 → Location → Loading → Verdict", async ({ page }) => {
+test("Moncton replay: Check → Q1 → Location → Loading → Verdict", async ({ page }) => {
   await page.goto("/?mode=replay");
   await page.getByRole("link", { name: "I smell smoke" }).click();
 
-  await expect(page.getByRole("heading", { name: "Do you see flames?" })).toBeVisible();
-  await page.getByRole("link", { name: /No flames in sight/ }).click();
-
-  await expect(page.getByRole("heading", { name: "What best describes it?" })).toBeVisible();
-  await page.getByRole("link", { name: /Haze everywhere/ }).click();
+  await expect(page.getByRole("heading", { name: "Do you see flames or a smoke column?" })).toBeVisible();
+  await page.getByRole("link", { name: /Just smoke or haze/ }).click();
 
   await expect(page.getByRole("heading", { name: "Where are you?" })).toBeVisible();
   await page.getByLabel("Town or city").fill("Monc");
@@ -51,12 +48,28 @@ test.describe("reduced motion", () => {
   });
 });
 
-test("Q2 lists the dark column first, in English and French", async ({ page }) => {
+test("Q1 is the only question: Yes goes to Emergency, No straight to Location, in English and French", async ({ page }) => {
   await page.goto("/?mode=replay");
-  await page.goto("/q2");
-  await expect(page.locator("a.opt").first()).toContainText("Dark column rising from one spot");
+  await page.getByRole("link", { name: "I smell smoke" }).click();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Do you see flames or a smoke column?");
+  await expect(page.getByText(/Question \d of \d/)).toHaveCount(0);
+  await expect(page.getByRole("link", { name: /^Yes\s*I see flames or a smoke column$/ })).toHaveAttribute("href", "/emergency");
+  await page.getByRole("link", { name: /^No\s*Just smoke or haze$/ }).click();
+  await expect(page).toHaveURL(/\/location$/);
+  await page.getByRole("link", { name: "Back" }).click(); // back to the question
+  await expect(page).toHaveURL(/\/q1$/);
+
   await page.getByRole("button", { name: "Français" }).click();
-  await expect(page.locator("a.opt").first()).toContainText("Colonne sombre qui monte d’un seul endroit");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(/^Voyez-vous des flammes ou une colonne de fumée\s\?$/);
+  await expect(page.getByText(/Question \d sur \d/)).toHaveCount(0);
+  await expect(page.getByRole("link", { name: /^Oui\s*Je vois des flammes ou une colonne de fumée$/ })).toHaveAttribute("href", "/emergency");
+  await page.getByRole("link", { name: /^Non\s*Seulement de la fumée ou un voile$/ }).click();
+  await expect(page.getByRole("heading", { name: /^Où êtes-vous\s\?$/ })).toBeVisible();
+
+  // The second question is gone: its old address opens Check.
+  await page.goto("/q2");
+  await expect(page.getByRole("link", { name: "Je sens de la fumée" })).toBeVisible();
+  await expect(page).not.toHaveURL(/q2/);
 });
 
 test("the loading counter reads Heure {n} sur 24 in French", async ({ page }) => {

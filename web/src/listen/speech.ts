@@ -53,7 +53,6 @@ export const checkVoice = (lang: Lang, replay: boolean, install: boolean) => [
   ...(install ? script(lang, "voice.check.install", { add: translate(lang, "keep.add") }) : []),
 ];
 export const q1Voice = (lang: Lang) => script(lang, "voice.q1");
-export const q2Voice = (lang: Lang) => script(lang, "voice.q2");
 export const locationVoice = (lang: Lang) => script(lang, "voice.location");
 export const loadingVoice = (lang: Lang) => script(lang, "voice.loading");
 export const emergencyVoice = (lang: Lang) => script(lang, "voice.emergency");

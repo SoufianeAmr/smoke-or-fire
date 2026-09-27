@@ -56,7 +56,7 @@ describe("strings", () => {
     const { translate } = await import("./index");
     vi.doUnmock("./fr.json");
     expect([translate("fr", "q1.title"), translate("fr", "banner.replayTown", { town: "Dieppe" })]).toEqual([
-      "Do you see flames?",
+      "Do you see flames or a smoke column?",
       "Reprise · Dieppe · 25 août 2025 ·",
     ]);
   });

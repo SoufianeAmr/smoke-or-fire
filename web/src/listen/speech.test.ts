@@ -25,7 +25,7 @@ const noFires = { ...json(halifax), noFiresInRange: true, nearestFire: null, clo
 
 /** Everything the app can say, in both languages, across screens and states. */
 const everything = LANGS.flatMap((lang) => [
-  ...voice.checkVoice(lang, true, true), ...voice.checkVoice(lang, false, false), ...voice.q1Voice(lang), ...voice.q2Voice(lang), ...voice.locationVoice(lang),
+  ...voice.checkVoice(lang, true, true), ...voice.checkVoice(lang, false, false), ...voice.q1Voice(lang), ...voice.locationVoice(lang),
   ...voice.loadingVoice(lang), ...voice.emergencyVoice(lang), ...voice.howVoice(lang), ...voice.locationOffVoice(lang), ...voice.noDataVoice(lang),
   ...[moncton, bridgetown, westDalhousie, miramichi, charlottetown, halifax, noFires, { ...moncton, aqhi: null }].flatMap((d) => verdictView(json(d), lang).voice),
   ...voice.leaveVoice(lang, { kind: "where" }),
@@ -90,20 +90,18 @@ describe("screens", () => {
     }
   });
 
-  test("Q1, one sentence per utterance, in English and French", () => {
+  test("Q1, the only question: one sentence per utterance, in English and French", () => {
     expect(voice.q1Voice("en")).toEqual([
-      "First question.",
       "Look outside, toward the smell.",
-      "Do you see flames?",
-      "If you do, tap the red button at the top: Yes, I see flames.",
-      "If you don’t, tap the white button just below it: No.",
+      "Do you see flames, or a column of smoke rising from one spot?",
+      "If you do, tap the red button at the top: Yes.",
+      "If you only see smoke or haze, tap the white button below it: No.",
     ]);
     expect(voice.q1Voice("fr")).toEqual([
-      "Première question.",
       "Regardez dehors, du côté de l’odeur.",
-      `Voyez-vous des flammes${NBSP}?`,
-      `Si oui, touchez le bouton rouge en haut${NBSP}: Oui, je vois des flammes.`,
-      `Sinon, touchez le bouton blanc juste en dessous${NBSP}: Non.`,
+      `Voyez-vous des flammes, ou une colonne de fumée qui monte d’un seul endroit${NBSP}?`,
+      `Si oui, touchez le bouton rouge en haut${NBSP}: Oui.`,
+      `Si vous voyez seulement de la fumée ou un voile, touchez le bouton blanc juste en dessous${NBSP}: Non.`,
     ]);
   });
 

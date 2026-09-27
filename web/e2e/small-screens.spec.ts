@@ -1,7 +1,5 @@
 // Small phones: on every screen the main action and the 911 bar are visible without scrolling,
 // and the main action is not hidden behind the 911 bar.
-// Q2 on short screens (decided): only the first answer, the urgent "dark column", must be visible;
-// the other two may scroll. At 390 × 844 all three must be visible.
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
 const VIEWPORTS = [
@@ -35,8 +33,7 @@ const verdictMain = (page: Page) => [page.locator("#verdict-h"), page.locator("s
 const SCREENS: Check[] = [
   // Check: I smell smoke; and from 667 px tall, the Live/Replay toggle too.
   { name: "01 Check", open: (p) => p.goto("/").then(), main: (p) => [p.locator('a[href="/q1"]'), ...(p.viewportSize()!.height >= 667 ? [p.locator("main [role=group]")] : [])], bar: false },
-  { name: "02 Q1", open: (p) => p.goto("/q1").then(), main: (p) => [p.locator('a[href="/emergency"]'), p.locator('a[href="/q2"]')], bar: true },
-  { name: "03 Q2", open: (p) => p.goto("/q2").then(), main: (p) => [p.viewportSize()!.height >= 844 ? p.locator("a.opt") : p.locator("a.opt").first()], bar: true },
+  { name: "02 Q1", open: (p) => p.goto("/q1").then(), main: (p) => [p.locator('a[href="/emergency"]'), p.locator('main a[href="/location"]')], bar: true },
   { name: "04 Emergency", open: (p) => p.goto("/emergency").then(), main: (p) => [p.locator('main a[href="tel:911"]')], bar: false },
   { name: "05 Location", open: (p) => p.goto("/location").then(), main: (p) => [p.locator('main a[href="/loading"]').first(), p.locator("input[type=search]")], bar: true },
   { name: "06 Loading", open: (p) => searchTown(p, "Moncton"), main: (p) => [p.locator("h1")], bar: true },

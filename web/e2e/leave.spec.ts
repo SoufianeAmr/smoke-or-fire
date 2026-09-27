@@ -14,13 +14,13 @@ const OK_FR = "Je vais bien. Il y a un feu près de moi et je suis les consignes
 
 const L = {
   en: {
-    cta: "I smell smoke", yes: /I see flames/, no: /No flames in sight/, haze: /Haze everywhere/, emergency: "Call 911 now",
+    cta: "I smell smoke", yes: /I see flames/, no: /Just smoke or haze/, emergency: "Call 911 now",
     entry: "Told to leave your home? What to do", where: "Where are you?", town: "Town or city", title: "If you’re told to leave",
     near: "Evacuation centres for the Long Lake fire (Annapolis County)", directions: "Get directions",
     drifting: "DRIFTING SMOKE", headline: "Likely from the Long Lake fire", banner: `Replay${NBSP}· Bridgetown${NBSP}·`,
   },
   fr: {
-    cta: "Je sens de la fumée", yes: /Je vois des flammes/, no: /Aucune flamme en vue/, haze: /Voile de fumée partout/, emergency: "Appelez le 911 maintenant",
+    cta: "Je sens de la fumée", yes: /Je vois des flammes/, no: /Seulement de la fumée ou un voile/, emergency: "Appelez le 911 maintenant",
     entry: /^On vous demande de partir\s\? Que faire$/, where: /^Où êtes-vous\s\?$/, town: "Ville ou village", title: "Si on vous demande de partir",
     near: "Centres d’évacuation pour le feu de Long Lake (comté d’Annapolis)", directions: "Itinéraire",
     drifting: "FUMÉE QUI DÉRIVE", headline: "Elle vient probablement du feu de Long Lake", banner: `Reprise${NBSP}· Bridgetown${NBSP}·`,
@@ -67,8 +67,6 @@ async function scenario1(page: Page, lang: "en" | "fr") {
   await listen(page, lang);
   await page.getByRole("link", { name: l.no }).click();
   await listen(page, lang);
-  await page.getByRole("link", { name: l.haze }).click();
-  await listen(page, lang);
   await page.getByLabel(l.town).fill("Monc");
   await page.getByRole("option", { name: /^Moncton,/ }).click();
   await expect(page).toHaveURL(/\/verdict$/, { timeout: 10_000 });
@@ -113,7 +111,7 @@ async function scenario2(page: Page, lang: "en" | "fr") {
 }
 
 for (const lang of ["en", "fr"] as const) {
-  test(`Scenario 1 (${lang.toUpperCase()}): Replay → I smell smoke → No → Haze everywhere → Moncton → drifting verdict`, ({ page }) => scenario1(page, lang));
+  test(`Scenario 1 (${lang.toUpperCase()}): Replay → I smell smoke → No → Moncton → drifting verdict`, ({ page }) => scenario1(page, lang));
   test(`Scenario 2 (${lang.toUpperCase()}): Replay → I smell smoke → Yes → Emergency → Told to leave → Bridgetown → centres → Get directions`, ({ page }) => scenario2(page, lang));
 }
 

@@ -10,7 +10,6 @@ import { NoData } from "./screens/NoData";
 import { Location } from "./screens/Location";
 import { Loading } from "./screens/Loading";
 import { Q1Flames } from "./screens/Q1Flames";
-import { Q2Describe } from "./screens/Q2Describe";
 import { Verdict } from "./screens/Verdict";
 
 /** Each screen opens at its top, as the screen files do. */
@@ -30,7 +29,6 @@ export function App() {
         <Routes>
           <Route path="/" element={<Check />} />
           <Route path="/q1" element={<Q1Flames />} />
-          <Route path="/q2" element={<Q2Describe />} />
           <Route path="/location" element={<Location />} />
           <Route path="/loading" element={<Loading />} />
           <Route path="/verdict" element={<Verdict />} />
