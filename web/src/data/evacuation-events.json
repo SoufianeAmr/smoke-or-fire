@@ -1,7 +1,7 @@
 {
   "about": "Evacuation centres that officials announced during past fires, hand-curated from official sources. The app shows an event only on the dates it was active: in replay, on Aug 25, 2025; in live mode, only an event active today. Nothing here is looked up at runtime. Every item needs a source that says it; anything a source does not confirm is left out. Coordinates are geocoded once from the address and are approximate.",
   "grabList": {
-    "about": "Sources for the six items on the screen's grab list (medication, wallet and ID, keys, phone and charger, glasses and hearing aids, pets). For Long Lake, officials named meds, wallet and keys (events[].take); all six are on official kit and evacuation lists. No official source found says \"never go back inside for belongings\" in those words; the nearest are NB's evacuation order advice and the Red Cross on home fires.",
+    "about": "Sources for the six items on the screen's grab list (medication, wallet and ID, keys, phone and charger, glasses and hearing aids, pets). For Long Lake, officials named meds, wallet and keys (events[].take); all six are on official kit and evacuation lists. The line under the list is New Brunswick's advice for an evacuation order (noDelay).",
     "evacuate": {
       "quote": "If you are ordered to evacuate, take your emergency kit, your wallet, personal identification for each family member and copies of essential family documents with you. Bring a cellular phone and spare battery or charger with you, if you have one. […] Take pets with you.",
       "source": "https://web.archive.org/web/20250120083613/https://www.getprepared.gc.ca/cnt/rsrcs/pblctns/yprprdnssgd/index-en.aspx",
@@ -15,7 +15,17 @@
       "glasses-hearing-aids": ["https://www.redcross.ca/how-we-help/emergencies-and-disasters-in-canada/be-ready-emergency-preparedness-and-recovery/get-an-emergency-kit"],
       "pets": ["https://www.canada.ca/en/services/policing/emergencies/preparedness/get-prepared/emergency-planning-resources/animals.html", "https://emergencyinfo.novascotia.ca/wildfire"]
     },
-    "neverGoBack": ["https://www.gnb.ca/en/topic/laws-safety/emergency-preparedness-alerts/evacuations.html", "https://www.redcross.ca/how-we-help/emergencies-and-disasters-in-canada/types-of-emergencies/home-fires"]
+    "noDelay": {
+      "quote": "Evacuation order […] leave immediately using designated routes / follow instructions from authorities / do not delay for non-essential items",
+      "quoteFr": "Ordre d’évacuation […] quittez immédiatement en utilisant les routes désignées / suivez les instructions des autoritéss [sic] / ne retardez pas votre départ pour des articles non essentiels",
+      "source": "https://www.gnb.ca/en/topic/laws-safety/emergency-preparedness-alerts/evacuations.html",
+      "sourceFr": "https://www.gnb.ca/fr/sujet/lois-securite/gestion-urgences/evacuations.html",
+      "note": "Government of New Brunswick, Understanding evacuations."
+    },
+    "twoOneOne": {
+      "note": "211 in both provinces: dial 2-1-1. 211 NB is free, bilingual and confidential; 211 Nova Scotia has no French service, only interpretation (the French screen says so).",
+      "sources": ["https://nb.211.ca/about-211-nb/", "https://www.gnb.ca/fr/urgence/contact.html", "https://ns.211.ca/about-211-nova-scotia/", "https://ns.211.ca/contact-us/"]
+    }
   },
   "events": [
     {

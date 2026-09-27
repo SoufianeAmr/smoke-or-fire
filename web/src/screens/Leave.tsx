@@ -172,7 +172,7 @@ function TakeCard({ officials }: { officials: boolean }) {
           </li>
         ))}
       </ul>
-      <p style={{ ...BODY, fontWeight: "700" }}>{t("leave.take.never")}</p>
+      <p style={{ ...BODY, fontWeight: "700" }}>{t("leave.take.noDelay")}</p>
     </section>
   );
 }

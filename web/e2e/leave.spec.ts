@@ -90,7 +90,7 @@ test("replay, English: map, both centres with addresses and directions, phone li
   await expect(take).toContainText("Officials asked evacuees to take their 72-hour kit and critical items (meds, wallet, keys).");
   await expect(take.locator("li")).toHaveText(["Medication", "Wallet and ID", "Keys", "Phone and charger", "Glasses and hearing aids", "Pets"]);
   await expect(take.locator("li svg")).toHaveCount(6);
-  await expect(take.locator("p", { hasText: "Never go back inside for belongings." })).toHaveCSS("font-weight", "700");
+  await expect(take.locator("p", { hasText: "Do not delay for non-essential items." })).toHaveCSS("font-weight", "700");
 
   // No location shared this session: the message has no last sentence.
   await expect(page.getByRole("link", { name: "Tell family you’re OK" })).toHaveAttribute("href", sms("I’m OK. There’s a fire near me and I’m following official instructions."));
@@ -125,7 +125,7 @@ test("replay, French", async ({ page }) => {
   await expect(take.getByRole("heading")).toHaveText("Ce qu’il faut emporter");
   await expect(take).toContainText("Les autorités ont demandé d’emporter la trousse de 72 heures et les objets essentiels (médicaments, portefeuille, clés).");
   await expect(take.locator("li")).toHaveText(["Médicaments", "Portefeuille et pièces d’identité", "Clés", "Téléphone et chargeur", "Lunettes et appareils auditifs", "Animaux de compagnie"]);
-  await expect(take).toContainText("Ne retournez jamais à l’intérieur pour chercher des objets.");
+  await expect(take.locator("p", { hasText: "Ne tardez pas pour des objets non essentiels." })).toHaveCSS("font-weight", "700");
 
   await expect(page.getByRole("link", { name: "Dites à vos proches que vous allez bien" })).toHaveAttribute("href", sms("Je vais bien. Il y a un feu près de moi et je suis les consignes officielles."));
   await expect(page.getByRole("link", { name: "Centres annoncés par la Municipalité du comté d’Annapolis, août 2025." })).toHaveAttribute("href", SOURCE);
@@ -133,7 +133,7 @@ test("replay, French", async ({ page }) => {
 
 test("live: no centres announced, so it says where officials announce them", async ({ page }) => {
   await openLeave(page, "live");
-  await expect(page.getByText("No evacuation centres are announced near you right now. During an evacuation, officials announce them here:")).toBeVisible();
+  await expect(page.getByText("For a fire happening now, officials announce where to go here:", { exact: true })).toBeVisible();
   // gnb.ca/en/topic/laws-safety/…/fire-watch.html and novascotia.ca/alerts/ redirect to these.
   await expect(page.getByRole("link", { name: /^New Brunswick Fire Watch/ })).toHaveAttribute("href", "https://www.gnb.ca/en/emergency/fire-watch.html");
   await expect(page.getByRole("link", { name: /^Emergency Info Nova Scotia/ })).toHaveAttribute("href", "https://emergencyinfo.novascotia.ca/");
@@ -151,10 +151,11 @@ test("live: no centres announced, so it says where officials announce them", asy
 
 test("live, French", async ({ page }) => {
   await openLeave(page, "live", "fr");
-  await expect(page.getByText(`Aucun centre d’évacuation n’est annoncé près de vous pour le moment. Lors d’une évacuation, les autorités les annoncent ici${NBSP}:`)).toBeVisible();
+  await expect(page.getByText(`Pour un feu en cours, les autorités annoncent où aller ici${NBSP}:`, { exact: true })).toBeVisible();
   await expect(page.getByRole("link", { name: /^Indice des feux du Nouveau-Brunswick/ })).toHaveAttribute("href", "https://www.gnb.ca/fr/urgence/indice-des-feux.html");
   await expect(page.getByRole("link", { name: /^Situations d’urgence en Nouvelle-Écosse/ })).toHaveAttribute("href", "https://emergencyinfo.novascotia.ca/fr");
-  await expect(page.getByRole("link", { name: /^Hébergement et aide\s: composez le 211$/ })).toHaveAttribute("href", "tel:211");
+  // 211 Nova Scotia has interpretation but no French service; the French line says so.
+  await expect(page.getByRole("link", { name: /^Hébergement et aide\s: composez le 211 \(N\.‑É\.\s: service en anglais, avec interprétation\)$/ })).toHaveAttribute("href", "tel:211");
   await expect(page.locator("section[aria-labelledby=take-h] li").first()).toHaveText("Médicaments");
 });
 
@@ -167,6 +168,7 @@ test.describe("location shared this session", () => {
     await page.goto("/location");
     await page.getByRole("link", { name: "Use my location" }).click();
     await expect(page).toHaveURL(/\/(loading|verdict)$/, { timeout: 10_000 });
+    await page.waitForFunction(() => sessionStorage.getItem("smoke-or-fire")?.includes('"shared":{')); // saved before leaving the page
     await page.goto("/leave");
 
     const body = "I’m OK. There’s a fire near me and I’m following official instructions. My location: https://www.google.com/maps/search/?api=1&query=44.90000,-65.15000";
