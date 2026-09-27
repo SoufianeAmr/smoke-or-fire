@@ -54,10 +54,19 @@ def _save(directory: Path, name: str, data) -> None:
 
 
 def fetch_wind(client: httpx.Client, directory: Path, day: date) -> list[str]:
-    answer, urls = sources.fetch_open_meteo(
-        client, sources.OPEN_METEO_HISTORICAL, GRID_POINTS,
-        start_date=(day - timedelta(days=1)).isoformat(), end_date=day.isoformat(),
-    )
+    # An answer can arrive cut short (invalid JSON): fetch the whole grid again, after the per-minute limit resets.
+    for attempt in range(3):
+        try:
+            answer, urls = sources.fetch_open_meteo(
+                client, sources.OPEN_METEO_HISTORICAL, GRID_POINTS,
+                start_date=(day - timedelta(days=1)).isoformat(), end_date=day.isoformat(),
+            )
+            break
+        except (ValueError, httpx.HTTPError) as error:
+            if attempt == 2:
+                raise
+            print(f"{directory.name}/wind.json: {type(error).__name__}, trying again in a minute")
+            time.sleep(61)
     if len(answer) != len(GRID_POINTS):
         raise SystemExit(f"expected {len(GRID_POINTS)} wind locations, got {len(answer)}")
     _save(directory, "wind.json", answer)
