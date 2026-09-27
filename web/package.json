@@ -9,6 +9,7 @@
     "build": "tsc --noEmit && vite build",
     "prebuild": "node scripts/build-data.mjs",
     "preview": "vite preview",
+    "deploy": "npm run build && npx --yes vercel@60 deploy dist --prod --project smoke-or-fire --scope soufianes-projects-2f519552",
     "test": "vitest run",
     "e2e": "playwright test --project=flow --project=small-screens",
     "strings:todo": "node scripts/strings-todo.mjs",
