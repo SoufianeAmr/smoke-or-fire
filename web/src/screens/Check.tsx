@@ -4,7 +4,7 @@ import { Link } from "react-router";
 import { useApp, useT } from "../app/state";
 import { Screen } from "../components/Screen";
 import { LangToggle } from "../components/TopBar";
-import { ChevronRightIcon } from "../components/icons";
+import { ChevronRightIcon, DoorOpenIcon } from "../components/icons";
 
 const SEGMENT: CSSProperties = { minHeight: "56px", border: "0", borderRadius: "14px", font: "inherit", fontSize: "18px", fontWeight: "700", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", cursor: "pointer" };
 const SELECTED: CSSProperties = { background: "#FFFFFF", color: "#1B2A4A", boxShadow: "inset 0 0 0 2px #1B2A4A" };
@@ -70,6 +70,10 @@ export function Check() {
           </button>
         </div>
         <p style={NOTE}>{isReplay ? t("check.replayNote") : t("check.liveNote")}</p>
+        <Link to="/leave" className="press" style={{ marginTop: "16px", minHeight: "56px", display: "flex", alignItems: "center", justifyContent: "center", gap: "10px", padding: "8px 16px", borderRadius: "18px", border: "2px solid #1B2A4A", color: "#1B2A4A", textDecoration: "none", fontSize: "18px", fontWeight: "700", lineHeight: "1.3", textAlign: "center" }}>
+          <DoorOpenIcon size={24} />
+          {t("leave.entry")}
+        </Link>
         <Link to="/how-it-works" style={{ alignSelf: "center", marginTop: "8px", minHeight: "56px", display: "flex", alignItems: "center", gap: "6px", padding: "0 12px", fontSize: "18px", fontWeight: "700", color: "#1B2A4A" }}>
           {t("check.howItWorks")}
           <ChevronRightIcon size={20} />

@@ -1,0 +1,119 @@
+{
+  "about": "Evacuation centres that officials announced during past fires, hand-curated from official sources. The app shows an event only on the dates it was active: in replay, on Aug 25, 2025; in live mode, only an event active today. Nothing here is looked up at runtime. Every item needs a source that says it; anything a source does not confirm is left out. Coordinates are geocoded once from the address and are approximate.",
+  "grabList": {
+    "about": "Sources for the six items on the screen's grab list (medication, wallet and ID, keys, phone and charger, glasses and hearing aids, pets). For Long Lake, officials named meds, wallet and keys (events[].take); all six are on official kit and evacuation lists. No official source found says \"never go back inside for belongings\" in those words; the nearest are NB's evacuation order advice and the Red Cross on home fires.",
+    "evacuate": {
+      "quote": "If you are ordered to evacuate, take your emergency kit, your wallet, personal identification for each family member and copies of essential family documents with you. Bring a cellular phone and spare battery or charger with you, if you have one. […] Take pets with you.",
+      "source": "https://web.archive.org/web/20250120083613/https://www.getprepared.gc.ca/cnt/rsrcs/pblctns/yprprdnssgd/index-en.aspx",
+      "note": "Public Safety Canada, Your Emergency Preparedness Guide (retired; archived Jan 20, 2025)."
+    },
+    "items": {
+      "medication": ["https://www.canada.ca/en/services/policing/emergencies/preparedness/get-prepared/emergency-kits/get-kit.html", "https://www.redcross.ca/how-we-help/emergencies-and-disasters-in-canada/be-ready-emergency-preparedness-and-recovery/get-an-emergency-kit"],
+      "wallet-id": ["https://www.canada.ca/en/services/policing/emergencies/preparedness/get-prepared/emergency-kits/get-kit.html", "https://www.redcross.ca/how-we-help/emergencies-and-disasters-in-canada/be-ready-emergency-preparedness-and-recovery/get-an-emergency-kit"],
+      "keys": ["https://www.canada.ca/en/services/policing/emergencies/preparedness/get-prepared/emergency-kits/get-kit.html", "https://emergencyinfo.novascotia.ca/evacuation-resources"],
+      "phone-charger": ["https://www.canada.ca/en/services/policing/emergencies/preparedness/get-prepared/emergency-kits/get-kit.html", "https://www.redcross.ca/how-we-help/emergencies-and-disasters-in-canada/be-ready-emergency-preparedness-and-recovery/get-an-emergency-kit"],
+      "glasses-hearing-aids": ["https://www.redcross.ca/how-we-help/emergencies-and-disasters-in-canada/be-ready-emergency-preparedness-and-recovery/get-an-emergency-kit"],
+      "pets": ["https://www.canada.ca/en/services/policing/emergencies/preparedness/get-prepared/emergency-planning-resources/animals.html", "https://emergencyinfo.novascotia.ca/wildfire"]
+    },
+    "neverGoBack": ["https://www.gnb.ca/en/topic/laws-safety/emergency-preparedness-alerts/evacuations.html", "https://www.redcross.ca/how-we-help/emergencies-and-disasters-in-canada/types-of-emergencies/home-fires"]
+  },
+  "events": [
+    {
+      "id": "long-lake-2025",
+      "fire": { "name": "Long Lake", "lat": 44.7024, "lon": -65.2034 },
+      "fireNote": "The name is in data/places/fire-names.json. The point is the replay's Aug 25 position of the fire (data/demo, closestApproach.fire and nearestFire: FIRMS and CWFIS detections in the 24 hours to 12:00 UTC), the same point the verdict map draws; a test keeps them equal.",
+      "authority": { "en": "Municipality of the County of Annapolis", "fr": "Municipalité du comté d’Annapolis" },
+      "announced": "2025-08",
+      "province": "NS",
+      "active": { "from": "2025-08-25", "to": "2025-09-02" },
+      "activeNote": "From Aug 25: the NSCC reception centre closed on Aug 23 at 5 p.m. (2210); on Aug 24 evacuees were first sent to register at Bridgetown Fire Hall (2211), then, in that night's further expanded order, to the reception centre at NSCC in Middleton (the _2 PDF); the Bridgetown comfort centre opened on Aug 24 (2210). Until Sept 2: on Sept 3 the public information line's hours became 8:30 a.m. to 7 p.m. (2218), and on Sept 4 at 8:00 a.m. the NSCC shelter went on standby (2218).",
+      "activeSources": [
+        "https://annapoliscounty.ca/government/news-media-releases/2210",
+        "https://annapoliscounty.ca/government/news-media-releases/2211",
+        "https://annapoliscounty.ca/images/2025/REMO/Hoyt_Lake_Wildfire/Mandatory_Evacution_Order_Expanded-Aug_24_2025_2.pdf",
+        "https://annapoliscounty.ca/government/news-media-releases/2218-evacuee-shelter-transition-to-standby-status-september-4th"
+      ],
+      "source": "https://annapoliscounty.ca/government/news-media-releases/2204-west-dalhousie-wildfires-evacuees-registration",
+      "centres": [
+        {
+          "type": "reception",
+          "name": "NSCC Annapolis Valley Campus",
+          "address": "295 Commercial St., Middleton",
+          "town": "Middleton",
+          "destination": "295 Commercial St., Middleton, NS",
+          "services": ["showers-laundry", "wifi", "light-food", "overnight"],
+          "hours": null,
+          "register": true,
+          "lat": 44.9554,
+          "lon": -65.0761,
+          "geocode": {
+            "geocoder": "NRCan Geolocation Service (geolocator.api.geo.ca), interpolated street position; OpenStreetMap Nominatim within 20 m",
+            "query": "295 Commercial St, Middleton, NS",
+            "date": "2026-09-27"
+          },
+          "source": "https://annapoliscounty.ca/government/news-media-releases/2204-west-dalhousie-wildfires-evacuees-registration",
+          "sourceNote": "Evacuation Reception Centre & Shelter at NSCC – Annapolis Valley Campus (295 Commercial St., Middleton): showers & laundry facilities, Wi-Fi access, light nourishment & snacks, overnight accommodations. Evacuees register at NSCC in Middleton or online. The page is updated in place and undated; its first archived copy with this list is from Sept 1, 2025. The same services are listed for Aug 19 (2206) and Aug 21–22 (2207); no dated source for Aug 25–31 lists them, and none says otherwise.",
+          "sources": [
+            "https://annapoliscounty.ca/government/news-media-releases/2204-west-dalhousie-wildfires-evacuees-registration",
+            "https://annapoliscounty.ca/government/news-media-releases/2206",
+            "https://annapoliscounty.ca/government/news-media-releases/2207",
+            "https://web.archive.org/web/20250901083122/https://annapoliscounty.ca/government/news-media-releases/2204-west-dalhousie-wildfires-evacuees-registration"
+          ]
+        },
+        {
+          "type": "comfort",
+          "name": "Bridgetown Fire Hall",
+          "address": "31 Bay Rd., Bridgetown",
+          "town": "Bridgetown",
+          "destination": "31 Bay Rd., Bridgetown, NS",
+          "services": ["charging", "wifi", "light-food"],
+          "hours": { "open": "10:00", "close": "16:00", "days": "daily" },
+          "register": false,
+          "lat": 44.8436,
+          "lon": -65.2963,
+          "geocode": {
+            "geocoder": "NRCan Geolocation Service (geolocator.api.geo.ca), interpolated street position; OpenStreetMap Nominatim within 60 m",
+            "query": "31 Bay Rd, Bridgetown, NS",
+            "date": "2026-09-27"
+          },
+          "source": "https://annapoliscounty.ca/government/news-media-releases/2210",
+          "sourceNote": "Comfort Centre at the Bridgetown Fire Hall, 31 Bay Rd., Bridgetown, daily 10:00 a.m. to 4:00 p.m. from Aug 24: light nourishment, charging stations for devices, Wi-Fi access. Hours also in 2204 and 2218 (Sept 3). CP24 repeats the services; its note that evacuees register at Bridgetown was superseded on the night of Aug 24.",
+          "sources": [
+            "https://annapoliscounty.ca/government/news-media-releases/2210",
+            "https://annapoliscounty.ca/government/news-media-releases/2204-west-dalhousie-wildfires-evacuees-registration",
+            "https://www.cp24.com/news/canada/2025/08/24/evacuation-order-expanded-as-wildfire-continues-to-burn-in-west-dalhousie-ns/"
+          ]
+        }
+      ],
+      "phones": {
+        "information": {
+          "number": "1-833-806-1515",
+          "hours": { "open": "11:00", "close": "19:00", "days": "daily" },
+          "sourceNote": "Public information line, staffed daily 11 a.m. to 7 p.m. (2204; 2210 on Aug 23; 2214 on Aug 29). From Sept 3, 8:30 a.m. to 7 p.m. (2218).",
+          "source": "https://annapoliscounty.ca/government/news-media-releases/2204-west-dalhousie-wildfires-evacuees-registration",
+          "sources": [
+            "https://annapoliscounty.ca/government/news-media-releases/2204-west-dalhousie-wildfires-evacuees-registration",
+            "https://annapoliscounty.ca/government/news-media-releases/2210",
+            "https://annapoliscounty.ca/government/news-media-releases/2214"
+          ]
+        },
+        "overnight": {
+          "number": "1-800-222-9597",
+          "sourceNote": "Overnight accommodations through the Canadian Red Cross, 24 hours a day, 7 days a week.",
+          "sources": [
+            "https://annapoliscounty.ca/government/news-media-releases/2210",
+            "https://annapoliscounty.ca/government/news-media-releases/2206",
+            "https://www.cp24.com/news/canada/2025/08/24/evacuation-order-expanded-as-wildfire-continues-to-burn-in-west-dalhousie-ns/"
+          ]
+        }
+      },
+      "take": {
+        "quote": "Take your 72-hour kit and critical items (meds, wallet, keys).",
+        "sources": [
+          "https://annapoliscounty.ca/government/news-media-releases/2200-west-dalhousie-wildfires-update",
+          "https://annapoliscounty.ca/images/2025/REMO/Hoyt_Lake_Wildfire/Mandatory_Evacution_Order_Expanded-Aug_24_2025_2.pdf"
+        ]
+      }
+    }
+  ]
+}

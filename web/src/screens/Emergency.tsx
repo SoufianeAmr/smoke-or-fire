@@ -5,7 +5,7 @@ import { useT } from "../app/state";
 import type { StringKey } from "../i18n";
 import { Screen } from "../components/Screen";
 import { LangToggle } from "../components/TopBar";
-import { BackIcon } from "../components/icons";
+import { BackIcon, ChevronRightIcon } from "../components/icons";
 
 const NUMBER: CSSProperties = { flexShrink: "0", width: "30px", height: "30px", borderRadius: "50%", background: "#1A1D21", color: "#FFFFFF", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "18px", fontWeight: "700" };
 const PHONE = "M5.5 3.5h3l1.8 4.6-2.2 1.4a11 11 0 0 0 6.4 6.4l1.4-2.2 4.6 1.8v3a2 2 0 0 1-2.2 2A16.5 16.5 0 0 1 3.5 5.7a2 2 0 0 1 2-2.2z";
@@ -61,6 +61,10 @@ export function Emergency() {
             {t("emergency.call")}
           </a>
           <p style={{ margin: "-6px 0 0", textAlign: "center", fontSize: "18px", fontWeight: "500", lineHeight: "1.4", textWrap: "balance" }}>{t("emergency.stay")}</p>
+          <Link to="/leave" style={{ alignSelf: "center", minHeight: "56px", display: "flex", alignItems: "center", gap: "6px", padding: "0 12px", fontSize: "18px", fontWeight: "700", lineHeight: "1.3", textAlign: "center" }}>
+            <span style={{ textWrap: "balance" }}>{t("leave.entry")}</span>
+            <ChevronRightIcon size={20} />
+          </Link>
         </main>
       </Screen>
     </div>

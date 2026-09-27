@@ -6,7 +6,8 @@ import towns from "./replay-towns.json";
 
 export const REPLAY_TOWNS: Place[] = towns;
 
-const files = import.meta.glob<VerdictJson>("../../../data/demo/*.json", { import: "default" });
+// The towns' verdicts; index.json lists them and is not one.
+const files = import.meta.glob<VerdictJson>(["../../../data/demo/*.json", "!../../../data/demo/index.json"], { import: "default" });
 
 export async function loadReplayVerdict(place: Place): Promise<VerdictJson> {
   const load = files[`../../../data/demo/${place.replayFile}`];

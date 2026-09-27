@@ -31,6 +31,17 @@ describe("strings", () => {
     expect(emoji).toEqual([]);
   });
 
+  test("never the word safe (DESIGN-LOCK hard rule), in English or French", () => {
+    const safe = [...Object.entries(en), ...Object.entries(fr)].filter(([, text]) => !text.startsWith("http") && /safe|sécuri/i.test(text)).map(([key]) => key);
+    expect(safe).toEqual([]);
+  });
+
+  test("never tells people not to call 911, in any wording", () => {
+    const dont = /(do not|don’t|never|no need to) call|ne (pas|jamais) appeler|n’appelez (pas|jamais)|9-1-1 for updates/i;
+    const found = [...Object.entries(en), ...Object.entries(fr)].filter(([, text]) => dont.test(text)).map(([key]) => key);
+    expect(found).toEqual([]);
+  });
+
   test("missing French falls back to English, and values are filled in", async () => {
     // Every string has French now, so one is marked missing here.
     vi.doMock("./fr.json", () => ({ default: { ...fr, "q1.title": TODO } }));

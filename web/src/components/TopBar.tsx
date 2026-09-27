@@ -1,5 +1,5 @@
 import type { CSSProperties } from "react";
-import { Link, useNavigate } from "react-router";
+import { Link, useLocation, useNavigate } from "react-router";
 import { useApp, useT } from "../app/state";
 import type { Lang } from "../i18n";
 import { BackIcon } from "./icons";
@@ -35,7 +35,9 @@ export function LangToggle({ on = "page" }: { on?: "page" | "band" }) {
 export function TopBar({ back }: { back: string | -1 }) {
   const t = useT();
   const navigate = useNavigate();
-  const onClick = back === -1 ? (e: React.MouseEvent) => { e.preventDefault(); navigate(-1); } : undefined;
+  // Opened directly (a link or bookmark), there is no previous screen in the app: the link goes to Check.
+  const inApp = useLocation().key !== "default";
+  const onClick = back === -1 && inApp ? (e: React.MouseEvent) => { e.preventDefault(); navigate(-1); } : undefined;
   return (
     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "4px 12px 0 4px", height: "64px" }}>
       <Link to={back === -1 ? "/" : back} onClick={onClick} aria-label={t("nav.back")} style={{ width: "56px", height: "56px", display: "flex", alignItems: "center", justifyContent: "center", color: "#1A1D21", borderRadius: "14px" }}>

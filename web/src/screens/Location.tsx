@@ -48,7 +48,7 @@ export function PlaceSearch({ id, places, query, setQuery, choose }: { id: strin
 }
 
 export function Location() {
-  const { mode, lang, place, setPlace } = useApp();
+  const { mode, lang, place, setPlace, setShared } = useApp();
   const t = useT();
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
@@ -64,6 +64,7 @@ export function Location() {
     if (!("geolocation" in navigator)) return navigate("/location-off");
     navigator.geolocation.getCurrentPosition(
       ({ coords }) => {
+        setShared({ lat: coords.latitude, lon: coords.longitude }); // for "My location" in the text to family
         if (mode === "replay") return choose(nearestReplayTown(coords.latitude, coords.longitude));
         loadCommunities().then((list) => choose(placeAt(list, coords.latitude, coords.longitude)));
       },

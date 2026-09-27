@@ -54,3 +54,110 @@ export const ChevronRightIcon = ({ size, style }: IconProps) => svg(size, <path 
 export const ChevronDownIcon = ({ size, style }: IconProps) => svg(size, <path d="M6 9l6 6 6-6" />, style);
 
 export const ChevronUpIcon = ({ size, style }: IconProps) => svg(size, <path d="M6 15l6-6 6 6" />, style);
+
+// "If you’re told to leave": path data from Lucide (ISC licence): door-open, house, coffee, navigation,
+// message-circle, pill, wallet, key-round, smartphone, glasses, paw-print.
+export const DoorOpenIcon = ({ size, style }: IconProps) =>
+  svg(
+    size,
+    <>
+      <path d="M10 21H2" />
+      <path d="M10 3H7a2 2 0 0 0-2 2v16" />
+      <path d="M14 12h.01" />
+      <path d="M19 21V5a2 2 0 0 0-1.675-1.974l-6.163-1.013A1 1 0 0 0 10 3v18a1 1 0 0 0 1.124.992z" />
+      <path d="M22 21h-3" />
+    </>,
+    style,
+  );
+
+export const HouseIcon = ({ size, style }: IconProps) =>
+  svg(
+    size,
+    <>
+      <path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8" />
+      <path d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+    </>,
+    style,
+  );
+
+export const CoffeeIcon = ({ size, style }: IconProps) =>
+  svg(
+    size,
+    <>
+      <path d="M10 2v2" />
+      <path d="M14 2v2" />
+      <path d="M16 8a1 1 0 0 1 1 1v8a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1h14a4 4 0 1 1 0 8h-1" />
+      <path d="M6 2v2" />
+    </>,
+    style,
+  );
+
+export const NavigationIcon = ({ size, style }: IconProps) => svg(size, <polygon points="3 11 22 2 13 21 11 13 3 11" />, style);
+
+export const MessageIcon = ({ size, style }: IconProps) =>
+  svg(size, <path d="M2.992 16.342a2 2 0 0 1 .094 1.167l-1.065 3.29a1 1 0 0 0 1.236 1.168l3.413-.998a2 2 0 0 1 1.099.092 10 10 0 1 0-4.777-4.719" />, style);
+
+export const PillIcon = ({ size, style }: IconProps) =>
+  svg(
+    size,
+    <>
+      <path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z" />
+      <path d="m8.5 8.5 7 7" />
+    </>,
+    style,
+  );
+
+export const WalletIcon = ({ size, style }: IconProps) =>
+  svg(
+    size,
+    <>
+      <path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1" />
+      <path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4" />
+    </>,
+    style,
+  );
+
+export const KeyIcon = ({ size, style }: IconProps) =>
+  svg(
+    size,
+    <>
+      <path d="M2.586 17.414A2 2 0 0 0 2 18.828V21a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h1a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h.172a2 2 0 0 0 1.414-.586l.814-.814a6.5 6.5 0 1 0-4-4z" />
+      <circle cx="16.5" cy="7.5" r=".5" style={{ fill: "currentColor" }} />
+    </>,
+    style,
+  );
+
+export const SmartphoneIcon = ({ size, style }: IconProps) =>
+  svg(
+    size,
+    <>
+      <rect width="14" height="20" x="5" y="2" rx="2" ry="2" />
+      <path d="M12 18h.01" />
+    </>,
+    style,
+  );
+
+export const GlassesIcon = ({ size, style }: IconProps) =>
+  svg(
+    size,
+    <>
+      <circle cx="6" cy="15" r="4" />
+      <circle cx="18" cy="15" r="4" />
+      <path d="M14 15a2 2 0 0 0-2-2 2 2 0 0 0-2 2" />
+      <path d="M2.5 13 5 7c.7-1.3 1.4-2 3-2" />
+      <path d="M21.5 13 19 7c-.7-1.3-1.5-2-3-2" />
+    </>,
+    style,
+  );
+
+export const PawIcon = ({ size, style }: IconProps) =>
+  svg(
+    size,
+    <>
+      <circle cx="11" cy="4" r="2" />
+      <circle cx="18" cy="8" r="2" />
+      <circle cx="20" cy="16" r="2" />
+      <path d="M9 10a5 5 0 0 1 5 5v3.5a3.5 3.5 0 0 1-6.84 1.045Q6.52 17.48 4.46 16.84A3.5 3.5 0 0 1 5.5 10Z" />
+    </>,
+    style,
+  );

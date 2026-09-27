@@ -22,6 +22,8 @@ interface Stored {
   mode: Mode;
   lang: Lang;
   place: Place | null;
+  /** The phone’s location, once the person has shared it this session (Use my location). */
+  shared: { lat: number; lon: number } | null;
 }
 
 interface AppState extends Stored {
@@ -29,6 +31,7 @@ interface AppState extends Stored {
   setMode: (mode: Mode) => void;
   setLang: (lang: Lang) => void;
   setPlace: (place: Place | null) => void;
+  setShared: (shared: { lat: number; lon: number }) => void;
   setResult: (result: VerdictJson | null) => void;
   /** Start a new check: keep mode and language, forget the place and result. */
   reset: () => void;
@@ -48,7 +51,7 @@ function initialState(): Stored {
   // A build without an engine URL is replay-only: it starts in replay (the QR code also opens ?mode=replay).
   const fallback: Mode = ENGINE_URL ? "live" : "replay";
   const mode: Mode = urlMode === "replay" || urlMode === "live" ? urlMode : stored.mode ?? fallback;
-  return { mode, lang: stored.lang ?? "en", place: stored.place ?? null };
+  return { mode, lang: stored.lang ?? "en", place: stored.place ?? null, shared: stored.shared ?? null };
 }
 
 export function AppProvider({ children }: { children: ReactNode }) {
@@ -70,14 +73,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
   const setLang = useCallback((lang: Lang) => setStored((s) => ({ ...s, lang })), []);
   const setPlace = useCallback((place: Place | null) => setStored((s) => ({ ...s, place })), []);
+  const setShared = useCallback((shared: { lat: number; lon: number }) => setStored((s) => ({ ...s, shared })), []);
   const reset = useCallback(() => {
     setStored((s) => ({ ...s, place: null }));
     setResult(null);
   }, []);
 
   const value = useMemo(
-    () => ({ ...stored, result, setMode, setLang, setPlace, setResult, reset }),
-    [stored, result, setMode, setLang, setPlace, reset],
+    () => ({ ...stored, result, setMode, setLang, setPlace, setShared, setResult, reset }),
+    [stored, result, setMode, setLang, setPlace, setShared, reset],
   );
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 }
