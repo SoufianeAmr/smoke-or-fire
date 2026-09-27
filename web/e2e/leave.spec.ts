@@ -3,6 +3,7 @@
 // mode says where officials announce centres. Entry points on Emergency and the near-fire verdict notice. The two demo
 // scenarios, EN and FR.
 import { expect, test, type Page } from "@playwright/test";
+import { navigations, texts } from "./navigations";
 
 const NBSP = String.fromCharCode(0xa0);
 const SOURCE = "https://annapoliscounty.ca/government/news-media-releases/2204-west-dalhousie-wildfires-evacuees-registration";
@@ -376,19 +377,193 @@ test.describe("375 × 667, live, Halifax", () => {
 test.describe("Use my location on the screen", () => {
   test.use({ geolocation: { latitude: 44.9, longitude: -65.15 }, permissions: ["geolocation"] });
 
-  test("replay picks the nearest replay town (Bridgetown), and the text to family ends with the location", async ({ page }) => {
+  test("replay picks the nearest replay town (Bridgetown), and the text to family ends with the phone's location, not the town's", async ({ page }) => {
+    await page.addInitScript(recordGeolocation);
     await openLeave(page, "replay");
     await page.getByRole("link", { name: "Use my location" }).click();
     await expect(page.getByRole("heading", { name: L.en.near })).toBeVisible();
     await expect(page.getByText(L.en.banner)).toBeVisible();
     await page.waitForFunction(() => sessionStorage.getItem("smoke-or-fire")?.includes('"shared":{')); // saved before reloading
-    const body = `${OK_EN} My location: https://www.google.com/maps/search/?api=1&query=44.90000,-65.15000`;
+    const body = `${OK_EN} My location: https://maps.google.com/?q=44.9,-65.15`;
     await expect(page.getByRole("link", { name: "Tell family you’re OK" })).toHaveAttribute("href", sms(body));
     await page.reload(); // later in the session: the place and the location are remembered
     await expect(page.getByRole("heading", { name: L.en.near })).toBeVisible();
-    await expect(page.getByRole("link", { name: "Tell family you’re OK" })).toHaveAttribute("href", sms(body));
+    const family = page.getByRole("link", { name: "Tell family you’re OK" });
+    await expect(family).toHaveAttribute("href", sms(body));
+    // Known this session: one tap opens the message, without asking the phone again.
+    const asked = await navigations(page);
+    await family.click();
+    await expect.poll(() => texts(asked)).toEqual([sms(body)]);
+    expect(await geolocationRequests(page)).toEqual([]);
   });
 });
+
+// "Tell family you’re OK" with the phone's real position: asked for on the tap when it isn't known this session.
+const GPS = { latitude: 45.123456, longitude: -64.987654 }; // nowhere near Bridgetown's town point
+const FAMILY = {
+  en: { tap: "Tell family you’re OK", locating: "Getting your location…", send: "Send message with my location", plain: "Send message", ok: OK_EN, at: (link: string) => `${OK_EN} My location: ${link}` },
+  fr: { tap: "Dites à vos proches que vous allez bien", locating: "Localisation en cours…", send: "Envoyer le message avec ma position", plain: "Envoyer le message", ok: OK_FR, at: (link: string) => `${OK_FR} Ma position${NBSP}: ${link}` },
+};
+const WITH_GPS = "https://maps.google.com/?q=45.123456,-64.987654";
+const IPHONE = "Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Mobile/15E148 Safari/604.1";
+const ANDROID = "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Mobile Safari/537.36";
+
+/** Record what the app asks the phone for; the browser answers as the test set it up. */
+function recordGeolocation() {
+  const w = window as unknown as { __geo: PositionOptions[] };
+  w.__geo = [];
+  const real = navigator.geolocation.getCurrentPosition.bind(navigator.geolocation);
+  navigator.geolocation.getCurrentPosition = (ok, fail, options) => {
+    w.__geo.push(options ?? {});
+    real(ok, fail, options);
+  };
+}
+/** A phone that is slow to answer (the test answers), or that answers "timed out". */
+function fakeGeolocation(answer: "later" | "timeout") {
+  const w = window as unknown as { __geo: PositionOptions[]; __answer: (lat: number, lon: number) => void };
+  w.__geo = [];
+  const geolocation = {
+    getCurrentPosition: (ok: PositionCallback, fail: PositionErrorCallback, options: PositionOptions) => {
+      w.__geo.push(options);
+      if (answer === "later") w.__answer = (latitude, longitude) => ok({ coords: { latitude, longitude, accuracy: 5 }, timestamp: Date.now() } as GeolocationPosition);
+      else setTimeout(() => fail({ code: 3, message: "Timeout expired", PERMISSION_DENIED: 1, POSITION_UNAVAILABLE: 2, TIMEOUT: 3 } as GeolocationPositionError), 50);
+    },
+    watchPosition: () => 0,
+    clearWatch: () => {},
+  };
+  Object.defineProperty(navigator, "geolocation", { configurable: true, value: geolocation });
+}
+/** The slow phone answers now. */
+const phoneAnswers = (page: Page, lat: number, lon: number) =>
+  page.evaluate(([la, lo]) => (window as unknown as { __answer: (lat: number, lon: number) => void }).__answer(la, lo), [lat, lon]);
+const geolocationRequests = (page: Page) => page.evaluate(() => (window as unknown as { __geo: PositionOptions[] }).__geo);
+const familyLink = (page: Page, name: string) => page.locator("main").getByRole("link", { name, exact: true });
+
+for (const lang of ["en", "fr"] as const) {
+  const f = FAMILY[lang];
+  test.describe(`Tell family you’re OK, with the phone's real location (${lang.toUpperCase()})`, () => {
+    test.describe("GPS allowed (Android)", () => {
+      test.use({ userAgent: ANDROID, geolocation: GPS, permissions: ["geolocation"] });
+
+      test("the tap asks the phone (high accuracy, 6 s), then opens the message with its position at full precision, never the replay town's", async ({ page }) => {
+        await page.addInitScript(recordGeolocation);
+        await openLeave(page, "replay", lang, "Bridgetown");
+        const tap = familyLink(page, f.tap);
+        await expect(tap).toHaveAttribute("href", sms(f.ok)); // nothing known yet
+        const asked = await navigations(page);
+        await tap.click();
+        await expect.poll(() => texts(asked)).toEqual([sms(f.at(WITH_GPS))]);
+        expect(await geolocationRequests(page)).toEqual([{ enableHighAccuracy: true, timeout: 6000, maximumAge: 0 }]);
+        expect(decodeURIComponent(texts(asked)[0])).not.toContain(BRIDGETOWN.split(",")[0]);
+        // In case the browser didn't open it: the button is now a plain link to the same message.
+        await expect(familyLink(page, f.send)).toHaveAttribute("href", sms(f.at(WITH_GPS)));
+        // Known for the rest of the session: later, one tap opens the message without asking again.
+        await page.waitForFunction(() => sessionStorage.getItem("smoke-or-fire")?.includes('"shared":{'));
+        await page.reload();
+        const again = await navigations(page);
+        await familyLink(page, f.tap).click();
+        await expect.poll(() => texts(again)).toEqual([sms(f.at(WITH_GPS))]);
+        expect(await geolocationRequests(page)).toEqual([]);
+      });
+    });
+
+    test("while the phone answers, the button says so, and another tap doesn't ask again", async ({ page }) => {
+      await page.addInitScript(fakeGeolocation, "later");
+      await openLeave(page, "replay", lang, "Bridgetown");
+      const asked = await navigations(page);
+      await familyLink(page, f.tap).click();
+      const locating = familyLink(page, f.locating);
+      await expect(locating).toBeVisible();
+      await expect(locating).toHaveAttribute("aria-busy", "true");
+      await locating.click();
+      expect(await geolocationRequests(page)).toHaveLength(1);
+      expect(texts(asked)).toEqual([]);
+      await phoneAnswers(page, 45.12345678, -64.98765432); // as many decimals as the phone gives, all kept
+      await expect.poll(() => texts(asked)).toEqual([sms(f.at("https://maps.google.com/?q=45.12345678,-64.98765432"))]);
+    });
+
+    test("leaving the screen while the phone answers: the late answer opens nothing there, and is kept for the session", async ({ page }) => {
+      await page.addInitScript(fakeGeolocation, "later");
+      await openLeave(page, "replay", lang, "Bridgetown");
+      const asked = await navigations(page);
+      await familyLink(page, f.tap).click();
+      await expect(familyLink(page, f.locating)).toBeVisible();
+      await page.getByRole("link", { name: lang === "en" ? "Back" : "Retour" }).click();
+      await expect(page.locator("main a[href='/q1']")).toBeVisible(); // on Check now
+      await phoneAnswers(page, 45.123456, -64.987654);
+      await page.waitForFunction(() => sessionStorage.getItem("smoke-or-fire")?.includes('"shared":{"lat":45.123456,"lon":-64.987654}'));
+      await page.waitForTimeout(300);
+      expect(texts(asked)).toEqual([]);
+    });
+
+    test("a browser that never answers (a dismissed prompt): a tap after 6 s sends without the location; a late answer sends nothing more", async ({ page }) => {
+      await page.clock.install();
+      await page.addInitScript(fakeGeolocation, "later");
+      await openLeave(page, "replay", lang, "Bridgetown");
+      const asked = await navigations(page);
+      await familyLink(page, f.tap).click();
+      await familyLink(page, f.locating).click(); // a double tap: still waiting
+      await page.clock.fastForward(3000);
+      await familyLink(page, f.locating).click(); // 3 s: still waiting
+      expect(texts(asked)).toEqual([]);
+      await page.clock.fastForward(3000);
+      await familyLink(page, f.locating).click(); // 6 s: send without it
+      await expect.poll(() => texts(asked)).toEqual([sms(f.ok)]);
+      await phoneAnswers(page, 45.123456, -64.987654);
+      await page.waitForTimeout(300);
+      expect(texts(asked)).toEqual([sms(f.ok)]);
+      await expect(familyLink(page, f.plain)).toHaveAttribute("href", sms(f.ok));
+    });
+
+    test("location denied: the message opens without the location sentence", async ({ page }) => {
+      await page.addInitScript(recordGeolocation);
+      await openLeave(page, "replay", lang, "Bridgetown"); // no permission given: the browser says no
+      const asked = await navigations(page);
+      await familyLink(page, f.tap).click();
+      await expect.poll(() => texts(asked)).toEqual([sms(f.ok)]);
+      expect(await geolocationRequests(page)).toHaveLength(1);
+      await expect(familyLink(page, f.plain)).toHaveAttribute("href", sms(f.ok));
+    });
+
+    test("location timed out: the message opens without the location sentence", async ({ page }) => {
+      await page.addInitScript(fakeGeolocation, "timeout");
+      await openLeave(page, "live", lang, "Moncton");
+      const asked = await navigations(page);
+      await familyLink(page, f.tap).click();
+      await expect.poll(() => texts(asked)).toEqual([sms(f.ok)]);
+    });
+
+    test.describe("iPhone", () => {
+      test.use({ userAgent: IPHONE });
+
+      test.describe("GPS allowed", () => {
+        test.use({ geolocation: GPS, permissions: ["geolocation"] });
+        test("two steps: the first tap gets the position, then Send message with my location opens it", async ({ page }) => {
+          await openLeave(page, "replay", lang, "Bridgetown");
+          const asked = await navigations(page);
+          await familyLink(page, f.tap).click();
+          const send = familyLink(page, f.send);
+          await expect(send).toHaveAttribute("href", sms(f.at(WITH_GPS)));
+          await page.waitForTimeout(300);
+          expect(texts(asked)).toEqual([]); // Safari wouldn't open Messages after the wait
+          await send.click();
+          await expect.poll(() => texts(asked)).toEqual([sms(f.at(WITH_GPS))]);
+        });
+      });
+
+      test("location denied: the second tap sends the message without it", async ({ page }) => {
+        await openLeave(page, "replay", lang, "Bridgetown");
+        const asked = await navigations(page);
+        await familyLink(page, f.tap).click();
+        const plain = familyLink(page, f.plain);
+        await expect(plain).toHaveAttribute("href", sms(f.ok));
+        expect(texts(asked)).toEqual([]);
+        await plain.click();
+        await expect.poll(() => texts(asked)).toEqual([sms(f.ok)]);
+      });
+    });
+  });
+}
 
 test("opened directly (a link or bookmark), Back goes to Check", async ({ page }) => {
   await page.goto("/leave");

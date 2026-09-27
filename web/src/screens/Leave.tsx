@@ -4,7 +4,7 @@
 //   (data/evacuation-events.json);
 // - farther away: that evacuation doesn't apply, and where officials announce centres in your province;
 // - no event active (live): where officials announce centres, the City of Moncton's alerts first in Moncton.
-import { useState, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { useApp, useT, type Place } from "../app/state";
 import { ReplayBanner } from "../components/ReplayBanner";
 import { Screen } from "../components/Screen";
@@ -12,7 +12,8 @@ import { Sticky911 } from "../components/Sticky911";
 import { TopBar } from "../components/TopBar";
 import { DoorOpenIcon, GlassesIcon, KeyIcon, MessageIcon, NavigationIcon, PawIcon, PhoneIcon, PillIcon, SmartphoneIcon, WalletIcon } from "../components/icons";
 import { usePlaces } from "../data/places";
-import { centreOf, clockTime, directionsUrl, eventFor, isNear, kmBetween, mapLink, monthName, smsUrl, telUrl, type Centre, type EvacuationEvent, type Hours, type LatLon } from "../data/evacuation";
+import { centreOf, clockTime, directionsUrl, eventFor, familyMessage, isNear, kmBetween, monthName, smsUrl, telUrl, type Centre, type EvacuationEvent, type Hours, type LatLon } from "../data/evacuation";
+import { platformOf } from "../keep/keep";
 import type { Lang, StringKey } from "../i18n";
 import { LeaveMap, MarkerBadge } from "../leave/LeaveMap";
 import { leaveVoice } from "../listen/speech";
@@ -52,12 +53,10 @@ const inMoncton = (place: Place) => place.name === "Moncton" && place.province =
 const officialLinks = (place: Place, live: boolean): Official[] => [...(live && inMoncton(place) ? [MONCTON] : []), ...(PROVINCE_LINKS[place.province] ?? [])];
 
 export function Leave() {
-  const { mode, lang, place, setPlace, shared } = useApp();
+  const { mode, lang, place, setPlace } = useApp();
   const t = useT();
   const event = eventFor(mode);
   const near = event !== null && place !== null && isNear(event, place);
-  // The text to family carries a location only if the person shared the phone's location this session.
-  const message = [t("leave.family.sms"), shared && t("leave.family.location", { mapLink: mapLink(shared) })].filter(Boolean).join(" ");
 
   // Listen: the guided voice for what this screen shows. The 211 line and the official links are said only when shown.
   const reception = event && near ? centreOf(event, "reception") : null;
@@ -97,10 +96,7 @@ export function Leave() {
           <>
             {event && near ? <Announced event={event} place={place} replay={mode === "replay"} /> : <Elsewhere place={place} event={event} live={mode === "live"} />}
             <TakeCard officials={near} />
-            <a href={smsUrl(message)} className="press" style={OUTLINED}>
-              <MessageIcon size={26} />
-              {t("leave.family")}
-            </a>
+            <TellFamily />
             {event && near && (
               <a href={event.source} target="_blank" rel="noopener noreferrer" style={{ minHeight: "56px", display: "flex", alignItems: "center", padding: "0 4px", fontSize: "18px", lineHeight: "1.45", color: "#1B2A4A" }}>
                 {t("leave.source", { authority: event.authority[lang], month: monthName(event.announced, lang) })}
@@ -111,6 +107,66 @@ export function Leave() {
       </main>
       <Sticky911 />
     </Screen>
+  );
+}
+
+/** How long to wait for the phone's position before sending the message without it. */
+const GPS_TIMEOUT_MS = 6000;
+
+/**
+ * "Tell family you’re OK": a text message that says where the phone really is. That is the phone's GPS position, never
+ * the replay town, at full precision (the person chooses who gets it). If it isn't known this session, the tap asks for
+ * it first; denied or timed out, the message goes without it. On an iPhone, Safari won't open Messages once it had to
+ * wait for the position, so that tap only gets it, and the button becomes "Send message with my location". Elsewhere the
+ * message opens at once, and the button stays a plain link to it in case the browser didn't open it.
+ */
+function TellFamily() {
+  const { lang, shared, setShared } = useApp();
+  const t = useT();
+  const [step, setStep] = useState<"tap" | "locating" | "ready">("tap");
+  const [iphone] = useState(() => platformOf(navigator.userAgent, navigator.maxTouchPoints) === "iphone");
+  const href = smsUrl(familyMessage(lang, shared));
+  // The request being answered: when it was asked, and how to finish it (once).
+  const asking = useRef<{ at: number; finish: (at: LatLon | null) => void } | null>(null);
+  // Left the screen: a late answer is still remembered, but opens nothing on another screen.
+  const gone = useRef(false);
+  useEffect(() => {
+    gone.current = false;
+    return () => void (gone.current = true);
+  }, []);
+
+  const onClick = (event: React.MouseEvent<HTMLAnchorElement>) => {
+    if (step === "locating") {
+      event.preventDefault();
+      // A tap while asking is a double tap, until the timeout has passed: then the browser may never answer (a
+      // permission prompt dismissed in Firefox), so this tap sends the message without the location.
+      if (asking.current && Date.now() - asking.current.at >= GPS_TIMEOUT_MS) asking.current.finish(null);
+      return;
+    }
+    if (shared || step === "ready" || !("geolocation" in navigator)) return; // the link opens the message
+    event.preventDefault();
+    setStep("locating");
+    const finish = (at: LatLon | null) => {
+      if (asking.current?.finish !== finish) return; // already finished: a late answer changes nothing
+      asking.current = null;
+      if (at) setShared(at);
+      setStep("ready");
+      if (!iphone && !gone.current) window.location.href = smsUrl(familyMessage(lang, at));
+    };
+    asking.current = { at: Date.now(), finish };
+    navigator.geolocation.getCurrentPosition(
+      ({ coords }) => finish({ lat: coords.latitude, lon: coords.longitude }),
+      () => finish(null),
+      { enableHighAccuracy: true, timeout: GPS_TIMEOUT_MS, maximumAge: 0 },
+    );
+  };
+
+  const label = step === "locating" ? "leave.family.locating" : step === "ready" ? (shared ? "leave.family.send" : "leave.family.sendPlain") : "leave.family";
+  return (
+    <a href={href} onClick={onClick} aria-busy={step === "locating"} className="press" style={OUTLINED}>
+      <MessageIcon size={26} />
+      {t(label)}
+    </a>
   );
 }
 

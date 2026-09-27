@@ -2,8 +2,9 @@
 // install prompt when it offered one, or else shows the steps for the phone, and is hidden when the app is open from the
 // home screen; "Send to someone", with the phone's share sheet or else a text message. Nothing is installed or cached:
 // there is no service worker.
-import { expect, test, type Browser, type CDPSession, type Page } from "@playwright/test";
+import { expect, test, type Browser, type Page } from "@playwright/test";
 import { readFileSync } from "node:fs";
+import { navigations } from "./navigations";
 
 type Lang = "en" | "fr";
 const STRINGS: Record<Lang, Record<string, string>> = {
@@ -86,14 +87,6 @@ function shareSheet(outcome: "shared" | "AbortError" | "NotAllowedError") {
 }
 const shared = (page: Page) => page.evaluate(() => (window as unknown as { __shared: ShareData[] }).__shared);
 
-/** Where the page asked to go: an sms: address never loads here, but the request is seen. */
-async function navigations(page: Page) {
-  const cdp: CDPSession = await page.context().newCDPSession(page);
-  await cdp.send("Page.enable");
-  const urls: string[] = [];
-  cdp.on("Page.frameRequestedNavigation", ({ url }) => urls.push(url));
-  return urls;
-}
 
 test.describe("the home-screen icon", () => {
   test("the built site serves the manifest and its icons, and the page links them", async ({ page, request }) => {
@@ -118,6 +111,7 @@ test.describe("the home-screen icon", () => {
 
   // In full Chromium: the headless shell the other tests run in answers "no installability errors" for any page.
   test.describe("in full Chromium", () => {
+    test.describe.configure({ timeout: 90_000 }); // a second browser: slow to start on a busy machine
     let browser: Browser;
     test.beforeAll(async ({ playwright }) => { browser = await playwright.chromium.launch({ channel: "chromium" }); });
     test.afterAll(async () => { await browser?.close(); });

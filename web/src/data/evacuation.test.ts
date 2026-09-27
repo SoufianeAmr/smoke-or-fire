@@ -3,7 +3,7 @@ import halifax from "../../../data/demo/halifax.json";
 import moncton from "../../../data/demo/moncton.json";
 import fireNames from "../../../data/places/fire-names.json";
 import data from "./evacuation-events.json";
-import { EVENTS, REPLAY_DATE, activeEvent, clockTime, directionsUrl, eventFor, isNear, kmBetween, mapLink, monthName, smsUrl, telUrl, todayAtlantic } from "./evacuation";
+import { EVENTS, REPLAY_DATE, activeEvent, clockTime, directionsUrl, eventFor, familyMessage, isNear, kmBetween, mapLink, monthName, smsUrl, telUrl, todayAtlantic } from "./evacuation";
 
 const SOURCE_2204 = "https://annapoliscounty.ca/government/news-media-releases/2204-west-dalhousie-wildfires-evacuees-registration";
 
@@ -98,12 +98,22 @@ describe("links", () => {
   });
 
   test("the text to family is prefilled, with an empty recipient", () => {
-    const body = "Je vais bien. Il y a un feu près de moi et je suis les consignes officielles. Ma position : https://www.google.com/maps/search/?api=1&query=46.20000,-64.55000";
+    const body = familyMessage("fr", { lat: 46.2, lon: -64.55 });
     const url = smsUrl(body);
     expect(url.startsWith("sms:?&body=")).toBe(true);
     expect(decodeURIComponent(url.slice("sms:?&body=".length))).toBe(body);
-    expect(url).not.toMatch(/[ #]/); // spaces and # are encoded, so no message is cut short
-    expect(mapLink({ lat: 46.2, lon: -64.55 })).toBe("https://www.google.com/maps/search/?api=1&query=46.20000,-64.55000");
+    // Spaces, # and the link's ? and & are encoded, so no message is cut short.
+    expect(url.slice("sms:?&body=".length)).not.toMatch(/[ #?&]/);
+  });
+
+  test("the text to family: the phone's position at full precision, as a maps.google.com link; none when unknown", () => {
+    const NBSP = String.fromCharCode(0xa0);
+    const at = { lat: 45.12345678, lon: -64.98765432 };
+    expect(mapLink(at)).toBe("https://maps.google.com/?q=45.12345678,-64.98765432");
+    expect(familyMessage("en", at)).toBe("I’m OK. There’s a fire near me and I’m following official instructions. My location: https://maps.google.com/?q=45.12345678,-64.98765432");
+    expect(familyMessage("fr", at)).toBe(`Je vais bien. Il y a un feu près de moi et je suis les consignes officielles. Ma position${NBSP}: https://maps.google.com/?q=45.12345678,-64.98765432`);
+    expect(familyMessage("en", null)).toBe("I’m OK. There’s a fire near me and I’m following official instructions.");
+    expect(familyMessage("fr", null)).toBe("Je vais bien. Il y a un feu près de moi et je suis les consignes officielles.");
   });
 });
 

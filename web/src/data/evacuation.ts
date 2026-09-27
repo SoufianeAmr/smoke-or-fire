@@ -3,7 +3,7 @@
 // or today in live mode. Nothing is looked up at runtime, and no route is planned here: "Get directions" hands
 // the address to the phone's maps app.
 import type { Mode } from "../app/state";
-import type { Lang } from "../i18n";
+import { translate, type Lang } from "../i18n";
 import demo from "../../../data/demo/index.json";
 import fireNames from "../../../data/places/fire-names.json";
 import data from "./evacuation-events.json";
@@ -108,11 +108,15 @@ export const directionsUrl = (centre: Centre, origin?: LatLon) =>
 /** "1-833-806-1515" → "tel:18338061515". */
 export const telUrl = (number: string) => `tel:${number.replace(/\D/g, "")}`;
 
-/** A link that opens a point in any browser or maps app. */
-export const mapLink = ({ lat, lon }: LatLon) => `https://www.google.com/maps/search/?api=1&query=${lat.toFixed(5)},${lon.toFixed(5)}`;
+/** A link that opens a point in any browser or maps app, at full precision: the person chooses who gets it. */
+export const mapLink = ({ lat, lon }: LatLon) => `https://maps.google.com/?q=${lat},${lon}`;
 
 /** A text message with the body filled in, recipient left empty. "sms:?&body=" opens it on iPhone and Android. */
 export const smsUrl = (body: string) => `sms:?&body=${encodeURIComponent(body)}`;
+
+/** The text to family: "I’m OK…", then "My location: {link}" when the phone's own position is known. */
+export const familyMessage = (lang: Lang, at: LatLon | null) =>
+  [translate(lang, "leave.family.sms"), at && translate(lang, "leave.family.location", { mapLink: mapLink(at) })].filter(Boolean).join(" ");
 
 /** "2025-08" → "August 2025" / "août 2025". */
 export const monthName = (month: string, lang: Lang) =>
