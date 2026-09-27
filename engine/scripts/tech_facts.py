@@ -434,13 +434,28 @@ def document(arch: dict, data: dict, place, body: dict, merged: dict, tests: dic
     return "\n".join(lines)
 
 
+SNOWFLAKE = re.compile(r"<!-- snowflake:start -->.*?<!-- snowflake:end -->\n", re.S)
+
+
+def with_snowflake(text: str, previous: str) -> str:
+    """The Snowflake section is written by analytics/scripts/report.py, which needs Snowflake to run: it is carried
+    over from the previous TECH-FACTS.md as it is, before "## Tests", where report.py puts it."""
+    found = SNOWFLAKE.search(previous.replace("\r\n", "\n"))
+    if not found:
+        return text
+    before, after = text.split("\n## Tests", 1)
+    return before.rstrip("\n") + "\n\n" + found.group(0) + "\n## Tests" + after
+
+
 def main() -> None:
     ran_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
     place, body = moncton()
     valid = validation()
     with tempfile.TemporaryDirectory() as tmp:
         tests = test_counts(Path(tmp))
-    OUT.write_text(document(architecture(), data_facts(), place, body, merges(), tests, ran_at, valid), encoding="utf-8")
+    previous = OUT.read_text(encoding="utf-8") if OUT.exists() else ""
+    text = document(architecture(), data_facts(), place, body, merges(), tests, ran_at, valid)
+    OUT.write_text(with_snowflake(text, previous), encoding="utf-8")
     print(f"{OUT.name}: engine {outcome(tests['engine'])}; web unit {outcome(tests['unit'])}; browser {outcome(tests['browser'])}")
 
 

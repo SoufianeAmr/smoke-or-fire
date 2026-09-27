@@ -66,7 +66,7 @@
   "keep.share": "Smoke or Fire? tells you in 60 seconds if the smoke you smell is from a known fire. Nothing to install:",
   "keep.steps.iphone.label": "iPhone",
   "keep.steps.android.label": "Android",
-  "keep.steps.iphone": "In Safari, tap the Share button (the square with an arrow), then “Add to Home Screen”.",
+  "keep.steps.iphone": "In Safari, tap the Share button (the square with an arrow; on newer iPhones, tap ••• first), then “Add to Home Screen”.",
   "keep.steps.android": "In Chrome, tap the menu (three dots), then “Add to Home screen” or “Install app”.",
   "q1.step": "Question 1 of 2",
   "q1.title": "Do you see flames?",

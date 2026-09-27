@@ -23,8 +23,8 @@ const LINE = {
 };
 const STEPS = {
   iphone: {
-    en: "In Safari, tap the Share button (the square with an arrow), then “Add to Home Screen”.",
-    fr: `Dans Safari, touchez le bouton Partager (le carré avec une flèche), puis «${NBSP}Sur l’écran d’accueil${NBSP}».`,
+    en: "In Safari, tap the Share button (the square with an arrow; on newer iPhones, tap ••• first), then “Add to Home Screen”.",
+    fr: `Dans Safari, touchez le bouton Partager (le carré avec une flèche${NBSP}; sur les iPhone récents, touchez d’abord •••), puis «${NBSP}Sur l’écran d’accueil${NBSP}».`,
   },
   android: {
     en: "In Chrome, tap the menu (three dots), then “Add to Home screen” or “Install app”.",
@@ -360,7 +360,7 @@ test.describe("the two links: one row with the dot when they fit, else one under
   });
 });
 
-test.describe("375 × 667: the line doesn't move I smell smoke or Told to leave your home", () => {
+test.describe("375 × 667: I smell smoke and Told to leave your home are on screen, and the line doesn't move them", () => {
   test.use({ viewport: { width: 375, height: 667 } });
   for (const lang of ["en", "fr"] as const) {
     for (const mode of ["replay", "live"] as const) {
@@ -369,10 +369,12 @@ test.describe("375 × 667: the line doesn't move I smell smoke or Told to leave 
         await page.evaluate(() => document.fonts.ready);
         const cta = page.locator('main a[href="/q1"]');
         const leave = page.locator('main a[href="/leave"]');
-        const box = await cta.boundingBox();
-        // I smell smoke is fully on screen.
-        expect(box!.y).toBeGreaterThanOrEqual(0);
-        expect(box!.y + box!.height).toBeLessThanOrEqual(667);
+        // I smell smoke and Told to leave your home? are fully on screen.
+        for (const button of [cta, leave]) {
+          const box = (await button.boundingBox())!;
+          expect(box.y).toBeGreaterThanOrEqual(0);
+          expect(box.y + box.height).toBeLessThanOrEqual(667);
+        }
         // The line sits below How it works, so both buttons are where they would be without it.
         const how = (await page.locator('main a[href="/how-it-works"]').boundingBox())!;
         const line = page.locator("main > div").last();

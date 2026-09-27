@@ -40,7 +40,7 @@ export function Check() {
         <LangToggle />
       </div>
       <main style={{ position: "relative", zIndex: "1", flexGrow: "1", display: "flex", flexDirection: "column", padding: "8px 20px 20px" }}>
-        <div style={{ display: "flex", flexDirection: "column", gap: "14px", marginTop: "12px" }}>
+        <div className="check-head" style={{ display: "flex", flexDirection: "column", gap: "14px", marginTop: "12px" }}>
           <svg width="64" height="64" viewBox="0 0 64 64" aria-hidden="true">
             <rect x="0" y="0" width="64" height="64" rx="18" style={{ fill: "#1B2A4A" }} />
             <path d="M25 50c-5-5 5-9 0-15s5-9 0-15" style={{ fill: "none", stroke: "#FFFFFF", strokeWidth: "3.5", strokeLinecap: "round" }} />
@@ -51,7 +51,7 @@ export function Check() {
             <p lang="fr" style={{ margin: "0", fontSize: "22px", fontWeight: "600", lineHeight: "1.3", color: "#4F5561" }}>Fumée ou feu&nbsp;?</p>
           </div>
         </div>
-        <p style={{ margin: "28px 0 0", fontSize: "22px", fontWeight: "500", lineHeight: "1.4", textWrap: "pretty" }}>{t("check.tagline")}</p>
+        <p className="check-tagline" style={{ margin: "28px 0 0", fontSize: "22px", fontWeight: "500", lineHeight: "1.4", textWrap: "pretty" }}>{t("check.tagline")}</p>
         <div style={{ flexGrow: "1" }} />
         <Link to="/q1" onClick={reset} className="press" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "14px", minHeight: "104px", borderRadius: "18px", background: "#1B2A4A", color: "#FFFFFF", textDecoration: "none", fontSize: "28px", fontWeight: "800", letterSpacing: "-0.01em", boxShadow: "0 12px 28px rgba(27, 42, 74, 0.28)" }}>
           <svg className="ic" width="34" height="34" viewBox="0 0 24 24" aria-hidden="true" style={{ strokeWidth: "2.2" }}>
@@ -61,7 +61,7 @@ export function Check() {
           </svg>
           {t("check.cta")}
         </Link>
-        <div role="group" aria-label={t("check.modeGroup")} style={{ marginTop: "20px", display: "flex", gap: "4px", padding: "4px", borderRadius: "18px", background: "#EDE6DA" }}>
+        <div role="group" aria-label={t("check.modeGroup")} className="check-modes" style={{ marginTop: "20px", display: "flex", gap: "4px", padding: "4px", borderRadius: "18px", background: "#EDE6DA" }}>
           <button type="button" aria-pressed={!isReplay} onClick={() => isReplay && setMode("live")} style={{ flex: "1 1 0", ...SEGMENT, ...(isReplay ? UNSELECTED : SELECTED) }}>
             <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true">
               {isReplay
@@ -76,7 +76,7 @@ export function Check() {
           </button>
         </div>
         <p style={NOTE}>{isReplay ? t("check.replayNote") : t("check.liveNote")}</p>
-        <Link to="/leave" className="press" style={{ marginTop: "16px", minHeight: "56px", display: "flex", alignItems: "center", justifyContent: "center", gap: "10px", padding: "8px 16px", borderRadius: "18px", border: "2px solid #1B2A4A", color: "#1B2A4A", textDecoration: "none", fontSize: "18px", fontWeight: "700", lineHeight: "1.3", textAlign: "center" }}>
+        <Link to="/leave" className="press check-leave" style={{ marginTop: "16px", minHeight: "56px", display: "flex", alignItems: "center", justifyContent: "center", gap: "10px", padding: "8px 16px", borderRadius: "18px", border: "2px solid #1B2A4A", color: "#1B2A4A", textDecoration: "none", fontSize: "18px", fontWeight: "700", lineHeight: "1.3", textAlign: "center" }}>
           <DoorOpenIcon size={24} />
           {t("leave.entry")}
         </Link>
