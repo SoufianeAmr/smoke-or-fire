@@ -18,9 +18,11 @@ const TEXT = {
 };
 const SMS = (lang: Lang) => `sms:?&body=${encodeURIComponent(`${TEXT[lang]} ${URL_SENT}`)}`;
 const LINE = {
-  en: { label: "Keep it on your phone:", add: "Add to home screen", send: "Send to someone" },
-  fr: { label: `Gardez-la sur votre téléphone${NBSP}:`, add: "Ajouter à l’écran d’accueil", send: "Envoyer à quelqu’un" },
+  en: { add: "Add to home screen", send: "Send to someone" },
+  fr: { add: "Ajouter à l’écran d’accueil", send: "Envoyer à quelqu’un" },
 };
+/** The line's former label, gone: the two links alone. */
+const NO_LABEL = { en: "Keep it on your phone", fr: "Gardez-la sur votre téléphone" };
 const STEPS = {
   iphone: {
     en: "In Safari, tap the Share button (the square with an arrow; on newer iPhones, tap ••• first), then “Add to Home Screen”.",
@@ -152,14 +154,20 @@ test.describe("the home-screen icon", () => {
 
 for (const lang of ["en", "fr"] as const) {
   test.describe(`Keep it on your phone, ${lang.toUpperCase()}`, () => {
-    test("one small line under How it works: the label, then Add to home screen · Send to someone", async ({ page }) => {
+    test("one small line under How it works: Add to home screen · Send to someone, with no label", async ({ page }) => {
       await start(page, lang);
       const how = (await page.getByRole("link", { name: STRINGS[lang]["check.howItWorks"] }).boundingBox())!;
-      const label = page.getByText(LINE[lang].label, { exact: true });
-      await expect(label).toBeVisible();
-      expect((await label.boundingBox())!.y).toBeGreaterThanOrEqual(how.y + how.height);
       await expect(addLink(page, lang)).toBeVisible();
       await expect(sendLink(page, lang)).toBeVisible();
+      await expect(page.getByText(NO_LABEL[lang], { exact: false })).toHaveCount(0);
+      const add = (await addLink(page, lang).boundingBox())!;
+      const send = (await sendLink(page, lang).boundingBox())!;
+      expect(add.y).toBeGreaterThanOrEqual(how.y + how.height);
+      // English: one line, with the dot between; French: one under the other when they don't fit side by side.
+      if (lang === "en") {
+        expect(send.y).toBe(add.y);
+        await expect(page.locator("main").getByText("·", { exact: true })).toBeVisible();
+      }
       // Text links: navy, underlined, no fill; 56 px to tap, text at least 16 px.
       for (const link of [addLink(page, lang), sendLink(page, lang)]) {
         expect(await link.evaluate((el) => { const s = getComputedStyle(el); return [s.color, s.textDecorationLine, s.backgroundColor]; })).toEqual(["rgb(27, 42, 74)", "underline", "rgba(0, 0, 0, 0)"]);
@@ -205,11 +213,11 @@ for (const lang of ["en", "fr"] as const) {
         await expect(sheet(page).locator("p")).toHaveText([STEPS.android[lang]]);
       });
 
-      test("once installed from the browser, Add to home screen and the label go; Send to someone stays", async ({ page }) => {
+      test("once installed from the browser, Add to home screen goes; Send to someone stays", async ({ page }) => {
         await start(page, lang);
         await page.evaluate(() => window.dispatchEvent(new Event("appinstalled")));
         await expect(addLink(page, lang)).toHaveCount(0);
-        await expect(page.getByText(LINE[lang].label, { exact: true })).toHaveCount(0);
+        await expect(page.locator("main").getByText("·", { exact: true })).toHaveCount(0);
         await expect(sendLink(page, lang)).toBeVisible();
       });
     });
@@ -223,16 +231,15 @@ for (const lang of ["en", "fr"] as const) {
       await page.keyboard.press("Escape");
       await page.evaluate(() => window.dispatchEvent(new Event("appinstalled")));
       await expect(addLink(page, lang)).toBeVisible();
-      await expect(page.getByText(LINE[lang].label, { exact: true })).toBeVisible();
+      await expect(sendLink(page, lang)).toBeVisible();
     });
 
     for (const how of ["display-mode", "iphone"] as const) {
-      test(`opened from the home screen (${how === "iphone" ? "iPhone" : "standalone display"}): no Add to home screen, no label; Send to someone stays`, async ({ page }) => {
+      test(`opened from the home screen (${how === "iphone" ? "iPhone" : "standalone display"}): no Add to home screen; Send to someone stays`, async ({ page }) => {
         await page.addInitScript(standalone, how);
         await start(page, lang);
         await expect(sendLink(page, lang)).toBeVisible();
         await expect(addLink(page, lang)).toHaveCount(0);
-        await expect(page.getByText(LINE[lang].label, { exact: true })).toHaveCount(0);
         await expect(page.locator("main").getByText("·", { exact: true })).toHaveCount(0);
       });
     }
@@ -360,29 +367,53 @@ test.describe("the two links: one row with the dot when they fit, else one under
   });
 });
 
-test.describe("375 × 667: I smell smoke and Told to leave your home are on screen, and the line doesn't move them", () => {
-  test.use({ viewport: { width: 375, height: 667 } });
-  for (const lang of ["en", "fr"] as const) {
-    for (const mode of ["replay", "live"] as const) {
-      test(`${lang.toUpperCase()}, ${mode}`, async ({ page }) => {
-        await start(page, lang, mode);
-        await page.evaluate(() => document.fonts.ready);
-        const cta = page.locator('main a[href="/q1"]');
-        const leave = page.locator('main a[href="/leave"]');
-        // I smell smoke and Told to leave your home? are fully on screen.
-        for (const button of [cta, leave]) {
-          const box = (await button.boundingBox())!;
-          expect(box.y).toBeGreaterThanOrEqual(0);
-          expect(box.y + box.height).toBeLessThanOrEqual(667);
-        }
-        // The line sits below How it works, so both buttons are where they would be without it.
-        const how = (await page.locator('main a[href="/how-it-works"]').boundingBox())!;
-        const line = page.locator("main > div").last();
-        expect((await line.boundingBox())!.y).toBeGreaterThanOrEqual(how.y + how.height);
-        const withLine = [await cta.boundingBox(), await leave.boundingBox()];
-        await line.evaluate((el) => { (el as HTMLElement).style.display = "none"; });
-        expect([await cta.boundingBox(), await leave.boundingBox()]).toEqual(withLine);
-      });
+// Check, with the line: Listen and EN/FR, logo, title, tagline, I smell smoke, Live/Replay, How it works, the two links.
+for (const [width, height] of [[375, 667], [390, 844]] as const) {
+  test.describe(`Check at ${width} × ${height}: all on screen, nothing overlaps, 16 px above I smell smoke, equal side margins`, () => {
+    test.use({ viewport: { width, height } });
+    for (const lang of ["en", "fr"] as const) {
+      for (const mode of ["replay", "live"] as const) {
+        test(`${lang.toUpperCase()}, ${mode}`, async ({ page }) => {
+          await start(page, lang, mode);
+          await page.evaluate(() => document.fonts.ready);
+          const boxes = await page.evaluate(() => {
+            const main = document.querySelector("main")!;
+            const parts = [
+              ...main.previousElementSibling!.children, // Listen, EN/FR
+              main.querySelector(".check-head svg"),
+              main.querySelector("h1"),
+              main.querySelector(".check-tagline"),
+              main.querySelector('a[href="/q1"]'),
+              main.querySelector("[role=group]"),
+              main.querySelector('a[href="/how-it-works"]'),
+              ...main.lastElementChild!.querySelectorAll("a, button"),
+            ];
+            return parts.map((el) => {
+              const r = el!.getBoundingClientRect();
+              return { name: (el!.textContent ?? "").trim() || el!.tagName, left: r.left, top: r.top, right: r.right, bottom: r.bottom };
+            });
+          });
+          expect(boxes).toHaveLength(10);
+          for (const box of boxes) {
+            expect(box.left, box.name).toBeGreaterThanOrEqual(0);
+            expect(box.right, box.name).toBeLessThanOrEqual(width);
+            expect(box.top, box.name).toBeGreaterThanOrEqual(0);
+            expect(box.bottom, box.name).toBeLessThanOrEqual(height);
+          }
+          for (const [i, a] of boxes.entries()) {
+            for (const b of boxes.slice(i + 1)) {
+              const overlap = a.left < b.right - 0.5 && b.left < a.right - 0.5 && a.top < b.bottom - 0.5 && b.top < a.bottom - 0.5;
+              expect(overlap, `${a.name} / ${b.name}`).toBe(false);
+            }
+          }
+          const [, langs, , , tagline, cta] = boxes;
+          expect(cta.top - tagline.bottom).toBeGreaterThanOrEqual(16);
+          // The same margin on both sides: the button, and EN/FR at the top right.
+          expect(Math.round(width - cta.right)).toBe(Math.round(cta.left));
+          expect(Math.round(width - langs.right)).toBe(Math.round(cta.left));
+          expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
+        });
+      }
     }
-  }
-});
+  });
+}

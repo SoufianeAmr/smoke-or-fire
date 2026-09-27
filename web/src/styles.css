@@ -74,13 +74,12 @@ body.emergency{background:#D92D20}
   .nodata-callout{padding:12px 20px !important}
 }
 
-/* 01 Check on short phones (375 × 667): less space between the blocks, so "Told to leave your home?" is fully on
-   screen in French replay too (its note takes three lines). Same text, type sizes and tap targets. */
+/* 01 Check on short phones (375 × 667): less space between the blocks, so the whole screen fits, the French links
+   (one under the other) too. Same text, type sizes and tap targets. */
 @media (max-height: 740px){
   .check-head{margin-top:4px !important}
   .check-tagline{margin-top:16px !important}
   .check-modes{margin-top:14px !important}
-  .check-leave{margin-top:12px !important}
 }
 
 /* iPhone SE in Safari with its toolbars (375 × 550): both Q1 answers clear the 911 bar. */

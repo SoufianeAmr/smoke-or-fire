@@ -79,7 +79,7 @@ export function TwoPossibilitiesCard({ view }: { view: VerdictView }) {
   );
 }
 
-// Outlined navy, as "Told to leave your home?" on the Check screen: never red, which is kept for Call 911.
+// Outlined navy: never red, which is kept for Call 911.
 const OUTLINED: CSSProperties = { minHeight: "56px", display: "flex", alignItems: "center", justifyContent: "center", gap: "10px", padding: "8px 16px", borderRadius: "18px", border: "2px solid #1B2A4A", color: "#1B2A4A", textDecoration: "none", fontSize: "18px", fontWeight: "700", lineHeight: "1.3", textAlign: "center" };
 
 // Health Canada's windows advice and "take a break from the smoke", after the official AQHI line and before the 811 line.

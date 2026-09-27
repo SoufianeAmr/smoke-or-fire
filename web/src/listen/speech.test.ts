@@ -58,12 +58,20 @@ describe("the scripts", () => {
   test("a value never splits a sentence: an address with “St.”, a label with a question mark", () => {
     const near = voice.leaveVoice("en", { kind: "near", name: "NSCC Annapolis Valley Campus", address: "295 Commercial St., Middleton", take: TAKE.en });
     expect(near).toContain("The reception centre is NSCC Annapolis Valley Campus, 295 Commercial St., Middleton.");
-    expect(voice.checkVoice("en", false, true)).toContain("If officials told you to leave your home, tap the button further down that says: Told to leave your home? What to do.");
-    expect(voice.checkVoice("fr", false, true)).toContain(`Si les autorités vous ont demandé de quitter votre maison, touchez le bouton plus bas${NBSP}: On vous demande de partir${NBSP}? Que faire.`);
+    expect(voice.script("en", "voice.verdict.notice", { link: "Told to leave your home? What to do" }).at(-1)).toBe("If you were told to leave, tap: Told to leave your home? What to do.");
+    expect(voice.script("fr", "voice.verdict.notice", { link: `On vous demande de partir${NBSP}? Que faire` }).at(-1)).toBe(`Si on vous a demandé de partir, touchez${NBSP}: On vous demande de partir${NBSP}? Que faire.`);
   });
 });
 
 describe("screens", () => {
+  test("Check: no sentence about leaving home (that button is on Emergency and the near-fire notice)", () => {
+    for (const lang of LANGS) {
+      const text = voice.checkVoice(lang, true, true).join(" ");
+      expect(text).not.toContain(translate(lang, "leave.entry"));
+      expect(text).not.toMatch(lang === "en" ? /leave your home/ : /quitter votre maison/);
+    }
+  });
+
   test("Check: the replay line comes first, only in replay", () => {
     expect(voice.checkVoice("en", true, true).slice(0, 3)).toEqual(["Right now, the app is showing a replay of August 25, 2025.", "Hello.", "This app tells you, in about a minute, if the smoke you smell comes from a known fire."]);
     expect(voice.checkVoice("en", false, true)[0]).toBe("Hello.");

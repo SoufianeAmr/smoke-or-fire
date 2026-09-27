@@ -188,15 +188,15 @@ const SCREENS: Screen[] = [
     open: async () => {},
     script: async (page, lang) => [
       ...script(lang, "voice.check.replay"),
-      ...script(lang, "voice.check", { leave: await text(page, 'main a[href="/leave"]') }),
+      ...script(lang, "voice.check"),
       ...script(lang, "voice.check.install", { add: await text(page, "main > div:last-child button") }),
     ],
     buttons: async (page, lang) => {
       await named(page.locator('main a[href="/q1"]'), STRINGS[lang]["check.cta"], NAVY); // "the big dark blue button"
-      await named(page.locator('main a[href="/leave"]'), STRINGS[lang]["leave.entry"]);
       await named(page.getByRole("button", { name: STRINGS[lang]["keep.add"], exact: true }), STRINGS[lang]["keep.add"]);
+      await expect(page.locator('main a[href="/leave"]')).toHaveCount(0); // no Told to leave button, so the script names none
     },
-    labels: keys("check.cta", "leave.entry", "keep.add"),
+    labels: keys("check.cta", "keep.add"),
   },
   {
     name: "Q1",

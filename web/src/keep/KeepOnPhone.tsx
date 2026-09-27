@@ -1,11 +1,10 @@
-// "Keep it on your phone: Add to home screen · Send to someone", the small line under How it works on Check, for
-// families setting the app up before fire season.
+// "Add to home screen · Send to someone", the small line under How it works on Check, for families setting the app up
+// before fire season.
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type MouseEvent } from "react";
 import { useApp, useT } from "../app/state";
 import { CloseIcon } from "../components/icons";
 import { openInstallPrompt, shareData, shareSms, type Platform } from "./keep";
 
-const LABEL: CSSProperties = { margin: "0", fontSize: "16px", fontWeight: "500", lineHeight: "1.4", color: "#4F5561" };
 const LINK: CSSProperties = { flexShrink: "0", minHeight: "56px", display: "inline-flex", alignItems: "center", padding: "0 4px", border: "0", background: "transparent", fontFamily: "inherit", fontSize: "16px", fontWeight: "700", lineHeight: "1.3", color: "#1B2A4A", textDecoration: "underline", textUnderlineOffset: "3px", textAlign: "center", cursor: "pointer" };
 const DOT: CSSProperties = { fontSize: "16px", fontWeight: "700", color: "#4F5561" };
 const GAP = 8;
@@ -69,7 +68,6 @@ export function KeepOnPhone({ offered, platform }: { offered: boolean; platform:
 
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center" }}>
-      {offered && <p style={LABEL}>{t("keep.label")}</p>}
       <div ref={row} style={{ alignSelf: "stretch", display: "flex", flexDirection: stacked ? "column" : "row", justifyContent: "center", alignItems: "center", columnGap: `${GAP}px` }}>
         {offered && (
           <>

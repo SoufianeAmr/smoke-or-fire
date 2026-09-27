@@ -49,7 +49,7 @@ export const lowerFirst = (text: string, lang: Lang) => (/^\p{Lu}\p{Ll}/u.test(t
 /** `install`: the Add to home screen link is shown (not when the app is open from the home screen). */
 export const checkVoice = (lang: Lang, replay: boolean, install: boolean) => [
   ...(replay ? script(lang, "voice.check.replay") : []),
-  ...script(lang, "voice.check", { leave: translate(lang, "leave.entry") }),
+  ...script(lang, "voice.check"),
   ...(install ? script(lang, "voice.check.install", { add: translate(lang, "keep.add") }) : []),
 ];
 export const q1Voice = (lang: Lang) => script(lang, "voice.q1");

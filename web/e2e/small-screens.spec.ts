@@ -33,8 +33,8 @@ async function verdictFor(page: Page, town: string) {
 const verdictMain = (page: Page) => [page.locator("#verdict-h"), page.locator("section[aria-labelledby=verdict-h] > div").nth(1)];
 
 const SCREENS: Check[] = [
-  // Check: I smell smoke; and from 667 px tall, Told to leave your home? too (French replay's note takes three lines).
-  { name: "01 Check", open: (p) => p.goto("/").then(), main: (p) => [p.locator('a[href="/q1"]'), ...(p.viewportSize()!.height >= 667 ? [p.locator('main a[href="/leave"]')] : [])], bar: false },
+  // Check: I smell smoke; and from 667 px tall, the Live/Replay toggle too.
+  { name: "01 Check", open: (p) => p.goto("/").then(), main: (p) => [p.locator('a[href="/q1"]'), ...(p.viewportSize()!.height >= 667 ? [p.locator("main [role=group]")] : [])], bar: false },
   { name: "02 Q1", open: (p) => p.goto("/q1").then(), main: (p) => [p.locator('a[href="/emergency"]'), p.locator('a[href="/q2"]')], bar: true },
   { name: "03 Q2", open: (p) => p.goto("/q2").then(), main: (p) => [p.viewportSize()!.height >= 844 ? p.locator("a.opt") : p.locator("a.opt").first()], bar: true },
   { name: "04 Emergency", open: (p) => p.goto("/emergency").then(), main: (p) => [p.locator('main a[href="tel:911"]')], bar: false },

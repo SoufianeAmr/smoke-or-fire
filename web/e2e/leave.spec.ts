@@ -1,6 +1,7 @@
 // "If you’re told to leave": it asks where you are (unless a place was chosen this session), then shows the Long Lake
 // centres within 40 km of the fire (replay, Aug 25, 2025), says the evacuation doesn't apply farther away, and in live
-// mode says where officials announce centres. Entry points on Check and Emergency. The two demo scenarios, EN and FR.
+// mode says where officials announce centres. Entry points on Emergency and the near-fire verdict notice. The two demo
+// scenarios, EN and FR.
 import { expect, test, type Page } from "@playwright/test";
 
 const NBSP = String.fromCharCode(0xa0);
@@ -192,26 +193,13 @@ test("verdict, Moncton: no fire-is-close notice (the fire is 159 km away)", asyn
   await expect(page.locator("main").getByRole("link", { name: L.en.entry })).toHaveCount(0);
 });
 
-test("Check: an outlined navy button below the mode toggle opens the screen", async ({ page }) => {
+test("Check has no Told to leave button, EN and FR: the screen opens from Emergency and the near-fire notice", async ({ page }) => {
   await page.goto("/?mode=replay");
-  const button = page.getByRole("link", { name: "Told to leave your home? What to do" });
-  const toggle = (await page.getByRole("group", { name: "Data mode" }).boundingBox())!;
-  expect((await button.boundingBox())!.y).toBeGreaterThan(toggle.y + toggle.height);
-  expect((await button.boundingBox())!.width).toBeGreaterThan(330);
-  await expect(button).toHaveCSS("border-top-color", "rgb(27, 42, 74)");
-  await expect(button).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
-  await button.click();
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText("If you’re told to leave");
-});
-
-test.describe("375 × 667", () => {
-  test.use({ viewport: { width: 375, height: 667 } });
-  test("the Check button does not push I smell smoke off the screen", async ({ page }) => {
-    await page.goto("/?mode=replay");
-    const cta = (await page.getByRole("link", { name: "I smell smoke" }).boundingBox())!;
-    expect(cta.y + cta.height).toBeLessThanOrEqual(667);
-    await expect(page.getByRole("link", { name: "Told to leave your home? What to do" })).toBeAttached();
-  });
+  await expect(page.locator("main").getByRole("link", { name: L.en.entry })).toHaveCount(0);
+  await expect(page.locator('main a[href="/leave"]')).toHaveCount(0);
+  await page.getByRole("button", { name: "Français" }).click();
+  await expect(page.locator("main").getByRole("link", { name: L.fr.entry })).toHaveCount(0);
+  await expect(page.locator('main a[href="/leave"]')).toHaveCount(0);
 });
 
 test("a place chosen this session skips the question; Change asks again", async ({ page }) => {
