@@ -4,7 +4,7 @@ import { Link, Navigate } from "react-router";
 import { useApp, useT } from "../app/state";
 import { ReplayBanner } from "../components/ReplayBanner";
 import { Screen } from "../components/Screen";
-import { Sticky911 } from "../components/Sticky911";
+import { CLEAR_OF_BAR, Sticky911 } from "../components/Sticky911";
 import { LangToggle } from "../components/TopBar";
 import { BackIcon, ChevronRightIcon } from "../components/icons";
 import { ListenButton } from "../listen/ListenButton";
@@ -67,7 +67,7 @@ export function Verdict() {
         <h1 id="verdict-h" style={{ margin: "16px 0 0", fontSize: "34px", fontWeight: "800", lineHeight: "1.12", letterSpacing: "-0.02em", textWrap: "balance" }}>{view.band.headline}</h1>
         <p style={{ margin: "10px 0 0", fontSize: "20px", fontWeight: "500", lineHeight: "1.4", textWrap: "pretty" }}>{view.band.sub}</p>
       </section>
-      <main style={{ display: "flex", flexDirection: "column", gap: "16px", padding: "16px 16px 160px" }}>
+      <main style={{ display: "flex", flexDirection: "column", gap: "16px", padding: `16px 16px ${CLEAR_OF_BAR}` }}>
         {/* The band's top row has no room left (New check, EN/FR): Listen starts the card list. */}
         <ListenButton sentences={view.voice} style={{ alignSelf: "flex-start" }} />
         {view.notice && (

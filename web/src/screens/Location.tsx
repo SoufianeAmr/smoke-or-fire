@@ -6,7 +6,7 @@ import { REPLAY_TOWNS, nearestReplayTown, searchPlaces } from "../data/replay";
 import { loadCommunities, placeAt, usePlaces } from "../data/places";
 import { ReplayBanner } from "../components/ReplayBanner";
 import { Screen } from "../components/Screen";
-import { Sticky911 } from "../components/Sticky911";
+import { CLEAR_OF_BAR, Sticky911 } from "../components/Sticky911";
 import { TopBar } from "../components/TopBar";
 import { ChevronRightIcon } from "../components/icons";
 import { circleBox, textBox } from "../map/labels";
@@ -90,7 +90,7 @@ export function Location() {
     <Screen>
       <ReplayBanner />
       <TopBar back="/q1" listen={locationVoice(lang)} />
-      <main style={{ flexGrow: "1", display: "flex", flexDirection: "column", gap: "16px", padding: "4px 16px 152px" }}>
+      <main style={{ flexGrow: "1", display: "flex", flexDirection: "column", gap: "16px", padding: `4px 16px ${CLEAR_OF_BAR}` }}>
         <div style={{ display: "flex", flexDirection: "column", gap: "8px", padding: "0 4px" }}>
           <h1 style={{ margin: "0", fontSize: "34px", fontWeight: "800", lineHeight: "1.12", letterSpacing: "-0.02em" }}>{t("location.title")}</h1>
           <p style={{ margin: "0", fontSize: "18px", lineHeight: "1.45", color: "#4F5561" }}>{t("location.sub")}</p>

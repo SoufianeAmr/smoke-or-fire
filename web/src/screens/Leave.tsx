@@ -8,7 +8,7 @@ import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 
 import { useApp, useT, type Place } from "../app/state";
 import { ReplayBanner } from "../components/ReplayBanner";
 import { Screen } from "../components/Screen";
-import { Sticky911 } from "../components/Sticky911";
+import { CLEAR_OF_BAR, Sticky911 } from "../components/Sticky911";
 import { TopBar } from "../components/TopBar";
 import { DoorOpenIcon, GlassesIcon, KeyIcon, MessageIcon, NavigationIcon, PawIcon, PhoneIcon, PillIcon, SmartphoneIcon, WalletIcon } from "../components/icons";
 import { usePlaces } from "../data/places";
@@ -77,7 +77,7 @@ export function Leave() {
     <Screen>
       <ReplayBanner />
       <TopBar back={-1} listen={listen} />
-      <main style={{ flexGrow: "1", display: "flex", flexDirection: "column", gap: "16px", padding: "4px 16px 160px" }}>
+      <main style={{ flexGrow: "1", display: "flex", flexDirection: "column", gap: "16px", padding: `4px 16px ${CLEAR_OF_BAR}` }}>
         <div style={{ display: "flex", flexDirection: "column", gap: "12px", padding: "0 4px 4px" }}>
           <span style={{ width: "60px", height: "60px", borderRadius: "50%", background: "#1B2A4A", color: "#FFFFFF", display: "flex", alignItems: "center", justifyContent: "center" }}>
             <DoorOpenIcon size={30} />

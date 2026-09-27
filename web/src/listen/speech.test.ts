@@ -122,7 +122,7 @@ describe("verdicts", () => {
       "What to do: Reduce or reschedule strenuous activities outdoors, especially if you experience symptoms such as coughing and throat irritation.",
       "If you can’t keep the air clean at home, tap: Find a library near me, to see places with filtered air.",
       "If you feel unwell but it’s not an emergency, tap the eight-one-one line to talk to a nurse.",
-      "And if you see flames, a smoke column, or dark smoke, tap the red Call nine-one-one button at the bottom of the screen.",
+      "If you see flames or a smoke column, tap the red Call nine-one-one button at the bottom of the screen.",
       "For the details, open: Why we think this.",
     ]);
   });

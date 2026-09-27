@@ -2,15 +2,14 @@
    single screen overrides (Emergency, How it works) are scoped to that screen. */
 
 body{margin:0;background:#FAF6F0}
-/* A focused link scrolls clear of the fixed 911 bar (about 132px tall at 375 × 667). */
-html{scroll-padding-bottom:calc(150px + env(safe-area-inset-bottom))}
+/* A focused link scrolls clear of the fixed 911 bar (about 72px tall). */
+html{scroll-padding-bottom:calc(96px + env(safe-area-inset-bottom))}
 *{box-sizing:border-box}
 a{color:#1B2A4A}a:hover{color:#0F1A33}
 .ic{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
 a:focus-visible,button:focus-visible{outline:3px solid #1B2A4A;outline-offset:3px}
 .press{transition:transform .08s ease}
 .press:active{transform:scale(0.97)}
-.tile:active{background-color:#E6DDCF !important}
 .row:active{background-color:#F3EEE6}
 input::placeholder{color:#6B6F76}
 

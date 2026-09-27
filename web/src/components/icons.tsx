@@ -25,9 +25,6 @@ export const SmokeColumnIcon = ({ size, style }: IconProps) =>
     style,
   );
 
-export const DarkSmokeIcon = ({ size, style }: IconProps) =>
-  svg(size, <path d="M5.5 18.5a3.5 3.5 0 0 1-.4-6.98A5 5 0 0 1 14.5 9a4 4 0 0 1 6 3.4 3.1 3.1 0 0 1-1.5 6.1z" style={{ fill: "#2D2926" }} />, style);
-
 export const PhoneIcon = ({ size, style }: IconProps) =>
   svg(size, <path d="M5.5 3.5h3l1.8 4.6-2.2 1.4a11 11 0 0 0 6.4 6.4l1.4-2.2 4.6 1.8v3a2 2 0 0 1-2.2 2A16.5 16.5 0 0 1 3.5 5.7a2 2 0 0 1 2-2.2z" />, style);
 

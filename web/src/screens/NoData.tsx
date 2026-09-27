@@ -4,7 +4,7 @@ import { useApp, useT } from "../app/state";
 import { noDataVoice } from "../listen/speech";
 import { ReplayBanner } from "../components/ReplayBanner";
 import { Screen } from "../components/Screen";
-import { Sticky911 } from "../components/Sticky911";
+import { CLEAR_OF_BAR, Sticky911 } from "../components/Sticky911";
 import { TopBar } from "../components/TopBar";
 
 export function NoData() {
@@ -15,7 +15,7 @@ export function NoData() {
     <Screen>
       <ReplayBanner />
       <TopBar back="/location" listen={noDataVoice(lang)} />
-      <main className="nodata-main" style={{ flexGrow: "1", display: "flex", flexDirection: "column", gap: "16px", padding: "4px 16px 152px" }}>
+      <main className="nodata-main" style={{ flexGrow: "1", display: "flex", flexDirection: "column", gap: "16px", padding: `4px 16px ${CLEAR_OF_BAR}` }}>
         <div className="nodata-head" style={{ display: "flex", flexDirection: "column", gap: "10px", padding: "0 4px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
             <span style={{ flexShrink: "0", width: "52px", height: "52px", borderRadius: "16px", background: "#E9EDF5", color: "#1B2A4A", display: "flex", alignItems: "center", justifyContent: "center" }}>

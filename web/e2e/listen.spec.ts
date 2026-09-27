@@ -1,4 +1,4 @@
-// "Listen", the guided voice on every screen. The browser's speech is replaced by a recorder that ends each sentence
+﻿// "Listen", the guided voice on every screen. The browser's speech is replaced by a recorder that ends each sentence
 // after 10 ms, so the tests see exactly what is said, in order, with the pause between sentences. Each script comes from
 // the strings file (voice.*); its {…} values are read from the screen, and every button it names is on the screen.
 import { expect, test, type Locator, type Page, type Route } from "@playwright/test";
@@ -443,6 +443,17 @@ test.describe("Listen: stopping", () => {
     await listenButton(page, "en").click();
     const before = await cancels(page);
     await page.locator('main a[href="tel:911"]').click();
+    await stopped(page, before);
+  });
+
+  test("the 911 bar's Call 911 stops it too", async ({ page }) => {
+    await start(page, "en");
+    await page.goto("/location");
+    await holdSentences(page);
+    await page.evaluate(() => document.addEventListener("click", (e) => { if ((e.target as Element).closest('a[href^="tel:"]')) e.preventDefault(); }));
+    await listenButton(page, "en").click();
+    const before = await cancels(page);
+    await page.locator('a.press[href="tel:911"]').click(); // the bar's red button
     await stopped(page, before);
   });
 

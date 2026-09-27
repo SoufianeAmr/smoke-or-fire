@@ -3,7 +3,7 @@ import { Link } from "react-router";
 import { useApp, useT } from "../app/state";
 import { ReplayBanner } from "../components/ReplayBanner";
 import { Screen } from "../components/Screen";
-import { Sticky911 } from "../components/Sticky911";
+import { CLEAR_OF_BAR, Sticky911 } from "../components/Sticky911";
 import { TopBar } from "../components/TopBar";
 import { FlameIcon } from "../components/icons";
 import { q1Voice } from "../listen/speech";
@@ -15,7 +15,7 @@ export function Q1Flames() {
     <Screen>
       <ReplayBanner />
       <TopBar back="/" listen={q1Voice(lang)} />
-      <main className="q1-main" style={{ flexGrow: "1", display: "flex", flexDirection: "column", gap: "28px", padding: "12px 16px 152px" }}>
+      <main className="q1-main" style={{ flexGrow: "1", display: "flex", flexDirection: "column", gap: "28px", padding: `12px 16px ${CLEAR_OF_BAR}` }}>
         <div className="q1-head" style={{ display: "flex", flexDirection: "column", gap: "10px", padding: "0 4px" }}>
           <h1 style={{ margin: "0", fontSize: "34px", fontWeight: "800", lineHeight: "1.12", letterSpacing: "-0.02em" }}>{t("q1.title")}</h1>
           <p style={{ margin: "0", fontSize: "18px", lineHeight: "1.45", color: "#4F5561" }}>{t("q1.hint")}</p>

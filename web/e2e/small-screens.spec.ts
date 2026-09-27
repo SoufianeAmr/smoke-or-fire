@@ -1,6 +1,38 @@
 // Small phones: on every screen the main action and the 911 bar are visible without scrolling,
 // and the main action is not hidden behind the 911 bar.
+// The 911 bar: one line of text and the red Call 911 button, about 72 px tall, on every screen but Check and Emergency.
 import { expect, test, type Locator, type Page } from "@playwright/test";
+import { readFileSync } from "node:fs";
+
+const STRINGS: Record<"en" | "fr", Record<string, string>> = {
+  en: JSON.parse(readFileSync(new URL("../src/i18n/en.json", import.meta.url), "utf8")),
+  fr: JSON.parse(readFileSync(new URL("../src/i18n/fr.json", import.meta.url), "utf8")),
+};
+
+/** The fixed bar at the bottom: the parent of a tel:911 link that stays put when the page scrolls. */
+async function bars(page: Page) {
+  const found: Locator[] = [];
+  for (const link of await page.locator('a[href="tel:911"]').all()) {
+    if ((await link.locator("..").evaluate((el) => getComputedStyle(el).position)) === "fixed") found.push(link.locator(".."));
+  }
+  return found;
+}
+
+/** The slim bar: its text, the red Call 911 button (56 px or taller, tel:911), about 72 px in all, and no tiles. */
+async function slimBar(page: Page, lang: "en" | "fr") {
+  const found = await bars(page);
+  expect(found).toHaveLength(1);
+  const bar = found[0];
+  await expect(bar.locator("p")).toHaveText(STRINGS[lang]["sticky.title"]);
+  const call = bar.getByRole("link");
+  await expect(call).toHaveCount(1);
+  await expect(call).toHaveText(STRINGS[lang]["sticky.call"]);
+  await expect(call).toHaveAttribute("href", "tel:911");
+  expect(await call.evaluate((el) => getComputedStyle(el).backgroundColor)).toBe("rgb(217, 45, 32)");
+  expect((await call.boundingBox())!.height).toBeGreaterThanOrEqual(56);
+  expect((await bar.boundingBox())!.height).toBeLessThanOrEqual(76);
+  await expect(bar.locator("button")).toHaveCount(0); // no Flames / Smoke column / Dark smoke tiles
+}
 
 const VIEWPORTS = [
   { width: 375, height: 667 },
@@ -88,6 +120,8 @@ for (const { viewport, screens } of RUNS) {
           for (const group of check.main(page)) await expect(group.first()).toBeVisible();
           await page.evaluate(() => document.fonts.ready);
           expect(await hidden(page, check)).toEqual([]);
+          if (check.bar) await slimBar(page, lang);
+          else expect(await bars(page)).toHaveLength(0); // Check and Emergency: no bar
         });
       }
     });

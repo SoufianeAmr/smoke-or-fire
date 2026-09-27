@@ -6,7 +6,7 @@ import { searchPlaces } from "../data/replay";
 import { usePlaces } from "../data/places";
 import { ReplayBanner } from "../components/ReplayBanner";
 import { Screen } from "../components/Screen";
-import { Sticky911 } from "../components/Sticky911";
+import { CLEAR_OF_BAR, Sticky911 } from "../components/Sticky911";
 import { TopBar } from "../components/TopBar";
 import { locationOffVoice } from "../listen/speech";
 
@@ -30,7 +30,7 @@ export function LocationOff() {
     <Screen>
       <ReplayBanner />
       <TopBar back="/q1" listen={locationOffVoice(lang)} />
-      <main style={{ flexGrow: "1", display: "flex", flexDirection: "column", gap: "20px", padding: "8px 16px 152px" }}>
+      <main style={{ flexGrow: "1", display: "flex", flexDirection: "column", gap: "20px", padding: `8px 16px ${CLEAR_OF_BAR}` }}>
         <div style={{ display: "flex", flexDirection: "column", gap: "12px", padding: "0 4px" }}>
           <span style={{ width: "64px", height: "64px", borderRadius: "18px", background: "#E9EDF5", color: "#1B2A4A", display: "flex", alignItems: "center", justifyContent: "center" }}>
             <svg className="ic" width="34" height="34" viewBox="0 0 24 24" aria-hidden="true">

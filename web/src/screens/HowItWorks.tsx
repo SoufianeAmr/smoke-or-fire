@@ -5,7 +5,7 @@ import type { StringKey } from "../i18n";
 import { howVoice } from "../listen/speech";
 import { ReplayBanner } from "../components/ReplayBanner";
 import { Screen } from "../components/Screen";
-import { Sticky911 } from "../components/Sticky911";
+import { CLEAR_OF_BAR, Sticky911 } from "../components/Sticky911";
 import { TopBar } from "../components/TopBar";
 import { VERDICT_ICONS } from "../verdict/cards";
 
@@ -63,7 +63,7 @@ export function HowItWorks() {
     <Screen>
       <ReplayBanner />
       <TopBar back={-1} listen={howVoice(lang)} />
-      <main className="how" style={{ display: "flex", flexDirection: "column", gap: "16px", padding: "8px 16px 160px" }}>
+      <main className="how" style={{ display: "flex", flexDirection: "column", gap: "16px", padding: `8px 16px ${CLEAR_OF_BAR}` }}>
         <div style={{ display: "flex", flexDirection: "column", gap: "10px", padding: "0 4px 8px" }}>
           <h1 style={{ margin: "0", fontSize: "34px", fontWeight: "800", lineHeight: "1.12", letterSpacing: "-0.02em" }}>{t("how.title")}</h1>
           <p style={{ margin: "0", fontSize: "20px", lineHeight: "1.45", textWrap: "pretty" }}>{t("how.intro")}</p>
