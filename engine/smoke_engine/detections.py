@@ -16,7 +16,12 @@ SATELLITE_NAMES = {
 }
 MODIS_MIN_CONFIDENCE = 30
 LATENCY_CLASSES = ("URT", "RT", "NRT", "SP")  # FIRMS: ultra real-time, real-time, near real-time, standard
-FUSE_KM = 1.0  # a FIRMS detection and a CWFIS hotspot this close in space
+# A CWFIS row within TWIN_KM of a FIRMS detection with the same FRP is that detection, republished
+# (FIRMS gives FRP to 0.1 MW or finer). CWFIS gives only a report time, which can be hours late.
+TWIN_KM = 0.05
+TWIN_FRP_MW = 0.05
+# Otherwise, a FIRMS detection and a CWFIS hotspot from the same satellite this close in space
+FUSE_KM = 1.0
 FUSE_MINUTES = 30  # and in time are one observation
 
 
@@ -34,6 +39,7 @@ class Detection:
     source: str  # "FIRMS" or "CWFIS": where this record comes from
     sources: tuple[str, ...]  # every source that saw it: ("FIRMS", "CWFIS") after fuse()
     satellites: tuple[str, ...]  # every named satellite of the records merged into it
+    observed: bool  # `time` is when a satellite saw it (FIRMS acquisition), not a CWFIS report time
 
     @property
     def by(self) -> str:
@@ -84,6 +90,7 @@ def parse_firms_csv(text: str) -> list[Detection]:
                 source="FIRMS",
                 sources=("FIRMS",),
                 satellites=(satellite,),
+                observed=True,
             )
         )
     return detections
@@ -106,7 +113,7 @@ def cwfis_detections(hotspots: dict) -> list[Detection]:
             Detection(
                 lat=p["lat"],
                 lon=p["lon"],
-                time=datetime.fromisoformat(p["rep_date"].replace("Z", "+00:00")),
+                time=datetime.fromisoformat(p["rep_date"].replace("Z", "+00:00")),  # report time
                 satellite=satellite,
                 instrument=p.get("sensor"),
                 confidence=None,
@@ -116,42 +123,73 @@ def cwfis_detections(hotspots: dict) -> list[Detection]:
                 source="CWFIS",
                 sources=("CWFIS",),
                 satellites=(satellite,) if satellite else (),
+                observed=False,  # the layer has only rep_date and rep_day, no observation time
             )
         )
     return detections
 
 
 def within(detections: list[Detection], since: datetime, at: datetime) -> list[Detection]:
-    """Detections acquired in (since, at]."""
+    """Detections whose time (FIRMS acquisition, or CWFIS report) is in (since, at]."""
     return [d for d in detections if since < d.time <= at]
 
 
 def fuse(firms: list[Detection], cwfis: list[Detection]) -> list[Detection]:
-    """One list, with each CWFIS hotspot that matches a FIRMS detection within FUSE_KM
-    and FUSE_MINUTES merged into it: the FIRMS record is kept, and both sources and
-    both satellites are recorded (the two can name different satellites).
+    """One list: FIRMS detections, with the CWFIS rows that are the same observation merged in.
 
-    Each detection matches at most one other; a hotspot takes the nearest free match.
+    1. A CWFIS row within TWIN_KM of a FIRMS detection with the same FRP (within TWIN_FRP_MW) is that
+       detection republished, however late CWFIS reported it: it merges into its FIRMS twin.
+    2. Otherwise a CWFIS row merges into the nearest FIRMS detection from the same satellite within
+       FUSE_KM and FUSE_MINUTES (each FIRMS detection takes at most one).
+    A merged detection keeps the FIRMS record (acquisition time, satellite, instrument, latency class)
+    and records both sources. Other CWFIS rows stay, with their report time.
     """
     order = sorted(range(len(firms)), key=lambda i: firms[i].lat)
     lats = [firms[i].lat for i in order]
-    lat_window = FUSE_KM / 110.0
-    fused, taken, unmatched = list(firms), set(), []
-    for hotspot in cwfis:
-        best = None
-        for n in range(bisect_left(lats, hotspot.lat - lat_window), bisect_right(lats, hotspot.lat + lat_window)):
+
+    def near(row: Detection, km: float):
+        """(distance, index) of the FIRMS detections within km of row, nearest first."""
+        window = km / 110.0
+        found = []
+        for n in range(bisect_left(lats, row.lat - window), bisect_right(lats, row.lat + window)):
             i = order[n]
-            if i in taken or abs(firms[i].time - hotspot.time) > timedelta(minutes=FUSE_MINUTES):
-                continue
-            km = distance_km(hotspot.lat, hotspot.lon, firms[i].lat, firms[i].lon)
-            if km <= FUSE_KM and (best is None or km < best[0]):
-                best = (km, i)
-        if best is None:
-            unmatched.append(hotspot)
-            continue
-        taken.add(best[1])
-        kept = firms[best[1]]
-        fused[best[1]] = replace(
-            kept, sources=("FIRMS", "CWFIS"), satellites=tuple(sorted({*kept.satellites, *hotspot.satellites}))
+            d = distance_km(row.lat, row.lon, firms[i].lat, firms[i].lon)
+            if d <= km:
+                found.append((d, i))
+        return sorted(found)
+
+    merged: dict[int, list[Detection]] = {}
+    unmatched = []
+    for row in cwfis:
+        twin = next((i for _, i in near(row, TWIN_KM) if _same_frp(row, firms[i])), None)
+        if twin is None:
+            unmatched.append(row)
+        else:
+            merged.setdefault(twin, []).append(row)
+    rest = []
+    for row in unmatched:
+        match = next(
+            (
+                i for _, i in near(row, FUSE_KM)
+                if i not in merged and row.satellite and row.satellite == firms[i].satellite
+                and abs(firms[i].time - row.time) <= timedelta(minutes=FUSE_MINUTES)
+            ),
+            None,
         )
-    return fused + unmatched
+        if match is None:
+            rest.append(row)
+        else:
+            merged[match] = [row]
+
+    fused = []
+    for i, detection in enumerate(firms):
+        rows = merged.get(i)
+        if rows:
+            names = {*detection.satellites, *(name for row in rows for name in row.satellites)}
+            detection = replace(detection, sources=("FIRMS", "CWFIS"), satellites=tuple(sorted(names)))
+        fused.append(detection)
+    return fused + rest
+
+
+def _same_frp(row: Detection, firms: Detection) -> bool:
+    return row.frp is not None and firms.frp is not None and abs(row.frp - firms.frp) <= TWIN_FRP_MW

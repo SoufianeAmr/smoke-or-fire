@@ -133,8 +133,8 @@ def test_unnamed_fire_is_described_by_its_nearest_community():
 
     fire = get_verdict(feeds).json()["closestApproach"]["fire"]
 
-    described = {k: fire[k] for k in ("name", "nearCommunity", "province", "km", "compass", "lastSeenHoursAgo")}
-    assert described == {"name": None, "nearCommunity": "Salisbury", "province": "NB", "km": 21, "compass": "WSW", "lastSeenHoursAgo": 3}
+    described = {k: fire[k] for k in ("name", "nearCommunity", "province", "km", "compass")}
+    assert described == {"name": None, "nearCommunity": "Salisbury", "province": "NB", "km": 21, "compass": "WSW"}
 
 
 def test_fire_listed_in_fire_names_takes_its_public_name():
@@ -233,12 +233,12 @@ def test_heights_that_disagree_lower_confidence_by_one_level():
 KM_EAST = 1 / KM_PER_DEGREE_LON
 
 
-def test_a_firms_detection_and_a_cwfis_hotspot_within_1_km_and_30_minutes_are_one_detection():
+def test_a_firms_detection_and_a_cwfis_hotspot_from_the_same_satellite_within_1_km_and_30_minutes_are_one_detection():
     lat, lon = FIRE_WEST_OF_MONCTON["lat"], FIRE_WEST_OF_MONCTON["lon"]
     feeds = FakeFeeds(
         wind=uniform_wind(from_deg=270, speed_ms=5),
-        hotspots=[FIRE_WEST_OF_MONCTON],  # seen 06:00 UTC
-        firms=[firms_detection(lat, lon + 0.5 * KM_EAST, seen="2025-08-25T06:20:00Z")],
+        hotspots=[hotspot(lat, lon, seen="2025-08-25T06:00:00Z", satellite="NOAA-20")],
+        firms=[firms_detection(lat, lon + 0.5 * KM_EAST, seen="2025-08-25T06:20:00Z", satellite="N20")],
     )
 
     detections = get_verdict(feeds).json()["closestApproach"]["fire"]["detections"]
@@ -305,11 +305,11 @@ def test_a_fires_last_sighting_names_the_satellite_and_how_fast_its_data_came_in
 
 
 def test_a_merged_observation_keeps_the_firms_satellite_instrument_and_latency():
-    # CWFIS names no satellite for its 06:00 hotspot; FIRMS saw the same spot at 06:10 from NOAA-21 (ultra real-time).
+    # CWFIS reported a NOAA-21 hotspot at 06:00 (sensor VIIRS-I); FIRMS has NOAA-21's detection at 06:10 (ultra real-time).
     lat, lon = FIRE_WEST_OF_MONCTON["lat"], FIRE_WEST_OF_MONCTON["lon"]
     feeds = FakeFeeds(
         wind=uniform_wind(from_deg=270, speed_ms=5),
-        hotspots=[FIRE_WEST_OF_MONCTON],
+        hotspots=[hotspot(lat, lon, seen="2025-08-25T06:00:00Z", satellite="NOAA-21")],
         firms=[firms_detection(lat, lon + 0.5 * KM_EAST, seen="2025-08-25T06:10:00Z", satellite="N21", version="2.0URT")],
     )
 
@@ -324,9 +324,11 @@ def test_with_no_fire_in_range_sources_say_when_the_data_was_checked_and_the_new
     # CWFIS answered 3 minutes ago and FIRMS 6 min 20 s ago. FIRMS's only detection is 26 hours old,
     # outside the 24-hour window, so no fire is in range; it is still the newest detection in the region.
     noon = datetime(2025, 8, 25, 12, tzinfo=timezone.utc)
+    # CWFIS also reported a hotspot at 11:00, far outside 500 km: a report time, so never the newest detection.
     feeds = FakeFeeds(
         wind=uniform_wind(from_deg=270, speed_ms=5),
         firms=[firms_detection(48.19, -64.92, seen="2025-08-24T10:00:00Z")],
+        hotspots=[hotspot(54.5, -58.0, seen="2025-08-25T11:00:00Z", satellite="NOAA-21")],
         checked_at={"cwfis": noon - timedelta(minutes=3), "firms": noon - timedelta(minutes=6, seconds=20)},
     )
     client = TestClient(create_app({"live": feeds}, now=lambda: noon))
@@ -338,8 +340,7 @@ def test_with_no_fire_in_range_sources_say_when_the_data_was_checked_and_the_new
 
 
 def test_a_fire_lists_the_satellites_that_saw_it_in_the_last_24_hours_from_both_sources():
-    # The NOAA-21 hotspot (06:00) and the Suomi NPP detection (06:30, 1 km west) merge as one
-    # observation; both satellites still count.
+    # The NOAA-21 hotspot (06:00) and the Suomi NPP detection (06:30, 1 km west) are two observations.
     lat, lon = FIRE_WEST_OF_MONCTON["lat"], FIRE_WEST_OF_MONCTON["lon"]
     feeds = FakeFeeds(
         wind=uniform_wind(from_deg=270, speed_ms=5),
@@ -357,3 +358,54 @@ def test_a_fire_lists_the_satellites_that_saw_it_in_the_last_24_hours_from_both_
     fire = get_verdict(feeds).json()["closestApproach"]["fire"]
 
     assert fire["detections"]["satellites"] == ["NOAA-20", "NOAA-21", "Suomi NPP"]
+
+
+def test_detections_from_different_satellites_within_1_km_and_30_minutes_are_two_observations():
+    lat, lon = FIRE_WEST_OF_MONCTON["lat"], FIRE_WEST_OF_MONCTON["lon"]
+    feeds = FakeFeeds(
+        wind=uniform_wind(from_deg=270, speed_ms=5),
+        hotspots=[hotspot(lat, lon, seen="2025-08-25T06:00:00Z", satellite="NOAA-21")],
+        firms=[firms_detection(lat, lon + 0.5 * KM_EAST, seen="2025-08-25T06:20:00Z", satellite="N")],
+    )
+
+    detections = get_verdict(feeds).json()["closestApproach"]["fire"]["detections"]
+
+    assert (detections["total"], detections["bySource"]) == (2, {"FIRMS": 1, "CWFIS": 1, "both": 0})
+
+
+def test_a_cwfis_row_that_republishes_a_firms_detection_takes_its_acquisition_time_and_satellite():
+    # Like the replay's NASA_w rows: CWFIS reports at 07:00, names no satellite (sensor MODIS), and its spot
+    # (within 50 m) and FRP match FIRMS's Terra detection acquired at 00:06.
+    lat, lon = FIRE_WEST_OF_MONCTON["lat"], FIRE_WEST_OF_MONCTON["lon"]
+    feeds = FakeFeeds(
+        wind=uniform_wind(from_deg=270, speed_ms=5),
+        hotspots=[hotspot(lat + 0.0002, lon, seen="2025-08-25T07:00:00Z", sensor="MODIS", frp=113.36)],
+        firms=[firms_detection(lat, lon, seen="2025-08-25T00:06:00Z", satellite="T", instrument="MODIS", confidence="37", version="61.03", frp=113.4)],
+    )
+
+    fire = get_verdict(feeds).json()["closestApproach"]["fire"]
+
+    shown = (fire["detections"]["bySource"]["both"], fire["lastSeen"]["time"], fire["lastSeen"]["satellite"], fire["lastSeenHoursAgo"])
+    assert shown == (1, "2025-08-25T00:06:00Z", "Terra", 12)
+
+
+def test_a_cwfis_report_time_counts_toward_the_24_hours_but_never_as_when_a_satellite_saw_the_fire():
+    # FIRMS saw the fire at 06:00; CWFIS reported another spot of it at 09:00 (no FIRMS twin, no observation time).
+    lat, lon = FIRE_WEST_OF_MONCTON["lat"], FIRE_WEST_OF_MONCTON["lon"]
+    feeds = FakeFeeds(
+        wind=uniform_wind(from_deg=270, speed_ms=5),
+        hotspots=[hotspot(lat, lon + 2 * KM_EAST, seen="2025-08-25T09:00:00Z", satellite="NOAA-21")],
+        firms=[firms_detection(lat, lon, seen="2025-08-25T06:00:00Z", satellite="N20")],
+    )
+
+    fire = get_verdict(feeds).json()["closestApproach"]["fire"]
+
+    assert (fire["detections"]["total"], fire["lastSeen"]["time"], fire["lastSeenHoursAgo"]) == (2, "2025-08-25T06:00:00Z", 6)
+
+
+def test_a_fire_seen_only_in_cwfis_report_times_has_no_last_sighting():
+    feeds = FakeFeeds(wind=uniform_wind(from_deg=270, speed_ms=5), hotspots=[FIRE_WEST_OF_MONCTON])
+
+    fire = get_verdict(feeds).json()["closestApproach"]["fire"]
+
+    assert (fire["detections"]["total"], fire["lastSeen"], fire["lastSeenHoursAgo"]) == (1, None, None)

@@ -165,6 +165,6 @@ def _fire_from_hotspots(group: list[Detection]) -> Fire:
         lat=sum(d.lat for d in group) / len(group),
         lon=sum(d.lon for d in group) / len(group),
         points=[(d.lat, d.lon) for d in group],
-        last_seen=max(d.time for d in group),
+        last_seen=max((d.time for d in group if d.observed), default=None),  # never a CWFIS report time
         detections=group,
     )

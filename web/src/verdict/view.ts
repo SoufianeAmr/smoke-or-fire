@@ -226,13 +226,17 @@ export function verdictView(json: VerdictJson, lang: Lang): VerdictView {
     : t("why.reached.noArea", { town, direction: compassWord(json.path.origin.compass, "from") });
   const edge = json.path.stoppedAtGridEdge ? " " + t("why.gridEdge") : "";
   const traced = { title: t("why.traced", { n: json.path.hoursTraced }), body: (variant === "7a" ? t("why.traced.body", { town }) : reached) + edge };
+  // The fire's newest satellite observation (the engine never uses a CWFIS report time for it); without
+  // one, the official-list sentence only for a fire with a CWFIS record, else nothing.
   const seen = (f: Fire) =>
     f.lastSeen?.satellite
       ? t("why.seenBy", { satellite: f.lastSeen.satellite, time: ago(f.lastSeen) })
-      : f.lastSeenHoursAgo === null ? t("why.onList") : f.lastSeenHoursAgo <= 1 ? t("why.seen.one") : t("why.seen", { n: f.lastSeenHoursAgo });
+      : f.lastSeenHoursAgo !== null
+        ? t(f.lastSeenHoursAgo <= 1 ? "why.seen.one" : "why.seen", { n: f.lastSeenHoursAgo })
+        : f.cwfisIds.length > 0 ? t("why.onList") : "";
   const overFire = () => {
     const h = approach!.hoursAgo;
-    return t(h <= 0 ? "why.over.under" : h === 1 ? "why.over.one" : "why.over", { h, fire: fireThe(fire!) }) + " " + seen(fire!);
+    return [t(h <= 0 ? "why.over.under" : h === 1 ? "why.over.one" : "why.over", { h, fire: fireThe(fire!) }), seen(fire!)].filter(Boolean).join(" ");
   };
   // When FIRMS saw the fire in the last 24 hours: every satellite that saw it, from either source.
   const satellitesLine = (f: Fire) => {

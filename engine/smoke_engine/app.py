@@ -111,7 +111,7 @@ def _detections_json(detections: list[Detection]) -> dict:
 
 def _sources_json(
     checked: dict[str, datetime | None],
-    reported: dict[str, list[Detection]],
+    fused: list[Detection],
     firms: list[Detection],
     arrival: datetime,
     now: datetime,
@@ -119,14 +119,16 @@ def _sources_json(
     """Each fire source: did it answer, when, and its newest detection at or before the check.
 
     `checked` has the fetch time of each source that answered (None when not known: replay);
-    `reported` has every detection each source returned up to the check, not only the last 24 hours;
+    `fused` has every detection both sources returned up to the check, merged, not only the last 24 hours;
     `firms` has the FIRMS detections of the last 24 hours.
+    Newest detections are observation times only: a CWFIS row counts once merged with its FIRMS record.
     checkedMinutesAgo is the age of the older answer, rounded up, and null unless every answering
     source says when it was fetched.
     """
 
-    def newest(detections: list[Detection]) -> str | None:
-        return _iso(max(d.time for d in detections)) if detections else None
+    def newest(detections) -> str | None:
+        times = [d.time for d in detections if d.observed]
+        return _iso(max(times)) if times else None
 
     counts = {latency: 0 for latency in LATENCY_CLASSES}
     for d in firms:
@@ -135,15 +137,19 @@ def _sources_json(
     checked_minutes = (
         max(1, math.ceil((now - min(times)).total_seconds() / 60)) if times and all(times) else None
     )
-    everything = reported["cwfis"] + reported["firms"]
-    newest_anywhere = max(everything, key=lambda d: d.time) if everything else None
+    observed = [d for d in fused if d.observed]
+    newest_anywhere = max(observed, key=lambda d: d.time) if observed else None
     seconds = (arrival - newest_anywhere.time).total_seconds() if newest_anywhere else 0
     return {
-        "cwfis": {"ok": "cwfis" in checked, "checkedAt": _iso_or_none(checked.get("cwfis")), "newestDetection": newest(reported["cwfis"])},
+        "cwfis": {
+            "ok": "cwfis" in checked,
+            "checkedAt": _iso_or_none(checked.get("cwfis")),
+            "newestDetection": newest(d for d in fused if "CWFIS" in d.sources),
+        },
         "firms": {
             "ok": "firms" in checked,
             "checkedAt": _iso_or_none(checked.get("firms")),
-            "newestDetection": newest(reported["firms"]),
+            "newestDetection": newest(d for d in fused if "FIRMS" in d.sources),
             "satellitesUsed": sorted({d.satellite for d in firms if d.satellite}),
             "countsByLatencyClass": counts,
         },
@@ -161,10 +167,11 @@ def _iso_or_none(t: datetime | None) -> str | None:
 
 
 def _last_seen_json(detections: list[Detection], arrival: datetime) -> dict | None:
-    """The fire's newest detection: when, and which satellite and instrument saw it."""
-    if not detections:
+    """The fire's newest observation: when, and which satellite and instrument saw it (never a CWFIS report time)."""
+    observed = [d for d in detections if d.observed]
+    if not observed:
         return None
-    newest = max(detections, key=lambda d: d.time)
+    newest = max(observed, key=lambda d: d.time)
     seconds = (arrival - newest.time).total_seconds()
     return {
         "time": _iso(newest.time),
@@ -282,12 +289,15 @@ def create_app(feeds_by_mode: dict, now=_utc_now, lifespan=None) -> FastAPI:
             checked["firms"] = feeds.checked_at("firms", arrival)
         except (FeedUnavailable, KeyError, ValueError):
             reported["firms"] = []
-        cwfis, firms = within(reported["cwfis"], since, arrival), within(reported["firms"], since, arrival)
+        # Merge first, over everything reported up to the check: a CWFIS row reported in the last 24 hours
+        # can be a FIRMS detection acquired before them.
+        fused = fuse(reported["firms"], reported["cwfis"])
+        firms = within(reported["firms"], since, arrival)
         if not checked:
             # "No fires" must mean the fire feeds answered with none (screen 7d),
             # never that they failed to answer (screen 9b).
             return _unavailable("fire_data_unavailable")
-        fires = known_fires(active, fuse(firms, cwfis), arrival, lat, lon)
+        fires = known_fires(active, within(fused, since, arrival), arrival, lat, lon)
         approaches = {height: closest_approach(path, fires) for height, path in paths.items()}
         km_by_height = {height: a.km if a else None for height, a in approaches.items()}
         results = {height: classify(km_by_height[height], paths[height].steady) for height in HEIGHTS}
@@ -324,7 +334,7 @@ def create_app(feeds_by_mode: dict, now=_utc_now, lifespan=None) -> FastAPI:
                 "paths": path_json,
             },
             "aqhi": _aqhi_json(nearest_reading(feeds, lat, lon, arrival)),
-            "sources": _sources_json(checked, reported, firms, arrival, now()),
+            "sources": _sources_json(checked, fused, firms, arrival, now()),
         }
 
     return app

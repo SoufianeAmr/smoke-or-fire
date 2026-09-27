@@ -215,33 +215,33 @@
   "lat": 44.711,
   "lon": -65.329,
   "fire": {
-   "id": "hotspots:44.703,-65.202",
+   "id": "hotspots:44.702,-65.203",
    "cwfisIds": [],
    "name": "Long Lake",
    "locality": "West Dalhousie",
    "nearCommunity": "Hannamville",
    "province": "NS",
-   "lat": 44.7025,
-   "lon": -65.2024,
+   "lat": 44.7024,
+   "lon": -65.2034,
    "km": 116,
    "compass": "SSE",
    "lastSeen": {
-    "time": "2025-08-25T07:00:00Z",
-    "hoursAgo": 5,
-    "minutesAgo": 300,
-    "satellite": null,
+    "time": "2025-08-25T01:43:00Z",
+    "hoursAgo": 10,
+    "minutesAgo": 617,
+    "satellite": "Terra",
     "instrument": "MODIS",
-    "latencyClass": null
+    "latencyClass": "SP"
    },
-   "lastSeenHoursAgo": 5,
+   "lastSeenHoursAgo": 10,
    "sizeHa": null,
    "stage": null,
    "detections": {
-    "total": 383,
+    "total": 456,
     "bySource": {
-     "FIRMS": 81,
-     "CWFIS": 92,
-     "both": 210
+     "FIRMS": 159,
+     "CWFIS": 165,
+     "both": 132
     },
     "satellites": [
      "Aqua",
@@ -255,33 +255,33 @@
   }
  },
  "nearestFire": {
-  "id": "hotspots:44.703,-65.202",
+  "id": "hotspots:44.702,-65.203",
   "cwfisIds": [],
   "name": "Long Lake",
   "locality": "West Dalhousie",
   "nearCommunity": "Hannamville",
   "province": "NS",
-  "lat": 44.7025,
-  "lon": -65.2024,
+  "lat": 44.7024,
+  "lon": -65.2034,
   "km": 116,
   "compass": "SSE",
   "lastSeen": {
-   "time": "2025-08-25T07:00:00Z",
-   "hoursAgo": 5,
-   "minutesAgo": 300,
-   "satellite": null,
+   "time": "2025-08-25T01:43:00Z",
+   "hoursAgo": 10,
+   "minutesAgo": 617,
+   "satellite": "Terra",
    "instrument": "MODIS",
-   "latencyClass": null
+   "latencyClass": "SP"
   },
-  "lastSeenHoursAgo": 5,
+  "lastSeenHoursAgo": 10,
   "sizeHa": null,
   "stage": null,
   "detections": {
-   "total": 383,
+   "total": 456,
    "bySource": {
-    "FIRMS": 81,
-    "CWFIS": 92,
-    "both": 210
+    "FIRMS": 159,
+    "CWFIS": 165,
+    "both": 132
    },
    "satellites": [
     "Aqua",
@@ -780,7 +780,7 @@
   "cwfis": {
    "ok": true,
    "checkedAt": null,
-   "newestDetection": "2025-08-25T07:00:00Z"
+   "newestDetection": "2025-08-25T00:06:00Z"
   },
   "firms": {
    "ok": true,
@@ -801,9 +801,9 @@
   },
   "checkedMinutesAgo": null,
   "newestDetection": {
-   "time": "2025-08-25T07:00:00Z",
+   "time": "2025-08-25T06:31:00Z",
    "hoursAgo": 5,
-   "minutesAgo": 300
+   "minutesAgo": 329
   }
  }
 }

@@ -63,21 +63,33 @@ def wind_over_time(wind_at):
     return answer
 
 
-def hotspot(lat: float, lon: float, seen: str, satellite: str | None = None) -> dict:
-    """Properties of one CWFIS `public:hotspots` feature."""
-    return {"lat": lat, "lon": lon, "rep_date": seen, "source": "NASA", "sensor": "VIIRS-I", "satellite": satellite, "agency": "NB"}
+def hotspot(
+    lat: float, lon: float, seen: str, satellite: str | None = None, sensor: str = "VIIRS-I", frp: float | None = None
+) -> dict:
+    """Properties of one CWFIS `public:hotspots` feature; `seen` is its rep_date (a report time)."""
+    return {
+        "lat": lat, "lon": lon, "rep_date": seen, "source": "NASA", "sensor": sensor, "satellite": satellite, "agency": "NB",
+        "frp": frp,
+    }
 
 
 FIRMS_HEADER = "latitude,longitude,bright_ti4,scan,track,acq_date,acq_time,satellite,instrument,confidence,version,bright_ti5,frp,daynight"
 
 
 def firms_detection(
-    lat: float, lon: float, seen: str, satellite: str = "N20", confidence: str = "n", version: str = "2.0NRT"
+    lat: float,
+    lon: float,
+    seen: str,
+    satellite: str = "N20",
+    confidence: str = "n",
+    version: str = "2.0NRT",
+    instrument: str = "VIIRS",
+    frp: float = 4.2,
 ) -> str:
-    """One row of a FIRMS VIIRS area API CSV, acquired at `seen` (UTC)."""
+    """One row of a FIRMS area API CSV, acquired at `seen` (UTC)."""
     t = datetime.fromisoformat(seen.replace("Z", "+00:00"))
     daynight = "D" if 10 <= t.hour < 22 else "N"
-    return f"{lat},{lon},330.5,0.4,0.4,{t:%Y-%m-%d},{t:%H%M},{satellite},VIIRS,{confidence},{version},290.1,4.2,{daynight}"
+    return f"{lat},{lon},330.5,0.4,0.4,{t:%Y-%m-%d},{t:%H%M},{satellite},{instrument},{confidence},{version},290.1,{frp},{daynight}"
 
 
 def active_fire(lat: float, lon: float, stage: str, fire_id: str = "2025_NB_00001", size_ha: float = 12.0) -> dict:

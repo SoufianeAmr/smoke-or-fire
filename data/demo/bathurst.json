@@ -240,14 +240,14 @@
   "km": 50,
   "compass": "W",
   "lastSeen": {
-   "time": "2025-08-25T01:37:20Z",
-   "hoursAgo": 10,
-   "minutesAgo": 623,
-   "satellite": "Sentinel-3A",
-   "instrument": "SLSTR",
-   "latencyClass": null
+   "time": "2025-08-24T16:34:00Z",
+   "hoursAgo": 19,
+   "minutesAgo": 1166,
+   "satellite": "NOAA-20",
+   "instrument": "VIIRS",
+   "latencyClass": "SP"
   },
-  "lastSeenHoursAgo": 10,
+  "lastSeenHoursAgo": 19,
   "sizeHa": 184.2,
   "stage": "OC",
   "detections": {
@@ -847,7 +847,7 @@
   "cwfis": {
    "ok": true,
    "checkedAt": null,
-   "newestDetection": "2025-08-25T07:00:00Z"
+   "newestDetection": "2025-08-25T00:06:00Z"
   },
   "firms": {
    "ok": true,
@@ -868,9 +868,9 @@
   },
   "checkedMinutesAgo": null,
   "newestDetection": {
-   "time": "2025-08-25T07:00:00Z",
+   "time": "2025-08-25T06:31:00Z",
    "hoursAgo": 5,
-   "minutesAgo": 300
+   "minutesAgo": 329
   }
  }
 }

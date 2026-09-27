@@ -1,5 +1,6 @@
 // The verdict view from the real replay files in data/demo/ (2025-08-25 12:00 UTC).
 import { describe, expect, test } from "vitest";
+import bathurst from "../../../data/demo/bathurst.json";
 import halifax from "../../../data/demo/halifax.json";
 import miramichi from "../../../data/demo/miramichi.json";
 import moncton from "../../../data/demo/moncton.json";
@@ -17,7 +18,7 @@ describe("Moncton replay (drifting, low: the three heights disagree)", () => {
       "7a",
       "DRIFTING SMOKE",
       "Likely from the Long Lake fire",
-      "Smoke drifting from Nova Scotia, about 158 km south-southwest of you.",
+      "Smoke drifting from Nova Scotia, about 159 km south-southwest of you.",
     ]);
   });
 
@@ -45,7 +46,7 @@ describe("Moncton replay (drifting, low: the three heights disagree)", () => {
     const fr = verdictView(json(moncton), "fr");
     expect([fr.band.headline, fr.band.sub, fr.fireRow.kind === "fire" && fr.fireRow.subtitle]).toEqual([
       "Elle vient probablement du feu de Long Lake",
-      "Fumée venue de la Nouvelle-Écosse, à environ 158 km au sud-sud-ouest de chez vous.",
+      "Fumée venue de la Nouvelle-Écosse, à environ 159 km au sud-sud-ouest de chez vous.",
       "West Dalhousie (N.‑É.)",
     ]);
   });
@@ -112,10 +113,23 @@ describe("the last satellite sighting of the fire (Why item 2, map badge)", () =
     ]);
   });
 
-  test("keeps the satellites sentence when no satellite is named (Moncton replay)", () => {
-    expect(verdictView(json(moncton), "en").why.items[1].body).toBe(
-      "About 6 hours ago, that air was over the Long Lake fire. Satellites saw it burning in the last 5 hours.",
-    );
+  test("names the satellite of the newest observation, never a CWFIS report time (Moncton replay)", () => {
+    // Long Lake's newest observation is Terra at 01:43 UTC; CWFIS's 07:00 rows are Terra's 00:06 detections, reported late.
+    expect([verdictView(json(moncton), "en").why.items[1].body, verdictView(json(moncton), "fr").why.items[1].body]).toEqual([
+      "About 6 hours ago, that air was over the Long Lake fire. Terra saw it burning 10 hours ago.",
+      "Il y a environ 6 heures, cet air se trouvait au-dessus du feu de Long Lake. Le satellite Terra l’a vu brûler il y a 10 heures.",
+    ]);
+  });
+
+  test("says the fire is on the official list only when it has a CWFIS record (Bathurst replay)", () => {
+    expect(verdictView(json(bathurst), "en").why.items[1].body).toMatch(/ It’s on Canada’s official active fire list\.$/);
+  });
+
+  test("says nothing about sightings when a fire has no satellite observation and no CWFIS record", () => {
+    const data = json(moncton);
+    const fire = { ...data.closestApproach!.fire, lastSeen: null, lastSeenHoursAgo: null, cwfisIds: [] };
+    const unseen = { ...data, closestApproach: { ...data.closestApproach!, fire } };
+    expect(verdictView(unseen, "en").why.items[1].body).toBe("About 6 hours ago, that air was over the Long Lake fire.");
   });
 
   test("the map badge names the satellite of the fire’s newest detection", () => {
@@ -136,8 +150,15 @@ describe("the last satellite sighting of the fire (Why item 2, map badge)", () =
     expect(verdictView(archiveSighting, "en").map.badge).toBe(`Seen by satellite Terra${NBSP}· 10 hours ago`);
   });
 
-  test("no map badge when the newest detection names no satellite (Moncton replay)", () => {
-    expect(verdictView(json(moncton), "en").map.badge).toBeNull();
+  test("Moncton replay: the badge names Terra, the newest observation", () => {
+    expect([verdictView(json(moncton), "en").map.badge, verdictView(json(moncton), "fr").map.badge]).toEqual([
+      `Seen by satellite Terra${NBSP}· 10 hours ago`,
+      `Vu par le satellite Terra${NBSP}· il y a 10 heures`,
+    ]);
+  });
+
+  test("no map badge when no satellite observation is known (Miramichi replay)", () => {
+    expect(verdictView(json(miramichi), "en").map.badge).toBeNull();
   });
 });
 
