@@ -37,9 +37,27 @@ RANK_GROUP_KM = 25
 TOWN_GROUP_KM = 15
 
 
+@st.cache_resource
+def session():
+    """Snowflake's own session inside Snowflake; outside it ("streamlit run" on a laptop), a session from
+    analytics/.env with the key pair (analytics/scripts/snow.py)."""
+    try:
+        return get_active_session()
+    except Exception:
+        import sys
+        from pathlib import Path
+
+        from snowflake.snowpark import Session
+
+        sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
+        from snow import connect
+
+        return Session.builder.configs({"connection": connect()}).create()
+
+
 @st.cache_data(ttl=600)
 def query(sql: str) -> pd.DataFrame:
-    return get_active_session().sql(sql).to_pandas()
+    return session().sql(sql).to_pandas()
 
 
 def numbers(df: pd.DataFrame, columns: list[str]) -> pd.DataFrame:
@@ -337,10 +355,15 @@ else:
             get_background_color=[255, 255, 255, 220],
         ),
     ]
+    # open centred on the 10 cells and the towns, far enough out to show them all
+    lats = pd.concat([cells["CENTER_LAT"], towns["LAT"]])
+    lons = pd.concat([cells["CENTER_LON"], towns["LON"]])
     st.pydeck_chart(
         pdk.Deck(
             layers=layers,
-            initial_view_state=pdk.ViewState(latitude=45.5, longitude=-64.5, zoom=5.3),
+            initial_view_state=pdk.ViewState(
+                latitude=(lats.min() + lats.max()) / 2, longitude=(lons.min() + lons.max()) / 2, zoom=4.9
+            ),
             map_style=BASEMAP,
             tooltip={"text": "{TIP}"},
         )

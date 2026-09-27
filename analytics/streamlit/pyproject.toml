@@ -1,0 +1,12 @@
+[project]
+name = "smoke-or-fire-data-room"
+version = "0.1.0"
+description = "Streamlit in Snowflake page over the SMOKE_OR_FIRE.SEASON_2025 views"
+requires-python = "==3.11.*"
+dependencies = [
+    "streamlit",
+    "snowflake-snowpark-python",
+    "pandas",
+    "altair",
+    "pydeck",
+]

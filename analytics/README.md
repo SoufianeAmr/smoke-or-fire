@@ -75,6 +75,10 @@ uv run python scripts/report.py               # what the views say (--write-tech
 `load.py --skip-put` reloads from the files already staged; `load.py --only-views` recreates the views.
 
 To open the app: Snowsight → Projects → Streamlit → `DATA_ROOM` (`deploy_streamlit.py` prints the direct link).
+It runs on the warehouse runtime, with packages from Snowflake's Anaconda channel (`streamlit/environment.yml`).
+The container runtime (`--runtime container`, `streamlit/pyproject.toml`) installs from PyPI, which needs an external
+access integration, and trial accounts cannot create one. Outside Snowflake the same page runs with
+`streamlit run streamlit/streamlit_app.py`, logging in with the key pair in `analytics/.env`.
 
 ## Tables and views
 
