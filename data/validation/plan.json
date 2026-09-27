@@ -1,0 +1,164 @@
+{
+ "about": "Validation on real events: the rules, events and controls, fixed before the engine is run on any of them.",
+ "rules": {
+  "event": "A reported smoke event matches if the verdict is drifting smoke or unclear.",
+  "control": "A control matches if the verdict is unexplained smoke and no fire is within 50 km of the air's path.",
+  "selection": "Five events, picked from the reports found before any run: the two in the brief (Moncton on Aug. 24 and Aug. 25), then one report each for Nova Scotia (Halifax), Prince Edward Island (Charlottetown) and western New Brunswick (Fredericton). Each source names the place and the date and describes smoke there on that day.",
+  "controlDay": "A control day is a community and date with no public smoke report and nothing recorded within 500 km of the community over the two UTC days recorded (the day before and the day itself): no NASA satellite detection of any confidence, no Canadian hotspot, and no Canadian fire record out of control or being held. The two controls come from a scan of May to October 2025 around Charlottetown, Moncton, Summerside, Amherst and Sackville, towns whose whole 500 km circle lies inside the area the NASA detections are downloaded for. From June to September only June 8 passed for any of them, and it was dropped: Moncton's AQHI reached 7 that day, a sign of smoke. The two picked are a spring day and an autumn day with low AQHI."
+ },
+ "checkTime": {
+  "local": "9:00 a.m. Atlantic Daylight Time (UTC−3)",
+  "utc": "12:00",
+  "why": "Morning is when people wake up to haze and the smell of smoke, and two of the reports speak of the morning. The Maritimes kept daylight time from March 9 to November 2, 2025, which covers every date here, so 9:00 a.m. is always 12:00 UTC. It is also the hour of the app's Moncton replay."
+ },
+ "events": [
+  {
+   "id": "moncton-2025-08-24",
+   "event": "Air quality statement for Moncton and southeast N.B.",
+   "place": "Moncton",
+   "province": "NB",
+   "date": "2025-08-24",
+   "replay": "2025-08-24",
+   "source": {
+    "publisher": "CBC News",
+    "published": "2025-08-24",
+    "title": "N.B. residents in two areas told to be ready to evacuate due to potential threat of fires",
+    "url": "https://www.cbc.ca/news/canada/new-brunswick/wildfire-update-nb-august-24-1.7616548",
+    "quote": "An air quality statement is in place for the Fundy National Park, Moncton and southeast New Brunswick due to smoke from a Nova Scotia wildfire drifting toward the areas.",
+    "fire": "a Nova Scotia wildfire (Long Lake, Annapolis County)"
+   },
+   "more": [
+    {
+     "publisher": "Acadia News",
+     "published": "2025-08-25",
+     "title": "Increased calls to fire departments due to N.S. wildfire smoke",
+     "url": "https://d2940.cms.socastsrm.com/2025/08/25/128945/",
+     "quote": "This part of the province was right in the path of the high winds blowing in from the Annapolis Valley on Sunday, and that caused the haze and smell of smoke.",
+     "dateNote": "Published Monday, Aug. 25; “Sunday” is Aug. 24."
+    }
+   ]
+  },
+  {
+   "id": "moncton-2025-08-25",
+   "event": "Smoke from Nova Scotia over Moncton; about 300 smoke calls",
+   "place": "Moncton",
+   "province": "NB",
+   "date": "2025-08-25",
+   "replay": "moncton-2025-08-25",
+   "source": {
+    "publisher": "CBC News",
+    "published": "2025-08-25",
+    "title": "Restrictions on N.B. Crown land end at midnight, provincewide burn ban remains",
+    "url": "https://www.cbc.ca/news/canada/new-brunswick/two-evacuation-advisories-still-in-place-for-eastern-nb-1.7616825",
+    "quote": "Normally, it is possible to see the Université de Moncton campus from this location but wildfire smoke from Nova Scotia has reduced visibility and air quality. This photo was taken on the morning of Aug. 25.",
+    "fire": "Long Lake, Annapolis County, N.S."
+   },
+   "more": [
+    {
+     "publisher": "Acadia News",
+     "published": "2025-08-25",
+     "title": "Increased calls to fire departments due to N.S. wildfire smoke",
+     "url": "https://d2940.cms.socastsrm.com/2025/08/25/128945/",
+     "quote": "Moncton Fire Deputy Chief Keith Guptill says on Monday morning, Moncton, Dieppe and Riverview departments received around 300 calls.",
+     "dateNote": "Published Monday, Aug. 25."
+    }
+   ]
+  },
+  {
+   "id": "halifax-2025-08-26",
+   "event": "Long Lake fire smoke over Halifax",
+   "place": "Halifax",
+   "province": "NS",
+   "date": "2025-08-26",
+   "replay": "2025-08-26",
+   "source": {
+    "publisher": "CBC News",
+    "published": "2025-08-26",
+    "title": "Air quality drops as smoke spreads from Annapolis County wildfire",
+    "url": "https://www.cbc.ca/news/canada/nova-scotia/air-quality-annapolis-county-wildfire-1.7617762",
+    "quote": "Thick smoke from the Long Lake fire in Nova Scotia's Annapolis County is shown over Halifax on Tuesday, Aug. 26, 2025.",
+    "fire": "Long Lake, Annapolis County, N.S."
+   },
+   "more": [
+    {
+     "publisher": "CBC News",
+     "published": "2025-08-26",
+     "title": "Air quality drops as smoke spreads from Annapolis County wildfire",
+     "url": "https://www.cbc.ca/news/canada/nova-scotia/air-quality-annapolis-county-wildfire-1.7617762",
+     "quote": "Ian Hubbard, a meteorologist with Environment Canada, said the smoke that many people could see and smell in the Halifax area Tuesday morning was simply driven east by the wind."
+    }
+   ]
+  },
+  {
+   "id": "charlottetown-2025-08-14",
+   "event": "Smoke prompts calls to the Charlottetown Fire Department",
+   "place": "Charlottetown",
+   "province": "PE",
+   "date": "2025-08-14",
+   "replay": "2025-08-14",
+   "source": {
+    "publisher": "CBC News",
+    "published": "2025-08-15",
+    "title": "Less wildfire smoke in P.E.I. skies, but Islanders still advised to take precautions",
+    "url": "https://www.cbc.ca/news/canada/prince-edward-island/pei-smoky-skies-wildfires-1.7609827",
+    "quote": "The smoke on Thursday prompted calls to the Charlottetown Fire Department.",
+    "fire": "wildfires burning in Nova Scotia and New Brunswick",
+    "dateNote": "Published Friday, Aug. 15; “Thursday” is Aug. 14."
+   },
+   "more": [
+    {
+     "publisher": "CBC News",
+     "published": "2025-08-15",
+     "title": "Less wildfire smoke in P.E.I. skies, but Islanders still advised to take precautions",
+     "url": "https://www.cbc.ca/news/canada/prince-edward-island/pei-smoky-skies-wildfires-1.7609827",
+     "quote": "Skies were hazy across P.E.I. on Thursday as winds carried smoke from wildfires burning in Nova Scotia and New Brunswick into this province."
+    }
+   ]
+  },
+  {
+   "id": "fredericton-2025-08-16",
+   "event": "Smoke drifting over Fredericton prompts 9-1-1 calls",
+   "place": "Fredericton",
+   "province": "NB",
+   "date": "2025-08-16",
+   "replay": "2025-08-16",
+   "source": {
+    "publisher": "City of Fredericton",
+    "published": "2025-08-16",
+    "title": "Drifting smoke from other Maritime wildfires prompting fire calls in Fredericton",
+    "url": "https://www.fredericton.ca/city-government/news/drifting-smoke-other-maritime-wildfires-prompting-fire-calls-fredericton",
+    "quote": "Smoke from wildfires in Nova Scotia and other parts of New Brunswick is drifting over Fredericton, prompting widespread fire calls to 9-1-1.",
+    "fire": "wildfires in Nova Scotia and other parts of New Brunswick",
+    "dateNote": "Dated Saturday, Aug. 16; it says the smoke will continue “through Saturday afternoon”."
+   }
+  }
+ ],
+ "notRun": [
+  {"report": "Saint John, NB, Aug. 25: CBC News and the City of Saint John's air quality alert", "why": "Same date and fire as the Moncton event on Aug. 25."},
+  {"report": "Oromocto, Harvey and Upper Kingsclear, NB, Aug. 16: CBC News, from an Oromocto Fire Department post", "why": "Same date and area as the Fredericton event."},
+  {"report": "Halifax, NS, Aug. 12: smoke from the Bayers Lake (Susies Lake) fire, CBC News, Global News and the Halifax Regional Municipality", "why": "Halifax is already covered by Aug. 26."},
+  {"report": "Miramichi, NB, Aug. 12: CBC News photo of a plume from the Oldfield Road fire", "why": "A plume seen over the area, not smoke reported in the town's air."},
+  {"report": "Fredericton, NB, June 5: CBC News, “A line of smoke from Western Canada lingered over Fredericton on Thursday morning”", "why": "Smoke from fires in Western Canada, thousands of kilometres away. The engine looks for fires within 500 km only, so this smoke is outside what it can trace to a fire."},
+  {"report": "Wolfville area, Annapolis Valley, Saint John (Aug. 29–30), Kentville (Sept. 29) and northern New Brunswick towns (Aug. 3)", "why": "The place is a region, or the wording is a forecast or smoke seen from a distance."}
+ ],
+ "controls": [
+  {
+   "id": "control-charlottetown-2025-05-24",
+   "event": "Quiet day",
+   "place": "Charlottetown",
+   "province": "PE",
+   "date": "2025-05-24",
+   "replay": "2025-05-24",
+   "why": "A news search for smoke in Charlottetown on May 24, 2025 found no report."
+  },
+  {
+   "id": "control-moncton-2025-10-27",
+   "event": "Quiet day",
+   "place": "Moncton",
+   "province": "NB",
+   "date": "2025-10-27",
+   "replay": "2025-10-27",
+   "why": "A news search for smoke in Moncton on Oct. 27, 2025 found no report."
+  }
+ ]
+}

@@ -1,27 +1,27 @@
-"""One-time download of the NASA FIRMS archive detections for the replay (Aug 24–25, 2025).
+"""One-time download of the NASA FIRMS archive detections for a replay day and the day before.
 
-    uv run python -m scripts.fetch_firms_replay     (from engine/; needs FIRMS_MAP_KEY)
+    uv run python -m scripts.fetch_firms_replay 2025-08-25 --name moncton-2025-08-25     (from engine/; needs FIRMS_MAP_KEY)
 
 Checks FIRMS data_availability, then saves each standard-processing (SP) source
-that covers both days, unchanged, as data/replay/moncton-2025-08-25/firms/<SOURCE>.csv.
+that covers both days, unchanged, as data/replay/<name>/firms/<SOURCE>.csv.
 Each file goes into manifest.json with its URL (MAP_KEY masked as ***), download
 time and row count. A source that does not cover the dates is recorded as missing;
-no other date is ever fetched in its place.
+no other date is ever fetched in its place. scripts/fetch_replay.py runs this last.
 """
 
+import argparse
 import csv
 import io
 import json
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
+from pathlib import Path
 
 import httpx
 
 from smoke_engine.feeds import sources
 from smoke_engine.feeds.replay import REPLAY_DIR
 
-DATE = "2025-08-24"
 DAY_RANGE = 2
-LAST_DAY = "2025-08-25"
 NO_ARCHIVE = {"VIIRS_NOAA21_SP": "FIRMS has no NOAA-21 standard-processing archive (not in data_availability)"}
 
 
@@ -38,13 +38,14 @@ def _get(client: httpx.Client, url: str, key: str) -> bytes:
     return response.content
 
 
-def main() -> None:
+def main(directory: Path, day: date) -> None:
     key = sources.firms_key()
     if not key:
         raise SystemExit("FIRMS_MAP_KEY is not set (engine/.env or the environment)")
-    out = REPLAY_DIR / "firms"
+    first, last = (day - timedelta(days=DAY_RANGE - 1)).isoformat(), day.isoformat()
+    out = directory / "firms"
     out.mkdir(parents=True, exist_ok=True)
-    manifest_path = REPLAY_DIR / "manifest.json"
+    manifest_path = directory / "manifest.json"
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
 
     with httpx.Client(headers={"User-Agent": sources.USER_AGENT}) as client:
@@ -57,11 +58,11 @@ def main() -> None:
             if row is None:
                 missing[source] = "not in data_availability"
                 continue
-            if not (date.fromisoformat(row["min_date"]) <= date.fromisoformat(DATE)
-                    and date.fromisoformat(LAST_DAY) <= date.fromisoformat(row["max_date"])):
+            if not (date.fromisoformat(row["min_date"]) <= date.fromisoformat(first)
+                    and date.fromisoformat(last) <= date.fromisoformat(row["max_date"])):
                 missing[source] = f"data_availability covers {row['min_date']} to {row['max_date']} only"
                 continue
-            url = sources.firms_area_url(key, source, DAY_RANGE, DATE)
+            url = sources.firms_area_url(key, source, DAY_RANGE, first)
             downloaded_at = _now()
             raw = _get(client, url, key)
             text = raw.decode("utf-8")
@@ -71,12 +72,12 @@ def main() -> None:
             (out / f"{source}.csv").write_bytes(raw)  # exactly as FIRMS sent it
             count = max(0, len(text.strip().splitlines()) - 1)
             files[f"firms/{source}.csv"] = {
-                "source": f"NASA FIRMS area API, {source}, bbox {sources.FIRMS_BBOX}, {DAY_RANGE} days from {DATE}",
+                "source": f"NASA FIRMS area API, {source}, bbox {sources.FIRMS_BBOX}, {DAY_RANGE} days from {first}",
                 "url": sources.mask_key(url, key),
                 "downloadedAt": downloaded_at,
                 "rows": count,
             }
-            print(f"firms/{source}.csv: {count} rows")
+            print(f"{directory.name}/firms/{source}.csv: {count} rows")
 
     manifest["files"].update(files)
     manifest["firms"] = {
@@ -93,4 +94,8 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description="Download the FIRMS archive files for a replay day.")
+    parser.add_argument("date", type=date.fromisoformat, help="the day of the arrival times (UTC), YYYY-MM-DD")
+    parser.add_argument("--name", help="directory under data/replay/ (default: the date)")
+    args = parser.parse_args()
+    main(REPLAY_DIR.parent / (args.name or args.date.isoformat()), args.date)

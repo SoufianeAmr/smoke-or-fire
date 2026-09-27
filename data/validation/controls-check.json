@@ -1,0 +1,110 @@
+{
+ "checkedAt": "2026-09-27T03:14:01Z",
+ "rule": "A control day is a community and date with no public smoke report and nothing recorded within 500 km of the community over the two UTC days recorded (the day before and the day itself): no NASA satellite detection of any confidence, no Canadian hotspot, and no Canadian fire record out of control or being held. The two controls come from a scan of May to October 2025 around Charlottetown, Moncton, Summerside, Amherst and Sackville, towns whose whole 500 km circle lies inside the area the NASA detections are downloaded for. From June to September only June 8 passed for any of them, and it was dropped: Moncton's AQHI reached 7 that day, a sign of smoke. The two picked are a spring day and an autumn day with low AQHI.",
+ "controls": [
+  {
+   "id": "control-charlottetown-2025-05-24",
+   "place": "Charlottetown, PE",
+   "point": [
+    46.24028,
+    -63.13472
+   ],
+   "recording": {
+    "from": "2025-05-23T00:00:00Z",
+    "to": "2025-05-25T00:00:00Z",
+    "directory": "data/replay/2025-05-24"
+   },
+   "firmsBbox": "-72,41,-56,51",
+   "firms": {
+    "MODIS_SP": {
+     "rows": 0,
+     "within500Km": 0
+    },
+    "VIIRS_NOAA20_SP": {
+     "rows": 0,
+     "within500Km": 0
+    },
+    "VIIRS_SNPP_SP": {
+     "rows": 0,
+     "within500Km": 0
+    }
+   },
+   "firmsWithin500Km": 0,
+   "cwfisHotspots": 4,
+   "cwfisHotspotsWithin500Km": 0,
+   "burningFireRecords": 0,
+   "burningFireRecordsWithin500Km": 0,
+   "otherFireRecordsWithin500Km": [
+    {
+     "km": 148.1,
+     "stage": "UC"
+    },
+    {
+     "km": 416.3,
+     "stage": "UC"
+    }
+   ],
+   "aqhi": {
+    "station": "BAARG",
+    "stationName": "Charlottetown",
+    "stationKm": 0.0,
+    "readings": 43,
+    "max": 2.0
+   }
+  },
+  {
+   "id": "control-moncton-2025-10-27",
+   "place": "Moncton, NB",
+   "point": [
+    46.09948,
+    -64.7998
+   ],
+   "recording": {
+    "from": "2025-10-26T00:00:00Z",
+    "to": "2025-10-28T00:00:00Z",
+    "directory": "data/replay/2025-10-27"
+   },
+   "firmsBbox": "-72,41,-56,51",
+   "firms": {
+    "MODIS_SP": {
+     "rows": 0,
+     "within500Km": 0
+    },
+    "VIIRS_NOAA20_SP": {
+     "rows": 0,
+     "within500Km": 0
+    },
+    "VIIRS_SNPP_SP": {
+     "rows": 1,
+     "within500Km": 0
+    }
+   },
+   "firmsWithin500Km": 0,
+   "cwfisHotspots": 13,
+   "cwfisHotspotsWithin500Km": 0,
+   "burningFireRecords": 2,
+   "burningFireRecordsWithin500Km": 0,
+   "otherFireRecordsWithin500Km": [
+    {
+     "km": 18.3,
+     "stage": "UC"
+    },
+    {
+     "km": 70.2,
+     "stage": "UC"
+    },
+    {
+     "km": 162.0,
+     "stage": "UC"
+    }
+   ],
+   "aqhi": {
+    "station": "DADHJ",
+    "stationName": "Moncton",
+    "stationKm": 1.8,
+    "readings": 48,
+    "max": 2.0
+   }
+  }
+ ]
+}
