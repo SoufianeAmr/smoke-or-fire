@@ -73,3 +73,13 @@ body.emergency{background:#D92D20}
   .q1-answers{gap:8px !important}
   .q1-answer{min-height:0 !important;padding:12px 24px !important}
 }
+
+/* The French Q1 title takes two lines: shorter answers on short phones; at 375 × 550 the title
+   shrinks to fit one line. */
+@media (max-height: 740px){
+  html[lang="fr"] .q1-answer{min-height:112px !important}
+}
+@media (max-height: 600px){
+  html[lang="fr"] .q1-answer{min-height:0 !important}
+  html[lang="fr"] .q1-head h1{font-size:25px !important}
+}

@@ -1,6 +1,8 @@
 // The verdict view from the real replay files in data/demo/ (2025-08-25 12:00 UTC).
 import { describe, expect, test } from "vitest";
 import bathurst from "../../../data/demo/bathurst.json";
+import charlottetown from "../../../data/demo/charlottetown.json";
+import edmundston from "../../../data/demo/edmundston.json";
 import halifax from "../../../data/demo/halifax.json";
 import miramichi from "../../../data/demo/miramichi.json";
 import moncton from "../../../data/demo/moncton.json";
@@ -202,5 +204,65 @@ describe("Why item 2: the satellites that saw the fire", () => {
 
   test("adds nothing when FIRMS never saw the fire (Miramichi replay)", () => {
     expect(verdictView(json(miramichi), "en").why.items[1].detail ?? null).toBeNull();
+  });
+});
+
+describe("French: the fire and the direction take the right article", () => {
+  const NBH = String.fromCharCode(0x2011); // no-break hyphen, as in N.‑É.
+
+  test("de + le contracts to du, and a sentence starts with Du or D’un (Charlottetown, Miramichi replays)", () => {
+    const [named, unnamed] = [verdictView(json(charlottetown), "fr"), verdictView(json(miramichi), "fr")];
+    expect([named.band.sub, named.twoPossibilities!.driftingLead, unnamed.band.sub, unnamed.twoPossibilities!.driftingLead]).toEqual([
+      "L’air est passé près du feu de Long Lake, mais pas assez près pour en être certain.",
+      `Du feu de Long Lake, N.${NBH}É.`,
+      "L’air est passé près d’un feu près de Fontaine, mais pas assez près pour en être certain.",
+      `D’un feu près de Fontaine, N.${NBH}B.`,
+    ]);
+  });
+
+  test("the fire takes le or un after depuis and as a subject (Moncton, Halifax, Edmundston replays)", () => {
+    const [moncton7a, halifax7b, edmundston7b] = [verdictView(json(moncton), "fr"), verdictView(json(halifax), "fr"), verdictView(json(edmundston), "fr")];
+    expect([moncton7a.map.aria, halifax7b.map.aria, edmundston7b.map.aria, edmundston7b.why.items[1].body]).toEqual([
+      `Carte${NBSP}: en environ 6 heures, l’air s’est déplacé depuis le feu de Long Lake (Nouvelle-Écosse) vers le nord-nord-est, jusqu’à Moncton`,
+      `Carte${NBSP}: l’air a atteint Halifax. Aucun feu actif ne se trouve à moins de 50 km de son trajet${NBSP}; le feu de Long Lake est hors du trajet.`,
+      `Carte${NBSP}: l’air a atteint Edmundston. Aucun feu actif ne se trouve à moins de 50 km de son trajet${NBSP}; un feu près de Napier est hors du trajet.`,
+      "Aucun feu à moins de 50 km de chaque étape horaire. Le plus proche, un feu près de Napier, est à 112 km et hors du trajet.",
+    ]);
+  });
+
+  test("vers le becomes vers l’ before est and ouest", () => {
+    const data = json(moncton);
+    const westOfTown = { ...data, closestApproach: { ...data.closestApproach!, fire: { ...data.closestApproach!.fire, compass: "W" } } } as VerdictJson;
+    expect(verdictView(westOfTown, "fr").map.aria).toContain("vers l’est, jusqu’à Moncton");
+  });
+});
+
+test("Two possibilities: a province abbreviation’s period ends the lead (Charlottetown replay)", () => {
+  expect(verdictView(json(charlottetown), "en").twoPossibilities!.driftingLead).toBe("From the Long Lake fire, N.S.");
+});
+
+describe("the map description never says 1 hours or 0 hours", () => {
+  const at = (data: unknown, hoursAgo: number) => {
+    const v = json(data);
+    return { ...v, closestApproach: { ...v.closestApproach!, hoursAgo } };
+  };
+  const aria = (data: VerdictJson) => [verdictView(data, "en").map.aria, verdictView(data, "fr").map.aria];
+
+  test("drifting: about 1 hour (Bathurst replay), and less than an hour", () => {
+    expect([...aria(json(bathurst)), ...aria(at(moncton, 0))]).toEqual([
+      "Map: over about 1 hour, the air moved from a fire near Heath Steele in New Brunswick northeast to Bathurst",
+      `Carte${NBSP}: en environ 1 heure, l’air s’est déplacé depuis un feu près de Heath Steele (Nouveau-Brunswick) vers le nord-est, jusqu’à Bathurst`,
+      "Map: in less than an hour, the air moved from the Long Lake fire in Nova Scotia north-northeast to Moncton",
+      `Carte${NBSP}: en moins d’une heure, l’air s’est déplacé depuis le feu de Long Lake (Nouvelle-Écosse) vers le nord-nord-est, jusqu’à Moncton`,
+    ]);
+  });
+
+  test("unclear: less than an hour ago (Miramichi replay), and about 1 hour ago", () => {
+    expect([...aria(json(miramichi)), ...aria(at(miramichi, 1))]).toEqual([
+      "Map: the air reached Miramichi and passed 42 km from a fire near Fontaine less than an hour ago",
+      `Carte${NBSP}: l’air a atteint Miramichi et est passé à 42 km d’un feu près de Fontaine il y a moins d’une heure`,
+      "Map: the air reached Miramichi and passed 42 km from a fire near Fontaine about 1 hour ago",
+      `Carte${NBSP}: l’air a atteint Miramichi et est passé à 42 km d’un feu près de Fontaine il y a environ 1 heure`,
+    ]);
   });
 });

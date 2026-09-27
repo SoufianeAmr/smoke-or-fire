@@ -1,7 +1,7 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import en from "./en.json";
 import fr from "./fr.json";
-import { TODO, translate } from "./index";
+import { TODO } from "./index";
 
 // A ? ! : or ; not preceded by a no-break space (U+00A0) or narrow no-break space (U+202F).
 const NO_SPACE_BEFORE_PUNCTUATION = new RegExp(`[^${String.fromCharCode(0xa0, 0x202f)}][?!:;]`);
@@ -31,7 +31,12 @@ describe("strings", () => {
     expect(emoji).toEqual([]);
   });
 
-  test("missing French falls back to English, and values are filled in", () => {
+  test("missing French falls back to English, and values are filled in", async () => {
+    // Every string has French now, so one is marked missing here.
+    vi.doMock("./fr.json", () => ({ default: { ...fr, "q1.title": TODO } }));
+    vi.resetModules();
+    const { translate } = await import("./index");
+    vi.doUnmock("./fr.json");
     expect([translate("fr", "q1.title"), translate("fr", "banner.replayTown", { town: "Dieppe" })]).toEqual([
       "Do you see flames?",
       "Reprise · Dieppe · 25 août 2025 ·",

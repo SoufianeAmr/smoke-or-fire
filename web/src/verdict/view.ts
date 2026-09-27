@@ -75,9 +75,17 @@ export function verdictView(json: VerdictJson, lang: Lang): VerdictView {
     code && (AREA_KEYS as readonly string[]).includes(code) ? t(`area.${form}.${code}` as StringKey) : null;
   const compassWord = (code: string, form: "word" | "at" | "from" | "abbr") => t(`compass.${form}.${code}` as StringKey);
 
-  // "the Long Lake fire" / "du feu de Long Lake", "a fire near Hannamville", "a fire in New Brunswick"
-  const fireThe = (f: Fire) =>
-    f.name ? t("fire.the.named", { name: f.name }) : f.nearCommunity ? t("fire.the.near", { community: f.nearCommunity }) : t("fire.the.in", { where: area(f.province, "in") ?? "" });
+  // "the Long Lake fire", "a fire near Hannamville", "a fire in New Brunswick". French has two forms:
+  // "the" takes the place of de + article ("du feu de Long Lake", "d’un feu près de…"), "plain" is for a
+  // subject or after any other word ("le feu de Long Lake", "un feu près de…").
+  const fireAs = (form: "the" | "plain") => (f: Fire) =>
+    f.name
+      ? t(`fire.${form}.named` as StringKey, { name: f.name })
+      : f.nearCommunity
+        ? t(`fire.${form}.near` as StringKey, { community: f.nearCommunity })
+        : t(`fire.${form}.in` as StringKey, { where: area(f.province, "in") ?? "" });
+  const fireThe = fireAs("the");
+  const firePlain = fireAs("plain");
   const fireTitle = (f: Fire) =>
     f.name ? t("fire.title.named", { name: lang === "fr" ? f.name.replace(/ /g, NBSP) : f.name }) : f.nearCommunity ? t("fire.title.near", { community: f.nearCommunity }) : t("fire.title.in", { where: area(f.province, "in") ?? "" });
   const hours = (h: number, one: StringKey, many: StringKey, under: StringKey) => (h <= 0 ? t(under) : h === 1 ? t(one) : t(many, { h }));
@@ -141,13 +149,17 @@ export function verdictView(json: VerdictJson, lang: Lang): VerdictView {
 
   // Map
   const travel = fire ? compassWord(opposite(fire.compass), "word") : ""; // from the fire toward the user
+  // French elides "vers le" before a vowel: "vers le nord", "vers l’est".
+  const toward = (text: string) => (lang === "fr" && /^[eo]/.test(travel) ? text.replace(`le ${travel}`, `l’${travel}`) : text);
+  // "about 1 hour", "less than an hour": never "1 hours" or "0 hours".
+  const perHours = (key: "map.aria.drifting" | "map.aria.unclear", h: number) => (h <= 0 ? `${key}.under` : h === 1 ? `${key}.one` : key) as StringKey;
   const mapAria =
     variant === "7a"
-      ? t("map.aria.drifting", { h: approach!.hoursAgo, fire: fireThe(fire!), province: area(fire!.province, "name") ?? "", direction: travel, town })
+      ? toward(t(perHours("map.aria.drifting", approach!.hoursAgo), { h: approach!.hoursAgo, fire: firePlain(fire!), province: area(fire!.province, "name") ?? "", direction: travel, town }))
       : variant === "7c"
-        ? t("map.aria.unclear", { km: approach!.km, fire: fireThe(fire!), h: approach!.hoursAgo, town })
+        ? t(perHours("map.aria.unclear", approach!.hoursAgo), { km: approach!.km, fire: fireThe(fire!), h: approach!.hoursAgo, town })
         : variant === "7b"
-          ? t("map.aria.unexplained", { town, km: json.rules.searchKm, fire: fireThe(fire!) })
+          ? t("map.aria.unexplained", { town, km: json.rules.searchKm, fire: firePlain(fire!) })
           : t("map.aria.noFires", { town, km: json.rules.fireRadiusKm });
   const map: VerdictView["map"] = {
     aria: mapAria,
@@ -172,13 +184,15 @@ export function verdictView(json: VerdictJson, lang: Lang): VerdictView {
     },
   };
 
-  // Two possibilities (7c)
+  // Two possibilities (7c). The French lead starts with the fire ("Du feu de…"), and a closing
+  // abbreviation's period ends it ("N.S.", not "N.S..").
+  const lead = (text: string) => (text.charAt(0).toUpperCase() + text.slice(1)).replace(/\.\.$/, ".");
   const twoPossibilities =
     variant === "7c"
       ? {
           title: t("two.title"),
           driftingChip: t("two.drifting.chip"),
-          driftingLead: t("two.drifting.lead", { fire: fireThe(fire!), province: area(fire!.province, "short") ?? "" }),
+          driftingLead: lead(t("two.drifting.lead", { fire: fireThe(fire!), province: area(fire!.province, "short") ?? "" })),
           driftingText: t(approach!.hoursAgo <= 0 ? "two.drifting.text.under" : approach!.hoursAgo === 1 ? "two.drifting.text.one" : "two.drifting.text", { km: approach!.km, h: approach!.hoursAgo }),
           unexplainedChip: t("two.unexplained.chip"),
           unexplainedLead: t("two.unexplained.lead"),
@@ -252,7 +266,7 @@ export function verdictView(json: VerdictJson, lang: Lang): VerdictView {
       : variant === "7c"
         ? { ...passed, body: approach!.km <= json.rules.driftingKm ? overFire() : t("why.closeButFar", { km: json.rules.driftingKm }) }
         : variant === "7b"
-          ? { title: t("why.noneNear"), body: t("why.noneNear.body", { km: json.rules.searchKm, nearest: fire!.name ?? fireThe(fire!), distance: fire!.km }) }
+          ? { title: t("why.noneNear"), body: t("why.noneNear.body", { km: json.rules.searchKm, nearest: fire!.name ?? firePlain(fire!), distance: fire!.km }) }
           : { title: t("why.noneInRegion"), body: t("why.noneInRegion.body", { km: json.rules.fireRadiusKm }) };
   const third =
     variant === "7b" || variant === "7d"
