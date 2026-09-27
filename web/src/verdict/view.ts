@@ -246,11 +246,15 @@ export function verdictView(json: VerdictJson, lang: Lang): VerdictView {
   const reached = originFrom
     ? t("why.reached", { town, from: originFrom, direction: compassWord(json.path.origin.compass, "word") })
     : t("why.reached.noArea", { town, direction: compassWord(json.path.origin.compass, "from") });
-  // A path that reached the grid edge says so on every screen; otherwise 7a keeps the design's sentence
-  // and the other screens say where the air came from.
+  // 7a follows the air backward; the other screens say where it came from. Either way, a path that
+  // reached the grid edge says it left the area the wind data covers.
+  const edge = json.path.stoppedAtGridEdge;
   const traced = {
     title: t("why.traced", { n: json.path.hoursTraced }),
-    body: json.path.stoppedAtGridEdge ? t("why.traced.body.gridEdge", { town }) : variant === "7a" ? t("why.traced.body", { town }) : reached,
+    body:
+      variant === "7a"
+        ? t(edge ? "why.traced.body.gridEdge" : "why.traced.body", { town })
+        : reached + (edge ? " " + t("why.reached.gridEdge") : ""),
   };
   // The fire's newest satellite observation (the engine never uses a CWFIS report time for it); without
   // one, the official-list sentence only for a fire with a CWFIS record, else nothing.

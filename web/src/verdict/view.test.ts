@@ -340,10 +340,11 @@ describe("Why item 1: the air traced back", () => {
     expect(verdictView(inside, "en").why.items[0].body).toBe("Using hourly winds, we followed the air arriving in Moncton backward, one hour at a time.");
   });
 
-  test("uses the grid-edge sentence on every screen when the path reached the grid edge (Halifax, Miramichi replays)", () => {
-    expect([verdictView(json(halifax), "en").why.items[0].body, verdictView(json(miramichi), "fr").why.items[0].body]).toEqual([
-      "Using hourly winds, we followed the air arriving in Halifax backward, one hour at a time, until it left the area our wind data covers.",
-      "Grâce aux vents horaires, nous avons suivi à rebours l’air qui arrive à Miramichi, une heure à la fois, jusqu’à ce qu’il quitte la zone couverte par nos données de vent.",
+  test("off 7a, says where the air came from, then that it left the wind data’s area (Halifax, Miramichi replays)", () => {
+    const [en, fr] = [verdictView(json(halifax), "en").why.items[0].body, verdictView(json(miramichi), "fr").why.items[0].body];
+    expect([en, fr]).toEqual([
+      expect.stringMatching(/^It reached Halifax from .+\. Beyond that, it left the area our wind data covers\.$/),
+      expect.stringMatching(/^Il est arrivé à Miramichi en venant .+\. Au-delà, il a quitté la zone couverte par nos données de vent\.$/),
     ]);
   });
 
