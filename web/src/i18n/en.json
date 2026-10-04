@@ -8,6 +8,7 @@
   "lang.fr": "Français",
   "listen.play": "Listen",
   "listen.stop": "Stop",
+  "voice.online": "This voice works over the internet, so what I read is sent to a voice service.",
   "voice.check.replay": "Right now, I’m showing you a replay of August 25, 2025.",
   "voice.check": "Hi. I’m here to help you figure out where the smoke is coming from. It only takes a minute. If you smell smoke, tap the big blue button: I smell smoke. And if you ever see flames, call nine-one-one right away.",
   "voice.check.install": "To keep me on your phone, tap: {add}.",

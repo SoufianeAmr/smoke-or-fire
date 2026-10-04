@@ -216,7 +216,8 @@ Replay mode, Moncton.
 3. **Listen on the other screens can send what it reads to a voice service.** In Chrome and Edge the "natural" voices
    the app prefers are cloud voices. What Listen reads elsewhere includes the town that was checked and, on "Told to
    leave", an address. `onDevice` now exists on the Listen button; turning it on everywhere is one line per screen,
-   and changes how the app sounds.
+   and changes how the app sounds. **Closed on Oct 4, 2026:** Listen now reads with a voice on the device first on
+   every screen, and says so once before reading where only a voice service exists (decision record 0004).
 4. **The Google Fonts stylesheet.** `index.html` loads Inter from Google on every screen. Hosting the font with the app
    removes a third party from every page. It predates this work.
 5. **Two existing strings differ from ECCC's pages.** French, low risk, general population: the page reads "idéale

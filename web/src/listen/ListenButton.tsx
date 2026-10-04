@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
 import { useApp, useT } from "../app/state";
 import { SpeakerIcon, StopIcon } from "../components/icons";
-import { LOCALE, pickVoice } from "./speech";
+import { LOCALE, onlineVoiceNotice, voiceFor } from "./speech";
 
 // Outlined navy, as the other secondary buttons: red stays for Call 911. White inside, so it also reads on a red screen.
 const OUTLINED: CSSProperties = { minHeight: "56px", display: "flex", alignItems: "center", gap: "6px", padding: "0 12px 0 10px", borderRadius: "18px", border: "2px solid #1B2A4A", background: "#FFFFFF", color: "#1B2A4A", fontFamily: "inherit", fontSize: "18px", fontWeight: "700", lineHeight: "1.2", cursor: "pointer" };
@@ -13,14 +13,21 @@ const OUTLINED: CSSProperties = { minHeight: "56px", display: "flex", alignItems
 // screen when "Why?" opens).
 let reading: { owner: object; stop: () => void } | null = null;
 
+// A voice that works on the device reads first, on every screen. Where the language has only a voice service (the
+// words go to a server to be spoken), the first reading says so before anything else: once, for every Listen button,
+// until the page is loaded again. Kept here and nowhere else: nothing about it is stored. It counts as said only when
+// it was heard to its end, so one cut short (Stop, another button, leaving the screen) is said again.
+let toldOnline = false;
+
 /** A short breath between sentences, as a person reading aloud would take. */
 const PAUSE_MS = 300;
 
 export const canSpeak = () => typeof window !== "undefined" && !!window.speechSynthesis && typeof window.SpeechSynthesisUtterance === "function";
 
 /**
- * `sentences` are read in order, one utterance each, with a pause between them. `onDevice`: read only by a voice that
- * works on the device (some browsers' best voices send what they say to a voice service); with none, nothing is said.
+ * `sentences` are read in order, one utterance each, with a pause between them, by a voice that works on the device
+ * when the language has one; else by a voice service, after saying so (once). `onDevice`: read only by a voice that
+ * works on the device; with none, nothing is said, not even that.
  * `label` names the button for a screen reader where a screen has a second one: "Listen: is burning allowed today?".
  */
 export function ListenButton({ sentences, style, onDevice = false, label }: { sentences: string[]; style?: CSSProperties; onDevice?: boolean; label?: { play: string; stop: string } }) {
@@ -71,33 +78,39 @@ export function ListenButton({ sentences, style, onDevice = false, label }: { se
     if (sentences.length === 0) return;
     const synth = window.speechSynthesis;
     // The voice first: a button with no voice it may use says nothing, and stops nobody else's reading.
-    const voice = pickVoice(onDevice ? synth.getVoices().filter((v) => v.localService) : synth.getVoices(), lang);
-    if (onDevice && !voice) return;
+    const plan = voiceFor(synth.getVoices(), lang, onDevice);
+    if (!plan) return;
     if (reading && reading.owner !== owner) reading.stop();
     reading = { owner, stop };
     synth.cancel();
     const id = ++run.current;
+    // Only a voice service for this language: the reading starts by saying so, unless that was already heard.
+    const notice = plan.online && !toldOnline ? onlineVoiceNotice(lang) : [];
+    const lines = [...notice, ...sentences];
     const say = (i: number) => {
       if (run.current !== id) return;
-      if (i >= sentences.length) {
+      if (i >= lines.length) {
         if (reading?.owner === owner) reading = null;
         setSpeaking(false);
         return;
       }
-      const utterance = new SpeechSynthesisUtterance(sentences[i]);
+      const utterance = new SpeechSynthesisUtterance(lines[i]);
       utterance.lang = LOCALE[lang];
-      utterance.voice = voice;
+      utterance.voice = plan.voice;
       // Calm and warm: a little slower than normal, a little higher.
       utterance.rate = 0.92;
       utterance.pitch = 1.05;
       utterance.volume = 1;
       // Next sentence after a pause; one that fails is skipped. Some browsers send both error and end: act once.
       let settled = false;
-      utterance.onend = utterance.onerror = () => {
+      const next = (heard: boolean) => {
         if (settled || run.current !== id) return;
         settled = true;
+        if (heard && i === notice.length - 1) toldOnline = true; // the notice was heard to its end
         pause.current = window.setTimeout(() => say(i + 1), PAUSE_MS);
       };
+      utterance.onend = () => next(true);
+      utterance.onerror = () => next(false);
       current.current = utterance;
       synth.speak(utterance);
     };

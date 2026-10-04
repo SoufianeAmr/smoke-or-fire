@@ -182,6 +182,11 @@ The at-risk part is where speech could leak. In Chrome and Edge the voices the a
 - Listen on the other screens picks the most natural voice, which in Chrome and Edge can be a voice service. What it
   reads there includes the town that was checked and, on "Told to leave", an address. Reading with on-device voices
   only (`onDevice`, added here) is one line per screen. Left for the owner: it changes how every screen sounds.
+  **Decided by the owner on Oct 4, 2026, and done:** on every screen Listen reads with a voice that works on the
+  device when the language has one, however natural a voice service sounds. Where the language has only a voice
+  service, the first reading says so in one sentence ("This voice works over the internet, so what I read is sent to
+  a voice service."), once, until the page is loaded again; a notice cut short is said again. This screen's at-risk
+  line is unchanged: it is read by a voice on the device or not at all, and says nothing instead of the notice.
 - `web/index.html` loads Inter from Google Fonts on every screen. A stylesheet from another site could, in principle,
   react to what a page shows. Hosting the font with the app removes that trust. It predates this feature.
 - A second tab that had the switch on keeps showing "saved" after the first tab forgets it, until it is opened again.

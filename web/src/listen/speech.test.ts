@@ -28,6 +28,7 @@ const VERDICTS = [moncton, bridgetown, westDalhousie, miramichi, charlottetown, 
 const everythingSaid = () => LANGS.flatMap((lang) => [
   ...voice.checkVoice(lang, true, true), ...voice.checkVoice(lang, false, false), ...voice.q1Voice(lang), ...voice.q2Voice(lang), ...voice.q3Voice(lang),
   ...voice.nearbyFireVoice(lang), ...voice.locationVoice(lang),
+  ...voice.onlineVoiceNotice(lang),
   ...voice.loadingVoice(lang), ...voice.emergencyVoice(lang), ...voice.howVoice(lang), ...voice.locationOffVoice(lang), ...voice.noDataVoice(lang),
   ...VERDICTS.flatMap((d) => verdictView(d, lang).voice),
   ...VERDICTS.flatMap((d) => verdictView(d, lang).card.voice),
@@ -443,5 +444,63 @@ describe("the voice", () => {
   test("never a novelty voice, and nothing when the language has no voice", () => {
     expect(voice.pickVoice([v("Albert", "en-US"), v("Zarvox", "en-US")], "en")).toBeNull();
     expect(voice.pickVoice([v("Google US English", "en-US")], "fr")).toBeNull();
+  });
+});
+
+// Some of a browser's voices are voice services: the words go to a server to be spoken. A voice that works on the
+// device itself comes first, on every screen; a service is used only when the language has nothing else, and Listen
+// then says so, once.
+describe("the voice: on the device first", () => {
+  const device = (name: string, lang: string, isDefault = false) => ({ name, lang, default: isDefault, localService: true });
+  const service = (name: string, lang: string) => ({ name, lang, default: false, localService: false });
+  const plain = (name: string, lang: string) => ({ name, lang, default: false }); // says nothing of where it works
+  const david = device("Microsoft David - English (United States)", "en-US");
+  const googleUs = service("Google US English", "en-US");
+  const clara = service("Microsoft Clara Online (Natural) - English (Canada)", "en-CA");
+  const named = (plan: ReturnType<typeof voice.voiceFor>) => plan && { voice: plan.voice?.name ?? null, online: plan.online };
+
+  test("a voice that works on the device comes first, however natural or Canadian a voice service is", () => {
+    expect(named(voice.voiceFor([googleUs, david], "en"))).toEqual({ voice: david.name, online: false });
+    expect(named(voice.voiceFor([clara, david], "en"))).toEqual({ voice: david.name, online: false });
+    expect(named(voice.voiceFor([service("Microsoft Sylvie Online (Natural) - French (Canada)", "fr-CA"), device("Thomas", "fr_FR")], "fr"))).toEqual({ voice: "Thomas", online: false });
+    expect(named(voice.voiceFor([service("Google français", "fr-FR"), device("Amélie", "fr-CA")], "fr"))).toEqual({ voice: "Amélie", online: false });
+  });
+
+  test("among the device’s own voices, the order is the same as before: natural first in English, Canadian first in French", () => {
+    expect(named(voice.voiceFor([device("Microsoft Linda - English (Canada)", "en-CA"), device("Samantha (Enhanced)", "en_US"), googleUs], "en"))?.voice).toBe("Samantha (Enhanced)");
+    expect(named(voice.voiceFor([device("Thomas", "fr_FR"), device("Amélie", "fr-CA"), service("Microsoft Sylvie Online (Natural) - French (Canada)", "fr-CA")], "fr"))?.voice).toBe("Amélie");
+  });
+
+  test("only voice services for the language: the best of them, and it is known to be online", () => {
+    expect(named(voice.voiceFor([googleUs, clara], "en"))).toEqual({ voice: clara.name, online: true });
+    // English has a voice on the device; French has only a service: French is online.
+    expect(named(voice.voiceFor([david, service("Google français", "fr-FR")], "fr"))).toEqual({ voice: "Google français", online: true });
+  });
+
+  test("a voice that does not say where it works is neither the device’s own nor called online", () => {
+    const linda = plain("Microsoft Linda - English (Canada)", "en-CA");
+    expect(named(voice.voiceFor([linda], "en"))).toEqual({ voice: linda.name, online: false });
+    expect(named(voice.voiceFor([linda, david], "en"))).toEqual({ voice: david.name, online: false });
+  });
+
+  test("no voice listed for the language: the browser’s own choice, and nothing is claimed about it", () => {
+    expect(voice.voiceFor([], "en")).toEqual({ voice: null, online: false });
+    expect(voice.voiceFor([david], "fr")).toEqual({ voice: null, online: false });
+  });
+
+  test("a novelty voice is never the device’s voice", () => {
+    expect(named(voice.voiceFor([device("Albert", "en-US"), googleUs], "en"))).toEqual({ voice: googleUs.name, online: true });
+  });
+
+  test("a button that reads only on the device: the device’s voice, or nothing at all", () => {
+    expect(named(voice.voiceFor([david, googleUs], "en", true))).toEqual({ voice: david.name, online: false });
+    for (const voices of [[googleUs], [plain("Microsoft Linda - English (Canada)", "en-CA")], [], [device("Albert", "en-US")]]) {
+      expect(voice.voiceFor(voices, "en", true)).toBeNull();
+    }
+  });
+
+  test("what Listen says first when the voice is a service: one sentence, in English and French", () => {
+    expect(voice.onlineVoiceNotice("en")).toEqual(["This voice works over the internet, so what I read is sent to a voice service."]);
+    expect(voice.onlineVoiceNotice("fr")).toEqual(["Cette voix fonctionne par Internet, alors ce que je lis est envoyé à un service vocal."]);
   });
 });

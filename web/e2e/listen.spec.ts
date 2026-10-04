@@ -18,9 +18,12 @@ const STRINGS: Record<Lang, Record<string, string>> = {
   fr: JSON.parse(readFileSync(new URL("../src/i18n/fr.json", import.meta.url), "utf8")),
 };
 const LABEL = { en: { play: "Listen", stop: "Stop" }, fr: { play: "Écouter", stop: "Arrêter" } };
-// The recorder's voices: in English, a plain Canadian voice and a natural US one (the natural one is used); in French, a
-// plain and a natural Canadian voice and a natural France one (the natural Canadian one is used); and a novelty voice.
-const VOICE = { en: "Google US English", fr: "Amélie (Enhanced)" };
+// The recorder's voices. The two Google ones are voice services (what they say goes to a server); the others work on
+// the device. A voice on the device reads first, however natural a service sounds: in English the plain Canadian voice
+// (not the natural US service, nor the novelty voice), in French the natural Canadian one.
+const VOICE = { en: "Microsoft Linda - English (Canada)", fr: "Amélie (Enhanced)" };
+const SERVICE = { en: "Google US English", fr: "Google français" };
+const SERVICES_ONLY = [{ lang: "en-US", name: SERVICE.en, localService: false }, { lang: "fr-FR", name: SERVICE.fr, localService: false }];
 const NAVY = "rgb(27, 42, 74)";
 const RED = "rgb(217, 45, 32)";
 const WHITE = "rgb(255, 255, 255)";
@@ -52,17 +55,22 @@ function fakeSpeech() {
     text: string; lang = ""; voice: unknown = null; rate = 1; pitch = 1; volume = 1; onend: (() => void) | null = null; onerror: (() => void) | null = null;
     constructor(text: string) { this.text = text; }
   }
-  const voices = [
-    { lang: "en-US", name: "Albert" }, { lang: "en-CA", name: "Microsoft Linda - English (Canada)" }, { lang: "en-US", name: "Google US English" },
-    { lang: "fr-FR", name: "Google français" }, { lang: "fr-CA", name: "Amélie" }, { lang: "fr-CA", name: "Amélie (Enhanced)" },
+  let voices: { lang: string; name: string; localService?: boolean }[] = [
+    { lang: "en-US", name: "Albert", localService: true }, { lang: "en-CA", name: "Microsoft Linda - English (Canada)", localService: true }, { lang: "en-US", name: "Google US English", localService: false },
+    { lang: "fr-FR", name: "Google français", localService: false }, { lang: "fr-CA", name: "Amélie", localService: true }, { lang: "fr-CA", name: "Amélie (Enhanced)", localService: true },
   ];
+  /** Another list of voices, as a browser that lists them late, or a phone with voice services only. */
+  w.__setVoices = (list: typeof voices) => { voices = list; };
+  // A tap in progress: iOS lets speech start only inside one.
+  w.__inTap = false;
+  document.addEventListener("click", () => { w.__inTap = true; setTimeout(() => { w.__inTap = false; }, 0); }, true);
   Object.defineProperty(window, "SpeechSynthesisUtterance", { value: Utterance, configurable: true, writable: true });
   Object.defineProperty(window, "speechSynthesis", {
     configurable: true,
     value: {
       getVoices: () => voices,
       speak: (u: Record<string, unknown>) => {
-        const entry = { u, at: performance.now(), end: 0 };
+        const entry = { u, at: performance.now(), end: 0, inTap: w.__inTap as boolean };
         spoken.push(entry);
         if (w.__autoEnd) setTimeout(() => { if (entry.end) return; entry.end = performance.now(); (u.onend as (() => void) | null)?.(); }, 10);
       },
@@ -82,6 +90,12 @@ const spoken = (page: Page): Promise<Spoken[]> =>
     })),
   );
 const cancels = (page: Page) => page.evaluate(() => (window as unknown as { __cancels: number }).__cancels);
+/** Give the browser another list of voices, from now on in this page. */
+const setVoices = (page: Page, list: object[]) => page.evaluate((voices) => (window as unknown as { __setVoices: (v: object[]) => void }).__setVoices(voices), list);
+/** What was said, with the voice that said it. */
+const heard = async (page: Page) => (await spoken(page)).map(({ text, voice }) => ({ text, voice }));
+/** Whether each sentence started inside a tap. */
+const inTap = (page: Page) => page.evaluate(() => (window as unknown as { __spoken: { inTap: boolean }[] }).__spoken.map((entry) => entry.inTap));
 const text = async (page: Page, selector: string) => ((await page.locator(selector).first().textContent()) ?? "").trim();
 const listenButton = (page: Page, lang: Lang) => page.getByRole("button", { name: LABEL[lang].play, exact: true });
 
@@ -805,6 +819,96 @@ test.describe("Listen: stopping", () => {
     await listenButton(page, "fr").click();
     await expect.poll(async () => (await spoken(page)).length).toBe(1 + french.length);
     expect((await spoken(page)).slice(1).map(({ text: t, lang, voice }) => ({ t, lang, voice }))).toEqual(french.map((t) => ({ t, lang: "fr-CA", voice: VOICE.fr })));
+  });
+});
+
+// Some of a browser's voices are voice services: the words go to a server to be spoken. A voice that works on the
+// device reads first, on every screen (the tests above hold which voice reads each screen). Where the language has
+// only a service, Listen says so before it reads: once, until the page is loaded again.
+test.describe("Listen: a voice on the device first; a voice service says so, once", () => {
+  const NOTICE = { en: script("en", "voice.online"), fr: script("fr", "voice.online") };
+  const q1 = (lang: Lang) => script(lang, "voice.q1", labelled(lang, Q1));
+  const q2 = (lang: Lang) => script(lang, "voice.q2", labelled(lang, Q2));
+  /** Tap Listen and wait for the reading to end. */
+  async function listen(page: Page, lang: Lang, sentences: number) {
+    const before = (await spoken(page)).length;
+    await listenButton(page, lang).click();
+    await expect.poll(async () => (await spoken(page)).length, { timeout: 15_000 }).toBeGreaterThanOrEqual(before + sentences);
+    await expect(listenButton(page, lang)).toBeVisible({ timeout: 5_000 });
+    return (await heard(page)).slice(before);
+  }
+  test.beforeEach(async ({ page }) => { await page.addInitScript(fakeSpeech); });
+
+  for (const lang of ["en", "fr"] as const) {
+    test(`${lang.toUpperCase()} only voice services for the language: Listen says so first, in one sentence, then reads the screen`, async ({ page }) => {
+      await page.addInitScript((list) => (window as unknown as { __setVoices: (v: object[]) => void }).__setVoices(list), SERVICES_ONLY);
+      await start(page, lang);
+      await page.goto("/q1");
+      expect(NOTICE[lang]).toHaveLength(1);
+      const said = await listen(page, lang, 1 + q1(lang).length);
+      expect(said.map((u) => u.text)).toEqual([...NOTICE[lang], ...q1(lang)]);
+      expect(new Set(said.map((u) => u.voice))).toEqual(new Set([SERVICE[lang]]));
+      // Nothing in it is against calling 911, and it never says "safe".
+      expect(NOTICE[lang].join(" ")).not.toMatch(/safe|sécuri|911|(do not|don’t|never) call|n’appelez/i);
+    });
+  }
+
+  test("it is said once: not at the second reading, not on the next screen; again after the page is loaded again", async ({ page }) => {
+    await page.addInitScript((list) => (window as unknown as { __setVoices: (v: object[]) => void }).__setVoices(list), SERVICES_ONLY);
+    await start(page, "en");
+    await page.goto("/q1");
+    expect((await listen(page, "en", 1 + q1("en").length)).map((u) => u.text)).toEqual([...NOTICE.en, ...q1("en")]);
+    expect((await listen(page, "en", q1("en").length)).map((u) => u.text)).toEqual(q1("en"));
+    await answer(page, "no"); // on to the next question, inside the app
+    await expect(page).toHaveURL(/\/q2$/);
+    expect((await listen(page, "en", q2("en").length)).map((u) => u.text)).toEqual(q2("en"));
+    await page.reload();
+    expect((await listen(page, "en", 1 + q2("en").length)).map((u) => u.text)).toEqual([...NOTICE.en, ...q2("en")]);
+  });
+
+  test("cut short before its end, it is said again at the next reading", async ({ page }) => {
+    await page.addInitScript((list) => (window as unknown as { __setVoices: (v: object[]) => void }).__setVoices(list), SERVICES_ONLY);
+    await start(page, "en");
+    await page.goto("/q1");
+    await holdSentences(page);
+    await listenButton(page, "en").click();
+    await page.getByRole("button", { name: "Stop", exact: true }).click();
+    await expect(listenButton(page, "en")).toBeVisible();
+    await page.evaluate(() => { (window as unknown as { __autoEnd: boolean }).__autoEnd = true; });
+    const said = await listen(page, "en", 1 + q1("en").length);
+    expect((await heard(page)).map((u) => u.text).slice(0, 1)).toEqual(NOTICE.en); // the one that was cut
+    expect(said.map((u) => u.text)).toEqual([...NOTICE.en, ...q1("en")]);
+  });
+
+  test("the browser lists its voices late: first its own choice and no claim; then a service, announced; then a voice on the device, and nothing more to say", async ({ page }) => {
+    await page.addInitScript(() => (window as unknown as { __setVoices: (v: object[]) => void }).__setVoices([]));
+    await start(page, "en");
+    await page.goto("/q1");
+    expect(await listen(page, "en", q1("en").length)).toEqual(q1("en").map((text) => ({ text, voice: null })));
+    await setVoices(page, SERVICES_ONLY);
+    expect(await listen(page, "en", 1 + q1("en").length)).toEqual([...NOTICE.en, ...q1("en")].map((text) => ({ text, voice: SERVICE.en })));
+    await setVoices(page, [...SERVICES_ONLY, { lang: "en-CA", name: VOICE.en, localService: true }]);
+    expect(await listen(page, "en", q1("en").length)).toEqual(q1("en").map((text) => ({ text, voice: VOICE.en })));
+  });
+
+  test("English has a voice on the device, French only a service: nothing is said in English, and French says so", async ({ page }) => {
+    await page.addInitScript((list) => (window as unknown as { __setVoices: (v: object[]) => void }).__setVoices(list), [{ lang: "en-CA", name: VOICE.en, localService: true }, SERVICES_ONLY[1]]);
+    await start(page, "en");
+    await page.goto("/q1");
+    expect(await listen(page, "en", q1("en").length)).toEqual(q1("en").map((text) => ({ text, voice: VOICE.en })));
+    await page.getByRole("button", { name: "Français" }).click();
+    expect(await listen(page, "fr", 1 + q1("fr").length)).toEqual([...NOTICE.fr, ...q1("fr")].map((text) => ({ text, voice: SERVICE.fr })));
+  });
+
+  test("the first words start inside the tap, with and without the notice (a phone lets speech start only there)", async ({ page }) => {
+    await start(page, "en");
+    await page.goto("/q1");
+    await listen(page, "en", q1("en").length);
+    await setVoices(page, SERVICES_ONLY);
+    await listen(page, "en", 1 + q1("en").length);
+    const started = await inTap(page);
+    expect([started[0], started[q1("en").length]]).toEqual([true, true]); // the first sentence of each reading
+    expect((await heard(page))[q1("en").length].text).toBe(NOTICE.en[0]);
   });
 });
 

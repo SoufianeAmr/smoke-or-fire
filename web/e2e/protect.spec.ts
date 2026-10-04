@@ -846,16 +846,19 @@ test.describe("private: nothing about the switch leaves the device", () => {
     }
     const line = (request: Sent) => `${request.method} ${request.url} ${request.body ?? ""}`;
     // The engine was asked for a verdict twice in each visit: its address carries the place and the mode, and nothing
-    // else. Its only other requests are the quiet wake-up pings, one each time the app opens in live mode (as the
-    // visit starts, and after its reload): GET /health, with nothing in it at all.
-    const toEngine = runs.on.filter((request) => request.url.startsWith(TEST_ENGINE_URL));
-    const asked = toEngine.filter((request) => new URL(request.url).pathname === "/verdict");
-    expect(asked.length).toBe(2);
-    const pings = toEngine.filter((request) => !asked.includes(request));
-    expect(pings.map((request) => [request.method, request.url, request.body ?? null])).toEqual(pings.map(() => ["GET", `${TEST_ENGINE_URL}/health`, null]));
-    expect(pings.length).toBeLessThanOrEqual(2);
-    expect(asked.map((request) => [...new URL(request.url).searchParams.keys()].sort().join(","))).toEqual(["lat,lon,mode", "lat,lon,mode"]);
-    expect(runs.on.map(line).sort()).toEqual(runs.off.map(line).sort());
+    // else. Its only other requests are the quiet wake-up pings the first screen sends when the app opens on it in
+    // live mode: GET /health, with nothing in it at all, switch on or off.
+    const ping = (request: Sent) => request.url === `${TEST_ENGINE_URL}/health`;
+    for (const visit of [runs.on, runs.off]) {
+      const toEngine = visit.filter((request) => request.url.startsWith(TEST_ENGINE_URL));
+      const asked = toEngine.filter((request) => new URL(request.url).pathname === "/verdict");
+      expect(asked.map((request) => [...new URL(request.url).searchParams.keys()].sort().join(","))).toEqual(["lat,lon,mode", "lat,lon,mode"]);
+      const pings = toEngine.filter((request) => !asked.includes(request));
+      expect(pings.map((request) => [request.method, request.url, request.body ?? null])).toEqual(pings.map(() => ["GET", `${TEST_ENGINE_URL}/health`, null]));
+    }
+    // How many pings a visit sends is not fixed: the first screen sends one only if it had drawn before the visit
+    // moved on. They are held above for what they carry, and left out of the comparison of the two visits.
+    expect(runs.on.filter((request) => !ping(request)).map(line).sort()).toEqual(runs.off.filter((request) => !ping(request)).map(line).sort());
     // Header by header, the two visits are alike too: nothing is added when the switch is on.
     const names = (sent: Sent[]) => [...new Set(sent.flatMap((request) => Object.keys(request.headers)))].sort();
     expect(names(runs.on)).toEqual(names(runs.off));
@@ -973,6 +976,8 @@ test.describe("Listen reads the tiles, and the at-risk line when the switch is o
     ...(await tilesShown(page)),
     ...sentences(own(lang, "voice.tap")),
   ];
+  /** What Listen says first, once, where the language has only a voice service (every screen's Listen does). */
+  const notice = (lang: Lang) => sentences(APP[lang]["voice.online"]);
   /** The switch-off words, whole. */
   const offScript = async (page: Page, lang: Lang) => [...(await start(page, lang)), ...sentences(own(lang, "voice.atRisk.off")), APP[lang]["voice.verdict.call"]];
   /** The switch-on words, whole: ECCC named, the band's message and the doctor's-advice line as the screen shows them. */
@@ -1069,7 +1074,8 @@ test.describe("Listen reads the tiles, and the at-risk line when the switch is o
       await page.getByRole("button", { name: "Français" }).click();
       await expect(message(page)).toContainText(CONTENT.atRisk.messages.very_high.fr);
       const french = await reading(page, "fr");
-      expect(french.map((u) => u.text)).toEqual(await offScript(page, "fr"));
+      // French has only a voice service: Listen says so first.
+      expect(french.map((u) => u.text)).toEqual([...notice("fr"), ...(await offScript(page, "fr"))]);
       expect([...new Set(french.map((u) => u.voice))]).toEqual([SERVICE.fr]);
     });
   });
@@ -1081,12 +1087,14 @@ test.describe("Listen reads the tiles, and the at-risk line when the switch is o
       test(`${lang.toUpperCase()} the switch changes nothing of what is said: on, Listen says what it says off, word for word, and the message stays on the screen`, async ({ page }) => {
         await replay(page, lang);
         const off = await reading(page, lang);
-        expect(off.map((u) => u.text)).toEqual(await offScript(page, lang));
+        // The first reading says the voice is a service; that is said once.
+        expect(off.map((u) => u.text)).toEqual([...notice(lang), ...(await offScript(page, lang))]);
 
         await atRisk(page).click();
         await expect(message(page)).toContainText(CONTENT.atRisk.messages.very_high[lang]);
         const on = await reading(page, lang);
-        expect(on.map((u) => u.text)).toEqual(off.map((u) => u.text));
+        expect(on.map((u) => u.text)).toEqual(off.map((u) => u.text).slice(notice(lang).length));
+        expect(on.map((u) => u.text)).toEqual(await offScript(page, lang));
         expect([...new Set(on.map((u) => u.voice))]).toEqual([SERVICE[lang]]);
         // Nothing a voice service hears depends on the switch: not the message, not whose it is.
         const all = on.map((u) => u.text).join(" ");
@@ -1100,7 +1108,7 @@ test.describe("Listen reads the tiles, and the at-risk line when the switch is o
       await replay(page, "en");
       await atRisk(page).click();
       const before = await reading(page, "en");
-      expect(before.map((u) => u.text)).toEqual(await offScript(page, "en"));
+      expect(before.map((u) => u.text)).toEqual([...notice("en"), ...(await offScript(page, "en"))]);
 
       await setVoices(page, VOICES); // the browser says its voices changed
       const after = await reading(page, "en");

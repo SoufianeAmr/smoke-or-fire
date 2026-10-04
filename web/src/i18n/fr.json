@@ -8,6 +8,7 @@
   "lang.fr": "Français",
   "listen.play": "Écouter",
   "listen.stop": "Arrêter",
+  "voice.online": "Cette voix fonctionne par Internet, alors ce que je lis est envoyé à un service vocal.",
   "voice.check.replay": "En ce moment, je vous montre une reprise du 25 août 2025.",
   "voice.check": "Bonjour. Je suis là pour vous aider à savoir d’où vient la fumée. Ça ne prend qu’une minute. Si vous sentez de la fumée, touchez le grand bouton bleu\u00a0: Je sens de la fumée. Et si vous voyez des flammes, appelez le neuf-un-un tout de suite.",
   "voice.check.install": "Pour me garder sur votre téléphone, touchez\u00a0: {add}.",

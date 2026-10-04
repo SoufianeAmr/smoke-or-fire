@@ -116,6 +116,10 @@ One card on the verdict screen, after "Why?", in New Brunswick only ([docs/decis
 - **Type:** every word on the card is 18 px or more, hosts under links included.
 - **Its own Listen**, named "Listen: is burning allowed today?" for a screen reader. One voice at a time: starting one Listen stops the other.
 
+## Amendment: Listen keeps what it reads on the phone (Oct 4, 2026)
+
+Some of a browser's voices are voice services: the words go to a server to be spoken. On every screen Listen reads with a voice that works on the device when the language has one, however natural a service sounds. Where the language has only a voice service, the first reading starts with one sentence, said once until the page is loaded again: "This voice works over the internet, so what I read is sent to a voice service." / « Cette voix fonctionne par Internet, alors ce que je lis est envoyé à un service vocal. » Stopped before its end, it is said again. Nothing about it is stored. The at-risk line of "Protect your home" is still read by a voice on the device or not at all.
+
 ## Hard rules (unchanged)
 - Never "safe". Never "don't call 911" or any paraphrase.
 - 911 on every screen; one Call 911 button per view.

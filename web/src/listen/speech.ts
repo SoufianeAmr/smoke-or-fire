@@ -10,7 +10,8 @@ const NATURAL = /enhanced|premium|natural|neural|google/i;
 // macOS novelty voices, never used to read a warning.
 const NOVELTY = /^(albert|bad news|bahh|bells|boing|bubbles|cellos|deranged|good news|hysterical|jester|junior|organ|pipe organ|ralph|superstar|trinoids|whisper|wobble|zarvox)\b/i;
 
-type Voice = { lang: string; name: string; default?: boolean };
+/** `localService`: true for a voice that works on the device, false for a voice service (the words go to a server). */
+type Voice = { lang: string; name: string; default?: boolean; localService?: boolean };
 
 /**
  * The installed voice to use. A natural voice is one whose name says so ("Enhanced", "Premium", "Natural", "Neural",
@@ -25,6 +26,21 @@ export function pickVoice<V extends Voice>(voices: V[], lang: Lang): V | null {
     (lang === "en" ? (natural(v) ? 4 : 0) + (canadian(v) ? 2 : 0) : (canadian(v) ? 4 : 0) + (natural(v) ? 2 : 0)) + (v.default ? 1 : 0);
   const candidates = voices.filter((v) => tag(v).split("-")[0] === lang && !NOVELTY.test(v.name));
   return candidates.reduce<V | null>((best, v) => (best === null || rank(v) > rank(best) ? v : best), null);
+}
+
+/**
+ * The voice a reading uses, and whether it is a voice service. A voice that works on the device comes first, however
+ * natural a service sounds: what is read aloud then stays on the device. Among the device's voices, and among the
+ * services when there is nothing else, the order is pickVoice's. `online` is true only for a voice that says it is a
+ * service; with no voice listed for the language the browser chooses (voice null), and nothing is claimed about it.
+ * `onDeviceOnly`: a reading that must stay on the device gets the device's voice or null, never a service.
+ */
+export function voiceFor<V extends Voice>(voices: V[], lang: Lang, onDeviceOnly = false): { voice: V | null; online: boolean } | null {
+  const own = pickVoice(voices.filter((v) => v.localService === true), lang);
+  if (own) return { voice: own, online: false };
+  if (onDeviceOnly) return null;
+  const other = pickVoice(voices, lang);
+  return { voice: other, online: other?.localService === false };
 }
 
 /** Sentences: split after . ? or ! followed by a space. */
@@ -73,6 +89,8 @@ export const q3Voice = (lang: Lang) =>
     notSure: notSure(lang),
   });
 export const nearbyFireVoice = (lang: Lang) => script(lang, "voice.nearby", { check: translate(lang, "nearby.check") });
+/** Said once, before the first reading by a voice service: the person is told where the words go. */
+export const onlineVoiceNotice = (lang: Lang) => script(lang, "voice.online");
 export const locationVoice = (lang: Lang) => script(lang, "voice.location");
 /** `waking`: the engine has not answered yet, and the screen says it is waking up. */
 export const loadingVoice = (lang: Lang, waking = false) => [...script(lang, "voice.loading"), ...(waking ? script(lang, "voice.loading.waking") : [])];
