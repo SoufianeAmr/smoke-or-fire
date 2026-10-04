@@ -15,7 +15,7 @@ export default defineConfig({
     timeout: 180_000,
   },
   projects: [
-    { name: "flow", testMatch: /(flow|live|leave|listen|keep|glance|look[\w-]*)\.spec\.ts/ },
+    { name: "flow", testMatch: /(flow|live|leave|listen|keep|glance|dispatch|look[\w-]*)\.spec\.ts/ },
     // Every screen at 375 × 667 and 390 × 844: main action and 911 bar visible without scrolling.
     { name: "small-screens", testMatch: /small-screens\.spec\.ts/ },
     // Compared with design/screens with a small tolerance; reported, never blocking.

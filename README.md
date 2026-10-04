@@ -43,6 +43,21 @@ Every answer comes with an honest **High / Medium / Low confidence**, official a
 
 **Built for seniors:** large text and targets (tested down to iPhone SE), a guided **Listen** voice on every screen (EN/FR), colour + icon + word for every status, and nothing to install (open a link, or add it to the home screen).
 
+### For 911 call takers: the dispatch board
+
+`/dispatch` is a page for a call taker at a desk, on a morning like Aug 25, 2025. It is worked by keyboard and is not linked from the public app. The replay of that morning is at `/dispatch?mode=replay`.
+
+> **Decision support only. Your dispatch protocol governs.** This sentence stays at the top of the board.
+
+- **Type the caller's town, press Enter.** The answer is the one the caller's phone would show: *Drifting smoke · Long Lake fire · 159 km SSW*, with how sure it is. Under it, four facts, each with who says so, when, and a link: the **fire and its distance**, **ECCC's air-quality alert** with ECCC's reading for the area, the **burn status**, and the **wind trace**.
+- **Burn status is a record or "not checked", never a guess.** For Aug 25, 2025 the board has the burn bans New Brunswick, Nova Scotia and Prince Edward Island announced, each from the province's own news release. For any other day it says *not checked* and links to the province's own page.
+- **Ask the caller.** The app's three questions as a script, one at a time, answered with a click or a number key. The routing is the public app's own code: **any yes or not sure is Dispatch**. A neighbour's fire pit is Dispatch when a burn ban is on record. "No flames, haze or a smell, nothing burning" reads *Caller reports no fire nearby*, with what the trace found. The board never tells anyone not to respond.
+- **Copy for call notes.** One button copies plain text: the place, the time, the answer, every fact with its source, time and link, and the caller's answers.
+- **Known smoke event.** When many calls are about the same smoke, a person marks it, and the board drafts a message for the fire department's social media, in English and in French: *"The smoke in Moncton today comes from the Long Lake fire in Nova Scotia, 159 km away. If you see flames or smoke from a building or vehicle, call 911."*, then ECCC's alert when one is in effect. Each comes with a share image of the card and the map, and its description for alt text. The text can be changed. **Nothing is ever posted:** the only buttons are *Copy the text* and *Download the image*. A draft is offered only for drifting smoke from a fire 25 km away or more.
+- **Nothing about a call is stored or sent.** The place, the answers and the drafts live on the screen and are gone when it closes.
+
+Why it is built this way: [design/DISPATCH-BOARD.md](design/DISPATCH-BOARD.md).
+
 ---
 
 ## Architecture
@@ -125,12 +140,12 @@ smoke-or-fire/
 │   ├── scripts/       replay fetch, demo build, place data, TECH-FACTS generator
 │   └── tests/
 ├── web/               React + TypeScript app (Vite)
-│   ├── src/           screens, EN/FR strings, curated data
+│   ├── src/           screens, EN/FR strings, curated data; src/dispatch/ is the dispatch board
 │   ├── public/        web app manifest and icons
 │   └── scripts/       data build, icons, missing-translation report
 ├── data/              replay recordings, demo verdicts, validation data, places
 ├── analytics/         Snowflake SQL views and Streamlit data room
-├── design/            frozen screens, DESIGN-LOCK.md, GAPS.md
+├── design/            frozen screens, DESIGN-LOCK.md, GAPS.md, DISPATCH-BOARD.md (decision record)
 ├── render.yaml        Render blueprint for the engine
 ├── TECH-FACTS.md      numbers generated from the code, data and test runs
 ├── VALIDATION.md      tests on real 2025 events
@@ -175,6 +190,7 @@ See `web/package.json` for all scripts. Current test counts are in [TECH-FACTS.m
 - The AQHI is an **area-wide** reading; smoke from a nearby source can be much stronger.
 - ECCC's alerts answer carries no data time: if ECCC's own list were stale but well formed, the badge would read "none in effect". The badge shows when ECCC was asked, and reads "not checked" whenever the answer cannot be read for certain.
 - Traces can leave the wind grid before 24 h; the app says how many hours it traced.
+- The dispatch board checks no burn ban by itself: outside the days of its curated records (Aug 25, 2025 for the replay), burn status reads "not checked".
 - Evacuation centres are shown only for events officials announced; the app plans no routes (it hands the address to the phone's maps app).
 
 ## Roadmap
@@ -199,6 +215,7 @@ See `web/package.json` for all scripts. Current test counts are in [TECH-FACTS.m
 | Hourly wind (GFS 0.25°) | Open-Meteo.com | CC BY 4.0 |
 | Community names and locations | NRCan, Canadian Geographical Names Database | Open Government Licence – Canada |
 | Province and marine outlines | Natural Earth | Public domain |
+| Burn bans in effect on Aug 25, 2025 (dispatch board, replay) | Government of New Brunswick, news release of Aug 25, 2025 ([EN](https://www.gnb.ca/en/news/n-b.2025.08.most-restrictions-on-crown-land-to-be-lifted-tonight.html), [FR](https://www.gnb.ca/fr/nouvelles/n-b.2025.08.la-plupart-des-restrictions-relatives-aux-terres-de-la-couronne-seront-levees-ce-soir.html)); Province of Nova Scotia, [Jul 30, 2025](https://news.novascotia.ca/en/2025/07/30/provincewide-burn-ban-effect); Government of Prince Edward Island, [Aug 11, 2025](https://www.princeedwardisland.ca/en/news/fire-ban-in-pei-including-campfires). Hand-curated in `web/src/dispatch/burn-status.json` | — |
 | Long Lake evacuation centres and alerts | Municipality of the County of Annapolis (REMO), Aug–Sep 2025 releases | — |
 | Centre coordinates | NRCan Geolocation Service | Open Government Licence – Canada |
 

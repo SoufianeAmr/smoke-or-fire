@@ -1,4 +1,4 @@
-import { useLayoutEffect } from "react";
+import { lazy, Suspense, useLayoutEffect } from "react";
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-router";
 import { AppProvider } from "./app/state";
 import { Trail } from "./app/trail";
@@ -15,6 +15,10 @@ import { Q1Flames } from "./screens/Q1Flames";
 import { Q2Sky } from "./screens/Q2Sky";
 import { Q3Nearby } from "./screens/Q3Nearby";
 import { Verdict } from "./screens/Verdict";
+
+// The dispatch board is for call takers, at a desk: it loads only when its address is opened, so the public app never
+// carries it. No public screen links to it.
+const Dispatch = lazy(() => import("./screens/Dispatch"));
 
 /** Each screen opens at its top, as the screen files do. */
 function ScrollToTop() {
@@ -45,6 +49,7 @@ export function App() {
             <Route path="/how-it-works" element={<HowItWorks />} />
             <Route path="/location-off" element={<LocationOff />} />
             <Route path="/no-data" element={<NoData />} />
+            <Route path="/dispatch" element={<Suspense fallback={null}><Dispatch /></Suspense>} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Trail>
