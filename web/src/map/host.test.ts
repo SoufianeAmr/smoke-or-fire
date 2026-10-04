@@ -12,7 +12,8 @@ test("every address is the app's own page, except its files: a tiles, vendor or 
   expect(["/tiles/maritimes-20260928.pmtiles", "/vendor/maplibre-gl-6.12.0/maplibre-gl.mjs", "/assets/Verdict-abc.js"].filter((path) => app.test(path))).toEqual([]);
 });
 
-test("the basemap file and the map library are kept by the browser for good: their names carry their versions", () => {
+test("the basemap file, the map library and the app's own built files are kept by the browser for good: their names carry their versions", () => {
   const kept = Object.fromEntries(host.headers.map((rule) => [rule.source, rule.headers.find((h) => h.key === "Cache-Control")?.value]));
-  expect(kept).toEqual({ "/tiles/(.*)": "public, max-age=31536000, immutable", "/vendor/(.*)": "public, max-age=31536000, immutable" });
+  const forGood = "public, max-age=31536000, immutable";
+  expect(kept).toEqual({ "/tiles/(.*)": forGood, "/vendor/(.*)": forGood, "/assets/(.*)": forGood });
 });

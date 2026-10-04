@@ -189,7 +189,9 @@ export function TileMap(props: Props) {
 
   useEffect(() => {
     const { lib, view, size, lang } = latest.current;
+    performance.mark("map:mount");
     let started = takeAhead();
+    performance.mark(started?.loaded ? "map:taken-drawn" : started ? "map:taken-loading" : "map:started-here");
     if (started) {
       // Started while the Loading screen showed: it comes onto the stage as it is, at the stage's size and frame.
       started.container.style.cssText = FILL;

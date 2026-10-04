@@ -819,6 +819,31 @@ test.describe("budgets: what the build weighs, gzipped", () => {
     expect(total).toBeLessThanOrEqual(MAP_BUDGET);
   });
 
+  test("the map’s library starts coming while the person picks their place, before any town is chosen; not on a phone that asks to save data", async ({ page, browser }) => {
+    const library = /\/vendor\/maplibre-gl-[\d.]+\/maplibre-gl\.mjs$/;
+    await start(page, "en", "replay");
+    const asked = page.waitForResponse((response) => library.test(response.url()), { timeout: 20_000 });
+    await page.goto("/location");
+    expect((await asked).status()).toBe(200);
+    await expect(page).toHaveURL(/\/location$/); // still picking
+
+    // Save-Data: nothing of the map is asked for here; the Loading screen fetches it, as it always does.
+    const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
+    const saving = await context.newPage();
+    await saving.addInitScript(() => Object.defineProperty(navigator, "connection", { value: { saveData: true }, configurable: true }));
+    const early: string[] = [];
+    saving.on("request", (request) => void (library.test(request.url()) && early.push(request.url())));
+    await start(saving, "en", "replay");
+    await saving.goto("/location");
+    await saving.waitForTimeout(2500);
+    expect(early).toEqual([]);
+    await saving.locator("input[type=search]").fill("Moncton");
+    await saving.getByRole("option", { name: /^Moncton,/ }).first().click();
+    await expect(saving.locator("#verdict-h")).toBeVisible({ timeout: 20_000 });
+    expect(early.length).toBe(1);
+    await context.close();
+  });
+
   test("the map is fetched while the Loading screen shows, and the tiles by byte range (206), never whole", async ({ page }) => {
     const asked: { url: string; range: string | null; status: number }[] = [];
     page.on("response", (response) => asked.push({ url: response.url(), range: response.request().headers()["range"] ?? null, status: response.status() }));

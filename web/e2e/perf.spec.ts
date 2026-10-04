@@ -3,7 +3,8 @@
 //
 // The phone: a mid-range one on a slow connection, as Lighthouse's mobile profile has it (the processor four times
 // slower, 1.6 Mbit/s down, 750 kbit/s up, 150 ms each way). The site: the test build, served here as the host serves
-// it (gzip for scripts, byte ranges for the tiles), which `vite preview` does not do.
+// it (gzip for scripts, byte ranges for the tiles, and the cache rules of public/vercel.json: the built files, the
+// map library and the tiles kept for good, the page itself asked for each time), which `vite preview` does not do.
 import { expect, test, type Browser, type Page } from "@playwright/test";
 import { closeSync, existsSync, mkdirSync, openSync, readFileSync, readSync, statSync, writeFileSync } from "node:fs";
 import { createServer, type Server } from "node:http";
@@ -17,6 +18,9 @@ const OUT = fileURLToPath(new URL("../test-results/", import.meta.url));
 const PHONE = { cpu: 4, latency: 150, down: (1.6 * 1024 * 1024) / 8, up: (750 * 1024) / 8 };
 const BUDGET_MS = 1500;
 const TYPES: Record<string, string> = { ".html": "text/html", ".js": "text/javascript", ".mjs": "text/javascript", ".css": "text/css", ".json": "application/json", ".png": "image/png", ".webmanifest": "application/manifest+json", ".pmtiles": "application/octet-stream" };
+
+/** How long the browser may keep an address, as the host says (public/vercel.json; the rest is the host's default). */
+const kept = (path: string) => (/^\/(assets|vendor|tiles)\//.test(path) ? "public, max-age=31536000, immutable" : "public, max-age=0, must-revalidate");
 
 let server: Server;
 let site: string;
@@ -35,13 +39,13 @@ test.beforeAll(async () => {
       const fd = openSync(file, "r");
       readSync(fd, bytes, 0, bytes.length, from);
       closeSync(fd);
-      response.writeHead(206, { "content-type": type, "content-range": `bytes ${from}-${to}/${size}`, "content-length": bytes.length, "accept-ranges": "bytes", etag: `"${size}"` });
+      response.writeHead(206, { "content-type": type, "content-range": `bytes ${from}-${to}/${size}`, "content-length": bytes.length, "accept-ranges": "bytes", etag: `"${size}"`, "cache-control": kept(path) });
       return response.end(bytes);
     }
     if (/javascript|css|html|json/.test(type)) {
       if (!zipped.has(file)) zipped.set(file, gzipSync(readFileSync(file), { level: 9 }));
       const body = zipped.get(file)!;
-      response.writeHead(200, { "content-type": type, "content-encoding": "gzip", "content-length": body.length, "cache-control": "no-cache" });
+      response.writeHead(200, { "content-type": type, "content-encoding": "gzip", "content-length": body.length, "cache-control": kept(path) });
       return response.end(body);
     }
     response.writeHead(200, { "content-type": type, "accept-ranges": "bytes" });
@@ -69,7 +73,10 @@ async function check(page: Page, town: string) {
   await page.waitForFunction(() => performance.getEntriesByName("map:shown").length > 0, null, { timeout: 90_000 });
   return page.evaluate(() => {
     const at = (name: string) => performance.getEntriesByName(name).at(-1)?.startTime ?? NaN;
-    return { interactive: Math.round(at("map:interactive") - at("verdict:shown")), shown: Math.round(at("map:shown") - at("verdict:shown")) };
+    const from = (name: string) => Math.round(at(name) - at("verdict:shown"));
+    // How the map came: taken from the Loading screen already drawn, taken while still loading, or started here.
+    const came = ["map:taken-drawn", "map:taken-loading", "map:started-here"].find((name) => performance.getEntriesByName(name).length > 0) ?? "?";
+    return { interactive: from("map:interactive"), shown: from("map:shown"), stage: from("map:stage"), mount: from("map:mount"), came: came.replace("map:", "") };
   });
 }
 /** A first visit: nothing in the browser's cache. */
@@ -106,7 +113,7 @@ test("the map is there within 1.5 s of the verdict, on a slowed-down phone", asy
   const result = {
     phone: "CPU 4x slower, 1.6 Mbit/s down, 750 kbit/s up, 150 ms latency",
     machine: runs[0].machine,
-    firstCheck: { interactiveMs: runs.map((r) => r.first.interactive), shownMs: runs.map((r) => r.first.shown), medianInteractiveMs: median(runs.map((r) => r.first.interactive)), medianShownMs: median(runs.map((r) => r.first.shown)) },
+    firstCheck: { interactiveMs: runs.map((r) => r.first.interactive), shownMs: runs.map((r) => r.first.shown), stageMs: runs.map((r) => r.first.stage), mountMs: runs.map((r) => r.first.mount), came: runs.map((r) => r.first.came), medianInteractiveMs: median(runs.map((r) => r.first.interactive)), medianShownMs: median(runs.map((r) => r.first.shown)) },
     secondCheck: { interactiveMs: runs.map((r) => r.second.interactive), shownMs: runs.map((r) => r.second.shown), medianInteractiveMs: median(runs.map((r) => r.second.interactive)), medianShownMs: median(runs.map((r) => r.second.shown)) },
     budgetMs: BUDGET_MS,
   };

@@ -39,14 +39,14 @@ async function question(page: Page, route: "/q1" | "/q2" | "/q3") {
   await expect(page.locator('main .look-answers[data-ready="true"]')).toBeVisible();
 }
 
-/** A replay town's verdict as it opens: the map drawn (the detailed one, or the outline map with its note), and the
- *  glance card in the sheet at its foot. */
+/** A replay town's verdict as it opens: the map drawn (the detailed one, or the outline map with its note; or no map,
+ *  on a small phone where the card and the fire-is-close notice leave it no room), and the glance card in the sheet. */
 async function verdict(page: Page, town: string) {
   await page.goto("/location");
   await page.locator("input[type=search]").fill(town);
   await page.getByRole("option", { name: new RegExp(`^${town},`) }).first().click();
   await expect(page.locator("#verdict-h")).toBeVisible({ timeout: 15_000 });
-  await page.waitForFunction(() => { const map = document.querySelector(".map-stage"); return map?.getAttribute("data-basemap") === "tiles" || map?.hasAttribute("data-fallback"); }, null, { timeout: 20_000 });
+  await page.waitForFunction(() => { const map = document.querySelector(".map-stage"); return map?.getAttribute("data-basemap") === "tiles" || map?.hasAttribute("data-fallback") || (map as HTMLElement | null)?.inert === true; }, null, { timeout: 20_000 });
 }
 /** A browser with no WebGL, for the picture of the outline map. Before the page loads. */
 const noWebGL = (page: Page) =>
@@ -211,6 +211,7 @@ const SHOTS: Shot[] = [
     file: "16-verdict-official-list",
     open: async (page) => {
       await verdict(page, "Bathurst");
+      await sheetTo(page, "half");
       await expect(page.locator('main .badge[data-badge="fire"]')).toBeVisible();
     },
   },

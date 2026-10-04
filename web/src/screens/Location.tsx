@@ -14,6 +14,7 @@ import { circleBox, textBox } from "../map/labels";
 import { Basemap, USER_XY, frameProjection } from "../map/basemap";
 import type { StringKey } from "../i18n";
 import { locationVoice } from "../listen/speech";
+import { loadVerdictScreen } from "./verdictScreen";
 
 export function PlaceSearch({ id, places, query, setQuery, choose, href = "/loading" }: { id: string; places: Place[]; query: string; setQuery: (q: string) => void; choose: (p: Place) => void; href?: string }) {
   const t = useT();
@@ -91,6 +92,19 @@ export function Location() {
     setPlace(chosen);
     navigate("/loading");
   };
+
+  // The verdict's own file and the map's library start coming while the person picks their place: on a slow
+  // connection they are then there when the answer is. A moment after this screen has drawn, and not on a phone that
+  // asks to save data (the Loading screen fetches them then, as it always does). Nothing here can fail the screen.
+  useEffect(() => {
+    if ((navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData === true) return;
+    const soon = window.setTimeout(() => {
+      loadVerdictScreen()
+        .then((verdict) => verdict.warmMap())
+        .catch(() => {});
+    }, 400);
+    return () => window.clearTimeout(soon);
+  }, []);
 
   const useMyLocation = useLocate(choose, () => navigate("/location-off"));
 

@@ -67,6 +67,27 @@ export function Verdict() {
   const model = useMemo(() => (result ? readMap(result) : null), [result]);
   const text = useMemo(() => (result && view && model ? mapText(result, view, model, lang, basemap) : null), [result, view, model, lang, basemap]);
   const shown = result !== null;
+  const open = detent === "full";
+  // Everything "Why?" opens. Drawn once for an answer, not again each time the screen measures itself or the map
+  // reports in: it is out of sight until "Why?" is pressed, and it holds a map of its own.
+  const whyAll = useMemo(
+    () =>
+      result && view ? (
+        <>
+          {/* Opened, "Why?" moves to the top of the sheet: Listen is under it, and reads everything below. It is
+              there only while "Why?" is open, so closing it stops the reading. */}
+          {open && <ListenButton sentences={view.voice} style={{ alignSelf: "flex-start" }} />}
+          <AnswerInFull view={view} />
+          <VerdictMap json={result} view={view} />
+          <ConfidenceCard view={view} />
+          {view.twoPossibilities && <TwoPossibilitiesCard view={view} />}
+          <WhatToDoCard view={view} />
+          <AirQualityCard view={view} />
+          <WhyCard view={view} startOpen />
+        </>
+      ) : null,
+    [result, view, open],
+  );
 
   // How much of the map the sheet covers, and how tall the 911 bar is (its French line can wrap): the map's frame and
   // the room kept at the foot of the screen follow them.
@@ -222,17 +243,8 @@ export function Verdict() {
             {/* Out of reach at peek, not only out of sight: nothing in it takes the focus. */}
             <div className="sheet-more" hidden={detent === "peek"}>
               <Badges badges={view.badges} title={t("badges.title")} />
-              <Why card={view.card} open={detent === "full"} onToggle={() => setDetent(detent === "full" ? "half" : "full")}>
-                {/* Opened, "Why?" moves to the top of the sheet: Listen is under it, and reads everything below. It is
-                    there only while "Why?" is open, so closing it stops the reading. */}
-                {detent === "full" && <ListenButton sentences={view.voice} style={{ alignSelf: "flex-start" }} />}
-                <AnswerInFull view={view} />
-                <VerdictMap json={result} view={view} />
-                <ConfidenceCard view={view} />
-                {view.twoPossibilities && <TwoPossibilitiesCard view={view} />}
-                <WhatToDoCard view={view} />
-                <AirQualityCard view={view} />
-                <WhyCard view={view} startOpen />
+              <Why card={view.card} open={open} onToggle={() => setDetent(open ? "half" : "full")}>
+                {whyAll}
               </Why>
             </div>
           </main>

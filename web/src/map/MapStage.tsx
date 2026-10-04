@@ -19,7 +19,7 @@ import type { MapModel } from "./model";
 import { Overlay } from "./Overlay";
 import { mapNote, mapText, type Basemap as BasemapKind, type Fallback } from "./text";
 import type { TileMapApi } from "./TileMap";
-import { NoTileMap, tileKit, type TileKit } from "./warm";
+import { NoTileMap, readyKit, tileKit, type TileKit } from "./warm";
 
 /** The outline map's outlines are coarse: past this zoom they are only straight lines. */
 const OUTLINE_MAX_ZOOM = 9;
@@ -63,7 +63,7 @@ export function MapStage({ json, view, model, covered: coveredNow, hidden, legen
   const carried = useRef<HTMLDivElement>(null);
   const tileMap = useRef<TileMapApi>(null);
   const [size, setSize] = useState<Size | null>(null);
-  const [kit, setKit] = useState<TileKit | null>(null);
+  const [kit, setKit] = useState<TileKit | null>(() => (model.detail === "reduced" ? null : readyKit()));
   const [fallback, setFallback] = useState<Fallback | null>(model.detail === "reduced" ? "reduced" : null);
   const [drawn, setDrawn] = useState(false); // the detailed map has drawn its first picture
   const [camera, setCamera] = useState<View | null>(null);
@@ -72,6 +72,7 @@ export function MapStage({ json, view, model, covered: coveredNow, hidden, legen
   // The stage's size, as it is laid out.
   useLayoutEffect(() => {
     const el = stage.current!;
+    performance.mark("map:stage"); // the map's place is on the screen (e2e/perf.spec.ts times the rest from the verdict)
     const measure = () => {
       const { width, height } = el.getBoundingClientRect();
       setSize((was) => (was && was.width === width && was.height === height ? was : { width, height }));

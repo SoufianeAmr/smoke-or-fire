@@ -43,6 +43,9 @@ export function canDraw(): boolean {
 }
 
 let kit: Promise<TileKit> | null = null;
+let loaded: TileKit | null = null;
+/** The kit, if it is already loaded: the verdict screen then puts the map on its stage without waiting a turn. */
+export const readyKit = (): TileKit | null => loaded;
 
 /** Everything the detailed map needs, loaded once. Rejects with NoTileMap; a failed load is tried again next time. */
 export function tileKit(): Promise<TileKit> {
@@ -59,6 +62,7 @@ export function tileKit(): Promise<TileKit> {
     }
   })();
   kit = loading;
+  loading.then((ready) => (loaded = ready)).catch(() => {});
   loading.catch((error: unknown) => {
     // The device will not change its mind; the network may.
     if (!(error instanceof NoTileMap && error.why === "webgl")) kit = null;
