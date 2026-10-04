@@ -8,13 +8,21 @@ import { LOCALE, pickVoice } from "./speech";
 // Outlined navy, as the other secondary buttons: red stays for Call 911. White inside, so it also reads on a red screen.
 const OUTLINED: CSSProperties = { minHeight: "56px", display: "flex", alignItems: "center", gap: "6px", padding: "0 12px 0 10px", borderRadius: "18px", border: "2px solid #1B2A4A", background: "#FFFFFF", color: "#1B2A4A", fontFamily: "inherit", fontSize: "18px", fontWeight: "700", lineHeight: "1.2", cursor: "pointer" };
 
+// One voice at a time. A screen can have two Listen buttons (the verdict, and its burn card): starting one stops the
+// other, and a button that is not the one reading never cuts the other's sentence (the verdict's own button leaves the
+// screen when "Why?" opens).
+let reading: { owner: object; stop: () => void } | null = null;
+
 /** A short breath between sentences, as a person reading aloud would take. */
 const PAUSE_MS = 300;
 
 export const canSpeak = () => typeof window !== "undefined" && !!window.speechSynthesis && typeof window.SpeechSynthesisUtterance === "function";
 
-/** `sentences` are read in order, one utterance each, with a pause between them. */
-export function ListenButton({ sentences, style }: { sentences: string[]; style?: CSSProperties }) {
+/**
+ * `sentences` are read in order, one utterance each, with a pause between them. `label` names the button for a screen
+ * reader where a screen has a second one: "Listen: is burning allowed today?".
+ */
+export function ListenButton({ sentences, style, label }: { sentences: string[]; style?: CSSProperties; label?: { play: string; stop: string } }) {
   const { lang } = useApp();
   const t = useT();
   const [supported] = useState(canSpeak);
@@ -23,12 +31,16 @@ export function ListenButton({ sentences, style }: { sentences: string[]; style?
   const pause = useRef<number | undefined>(undefined);
   const current = useRef<SpeechSynthesisUtterance | null>(null); // held so Chrome can't collect it before its end event
 
+  const owner = useRef({}).current; // this button, to tell whose reading it is
   const stop = useCallback(() => {
     run.current++;
     window.clearTimeout(pause.current);
-    window.speechSynthesis.cancel();
+    if (!reading || reading.owner === owner) {
+      window.speechSynthesis.cancel();
+      reading = null;
+    }
     setSpeaking(false);
-  }, []);
+  }, [owner]);
   // Leaving the screen, switching language, or the screen changing what it shows (the leave screen's "Change", Check's
   // Live/Replay) stops the reading: it was for what's no longer there. Keyed on the text: screens rebuild the array.
   const script = sentences.join("\n");
@@ -57,12 +69,15 @@ export function ListenButton({ sentences, style }: { sentences: string[]; style?
     if (speaking) return stop();
     if (sentences.length === 0) return;
     const synth = window.speechSynthesis;
+    if (reading && reading.owner !== owner) reading.stop();
+    reading = { owner, stop };
     synth.cancel();
     const id = ++run.current;
     const voice = pickVoice(synth.getVoices(), lang);
     const say = (i: number) => {
       if (run.current !== id) return;
       if (i >= sentences.length) {
+        if (reading?.owner === owner) reading = null;
         setSpeaking(false);
         return;
       }
@@ -88,7 +103,7 @@ export function ListenButton({ sentences, style }: { sentences: string[]; style?
   };
 
   return (
-    <button type="button" onClick={listen} className="press" style={{ ...OUTLINED, ...style }}>
+    <button type="button" onClick={listen} className="press" aria-label={label && (speaking ? label.stop : label.play)} style={{ ...OUTLINED, ...style }}>
       {speaking ? <StopIcon size={22} /> : <SpeakerIcon size={24} />}
       {t(speaking ? "listen.stop" : "listen.play")}
     </button>

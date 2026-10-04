@@ -146,6 +146,26 @@ def alerts_params(lat: float, lon: float) -> dict:
     return {"f": "json", "bbox": f"{lon},{lat},{lon},{lat}", "skipGeometry": "true", "limit": 50}
 
 
+# --- Government of New Brunswick: each county's burn category of the day -------------------------
+# The layers GNB's Fire Watch dashboard draws (Department of Natural Resources, ArcGIS Server; no key). Layer 0 lists
+# the counties that have a category now; layer 1, "No Current Category", the ones that have none. The service keeps
+# no past categories (supportsHistoricMoment is false).
+GNB_BURN_SERVICE = "https://gis-erd-der.gnb.ca/gisserver/rest/services/FireWeather/BurnCategories/MapServer"
+GNB_BURN_LAYERS = {0: f"{GNB_BURN_SERVICE}/0", 1: f"{GNB_BURN_SERVICE}/1"}
+
+
+def burn_requests() -> dict[str, tuple[str, dict]]:
+    """What is asked of the province, by name: the two lists of counties, whole (nothing may narrow them: a filter
+    that matches nothing would read as "no category"), and the first layer's own description, whose coded values
+    say what category 1, 2 and 3 mean. No outlines, and never the person's point."""
+    rows = {"where": "1=1", "outFields": "NAME,PUBLICCATEGORY,VALIDDATE", "returnGeometry": "false", "f": "json"}
+    return {
+        "current": (f"{GNB_BURN_LAYERS[0]}/query", rows),
+        "none": (f"{GNB_BURN_LAYERS[1]}/query", rows),
+        "layer": (GNB_BURN_LAYERS[0], {"f": "json"}),
+    }
+
+
 # --- NASA FIRMS: satellite fire detections (VIIRS and MODIS) -------------------------------------
 # The MAP_KEY sits inside every URL: never print, log or save a URL or error without mask_key().
 FIRMS_API = "https://firms.modaps.eosdis.nasa.gov/api"

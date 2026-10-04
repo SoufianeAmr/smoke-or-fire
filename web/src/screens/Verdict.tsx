@@ -6,6 +6,7 @@ import { useApp, useT } from "../app/state";
 import { ReplayBanner } from "../components/ReplayBanner";
 import { Screen } from "../components/Screen";
 import { CLEAR_OF_BAR, CLEAR_OF_CALL, Sticky911 } from "../components/Sticky911";
+import { BurnCard } from "../burn/BurnCard";
 import { LangToggle } from "../components/TopBar";
 import { BackIcon, ChevronRightIcon } from "../components/icons";
 import { ListenButton } from "../listen/ListenButton";
@@ -79,6 +80,7 @@ export function Verdict() {
           <AirQualityCard view={view} />
           <WhyCard view={view} startOpen />
         </Why>
+        <BurnCard json={result} />
       </main>
       <Sticky911 callFirst={view.card.callFirst} />
     </Screen>

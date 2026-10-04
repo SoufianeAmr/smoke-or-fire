@@ -2778,6 +2778,7 @@
    "alert": null
   }
  },
+ "burn": null,
  "sources": {
   "cwfis": {
    "ok": true,

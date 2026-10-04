@@ -10,6 +10,7 @@ from fastapi.responses import JSONResponse
 
 from smoke_engine.alerts import AlertCheck, air_quality_alert
 from smoke_engine.aqhi import Reading, nearest_reading
+from smoke_engine.burn import BurnCheck, burn_status
 from smoke_engine.detections import LATENCY_CLASSES, Detection, cwfis_detections, firms_detections, fuse, within
 from smoke_engine.feeds import FeedUnavailable
 from smoke_engine.fires import FIRE_RADIUS_KM, HOTSPOT_HOURS, Approach, Fire, closest_approach, known_fires
@@ -254,6 +255,20 @@ def _alerts_json(check: AlertCheck, mode: str) -> dict:
     }
 
 
+def _burn_json(check: BurnCheck | None, mode: str) -> dict | None:
+    """The province's burn category for the county of the spot; null outside New Brunswick. Nothing was recorded for the replay."""
+    if check is None:
+        return None
+    return {
+        "state": check.state,
+        "county": check.county,
+        "validUntil": _iso_or_none(check.valid_until),
+        "checkedAt": _iso_or_none(check.checked_at),
+        "source": "none_recorded" if mode == "replay" else "gnb_burn_categories",
+        "reason": check.reason,
+    }
+
+
 def _approach_json(approach: Approach | None, lat: float, lon: float, arrival: datetime) -> dict | None:
     if approach is None:
         return None
@@ -397,6 +412,7 @@ def create_app(feeds_by_mode: dict, now=_utc_now, lifespan=None) -> FastAPI:
             "aqhi": _aqhi_json(nearest_reading(feeds, lat, lon, arrival)),
             # Informational only, like the forward trace and the AQHI: after the verdict, never part of it.
             "alerts": _alerts_json(air_quality_alert(feeds, lat, lon, arrival), mode),
+            "burn": _burn_json(burn_status(feeds, lat, lon, arrival), mode),
             "sources": _sources_json(checked, fused, firms, arrival, now()),
         }
 

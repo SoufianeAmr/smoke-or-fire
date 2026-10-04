@@ -85,6 +85,15 @@ Screens 7a–7d keep every word, card and number above, behind one button. What 
 - **The fire-is-close notice** stays in front of "Why?".
 - **Unexplained smoke: Call 911 is the main action.** The 911 bar stays and becomes it: "Look outside. See flames or a smoke column?" above a Call 911 button as wide as the bar. Still one Call 911 button per view.
 
+## Amendment: "Is burning allowed today?" (Oct 4, 2026)
+
+One card on the verdict screen, after "Why?", in New Brunswick only ([docs/decisions/0005-burn.md](../docs/decisions/0005-burn.md)). Nothing above it moves.
+
+- **The status block:** a 48 px shape and the status in a few words, 22 px extrabold. No burning = white octagon with a red cross, on red, white text. Restricted = white triangle, outlined near-black, with a clock, on amber, near-black text. Burning permitted = green circle with a white flame, on white with a green outline. Fire season closed = outlined navy square with a bar. Not checked = dashed navy ring with a question mark, as on the source badges.
+- **Green: the one exception to "No green".** #1E7B3A, on this card only, as the outline and shape of the province's "burn permitted". Never a fill behind text, and never about the smoke. **No check mark:** under a verdict that says to look outside, a tick could read as "all is well".
+- **Type:** every word on the card is 18 px or more, hosts under links included.
+- **Its own Listen**, named "Listen: is burning allowed today?" for a screen reader. One voice at a time: starting one Listen stops the other.
+
 ## Hard rules (unchanged)
 - Never "safe". Never "don't call 911" or any paraphrase.
 - 911 on every screen; one Call 911 button per view.

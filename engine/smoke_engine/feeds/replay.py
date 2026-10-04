@@ -64,6 +64,11 @@ class ReplayFeeds:
             "features": [f for f in readings["features"] if f["properties"]["location_id"] == station_id],
         }
 
+    def burn_categories(self, at):
+        """The province keeps no past burn categories (its layers have no history) and no archive holds a copy of
+        them: nothing was recorded for the replay."""
+        raise FeedUnavailable("no burn categories recorded: the province keeps no past ones")
+
     def alerts(self, lat, lon, at):
         """What ECCC's alerts collection would have listed for the point at `at`, from the recorded messages
         (alerts.json): for each zone and alert, the newest message sent by then, unless it had expired."""

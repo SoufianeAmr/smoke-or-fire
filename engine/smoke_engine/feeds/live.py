@@ -11,6 +11,8 @@ thread every 10 minutes, and saved to disk the same way. Detections older than
 error and saved file.
 CWFIS fires and AQHI: fetched when asked, cached for 15 minutes.
 ECCC alerts: asked at every check, never cached, and given 5 seconds to answer.
+New Brunswick burn categories: the list of all 15 counties, fetched when asked, kept for the 15-minute slot and
+given 5 seconds in all to answer; a failure is remembered for 2 minutes. The person's point is never sent.
 """
 
 import json
@@ -39,6 +41,8 @@ FIRMS_MAX_AGE = timedelta(minutes=30)
 FIRMS_DAY_RANGE = 2  # today and yesterday (UTC); the verdict keeps the 24 hours before the check
 FIRMS_FILE = WIND_FILE.with_name("live-firms.json")
 ALERTS_TIMEOUT = 5.0  # seconds: a slow alerts service must never hold up the verdict
+BURN_TIMEOUT = 5.0  # seconds for its three requests together, for the same reason
+BURN_RETRY_AFTER = timedelta(minutes=2)  # while the province does not answer, checks do not each wait for it
 
 
 def _utc_now() -> datetime:
@@ -93,6 +97,9 @@ class LiveFeeds:
             for name in ("httpx", "httpcore"):
                 logging.getLogger(name).addFilter(_MaskKey(firms_key))
         self._cache: dict = {}
+        self._burn_lock = threading.Lock()
+        self._burn: tuple[datetime, dict] | None = None  # the 15-minute slot, and the province's answer in it
+        self._burn_down_until: datetime | None = None
         self._stop = threading.Event()
         self._thread: threading.Thread | None = None
 
@@ -323,6 +330,37 @@ class LiveFeeds:
             return response.json()
         except (httpx.HTTPError, ValueError) as error:
             raise FeedUnavailable(f"{sources.ECCC_ALERTS}: {type(error).__name__}: {error}") from error
+
+    def burn_categories(self, at):
+        """The province's burn category of every county: its two lists, the first layer's description, and when they
+        were fetched. It lists what is in effect now, so a check for another time gets no answer."""
+        now = self._now()
+        if abs(now - at) > CACHE_FOR:
+            raise FeedUnavailable(f"{sources.GNB_BURN_SERVICE}: no burn categories kept for {at:%Y-%m-%dT%H:%MZ}")
+        slot = _bucket(now)
+        # One fetch at a time: checks that arrive together wait for the same answer, and for 5 seconds at most.
+        with self._burn_lock:
+            if self._burn and self._burn[0] == slot:
+                return self._burn[1]
+            if self._burn_down_until and now < self._burn_down_until:
+                raise FeedUnavailable(f"{sources.GNB_BURN_SERVICE}: did not answer; asked again after {self._burn_down_until:%H:%M:%SZ}")
+            answer, deadline = {}, time.monotonic() + BURN_TIMEOUT
+            try:
+                for name, (url, params) in sources.burn_requests().items():
+                    left = deadline - time.monotonic()  # the three requests share the 5 seconds
+                    if left <= 0:
+                        raise FeedUnavailable(f"{url}: not asked, the province took over {BURN_TIMEOUT:g} seconds")
+                    response = self._client.get(url, params=params, timeout=left)
+                    response.raise_for_status()
+                    answer[name] = response.json()
+                    # ArcGIS sends its errors with HTTP 200: one is a failure, never an answer to keep.
+                    if isinstance(answer[name], dict) and "error" in answer[name]:
+                        raise FeedUnavailable(f"{url}: {answer[name]['error']}")
+            except (httpx.HTTPError, ValueError, FeedUnavailable) as error:
+                self._burn_down_until = now + BURN_RETRY_AFTER
+                raise FeedUnavailable(f"{sources.GNB_BURN_SERVICE}: {type(error).__name__}: {error}") from error
+            self._burn = (slot, {**answer, "checkedAt": now})
+            return self._burn[1]
 
     def _cached(self, key, url: str, params: dict):
         now = time.monotonic()
