@@ -2,7 +2,7 @@
 // before fire season.
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type MouseEvent } from "react";
 import { useApp, useT } from "../app/state";
-import { CloseIcon } from "../components/icons";
+import { CloseIcon, PhoneIcon } from "../components/icons";
 import { openInstallPrompt, shareData, shareSms, type Platform } from "./keep";
 
 const LINK: CSSProperties = { flexShrink: "0", minHeight: "56px", display: "inline-flex", alignItems: "center", padding: "0 4px", border: "0", background: "transparent", fontFamily: "inherit", fontSize: "16px", fontWeight: "700", lineHeight: "1.3", color: "#1B2A4A", textDecoration: "underline", textUnderlineOffset: "3px", textAlign: "center", cursor: "pointer" };
@@ -85,11 +85,14 @@ export function KeepOnPhone({ offered, platform }: { offered: boolean; platform:
 const CARD: CSSProperties = { background: "#FFFFFF", borderRadius: "18px 18px 0 0", boxShadow: "0 -16px 40px rgba(26, 29, 33, 0.22)", padding: "14px 6px calc(24px + env(safe-area-inset-bottom)) 20px", display: "flex", flexDirection: "column", gap: "12px", textAlign: "left" };
 const CLOSE: CSSProperties = { flexShrink: "0", width: "56px", height: "56px", border: "0", background: "transparent", color: "#1A1D21", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" };
 const STEPS: CSSProperties = { margin: "0", paddingRight: "14px", fontSize: "18px", lineHeight: "1.45" };
+// As the 911 bar's button, the width of the steps.
+const CALL: CSSProperties = { marginTop: "4px", marginRight: "14px", minHeight: "56px", padding: "6px 14px", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", borderRadius: "16px", background: "#D92D20", color: "#FFFFFF", textDecoration: "none", fontSize: "20px", fontWeight: "800", lineHeight: "1.1" };
 
 /**
  * How to add the app to the home screen, when the browser offers no prompt: the iPhone's steps on an iPhone or iPad, the
  * Android steps on Android, and both elsewhere (a computer, setting it up for someone's phone). A modal sheet at the
- * bottom of the screen; Close, Escape or a tap outside closes it.
+ * bottom of the screen; Close, Escape or a tap outside closes it. The sheet covers the 911 bar, so it ends with its own
+ * Call 911 button; Close stays the first thing in it, and so has the focus when it opens.
  */
 function StepsSheet({ platform, onClose }: { platform: Platform; onClose: () => void }) {
   const t = useT();
@@ -115,6 +118,10 @@ function StepsSheet({ platform, onClose }: { platform: Platform; onClose: () => 
             {t(`keep.steps.${p}`)}
           </p>
         ))}
+        <a href="tel:911" className="press" style={CALL}>
+          <PhoneIcon size={26} />
+          {t("sticky.call")}
+        </a>
       </div>
     </dialog>
   );

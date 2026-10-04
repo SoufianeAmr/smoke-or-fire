@@ -1,6 +1,7 @@
 // Small phones: on every screen the main action and the 911 bar are visible without scrolling,
 // and the main action is not hidden behind the 911 bar.
-// The 911 bar: one line of text and the red Call 911 button, about 72 px tall, on every screen but Check and Emergency.
+// The 911 bar: one line of text and the red Call 911 button, about 72 px tall, on every screen but Call 911 now and
+// Nearby fire, which have their own Call 911 button.
 import { expect, test, type Locator, type Page } from "@playwright/test";
 import { readFileSync } from "node:fs";
 
@@ -42,7 +43,8 @@ const VIEWPORTS = [
 const SAFARI_SE = { width: 375, height: 550 };
 const SAFARI_SE_SCREENS = ["01 Check", "02 Q1", "04 Emergency"];
 
-type Check = { name: string; open: (page: Page) => Promise<void>; main: (page: Page) => Locator[]; bar: boolean };
+/** `answers`: on a question, how many answers there are; every one of them is a main action. */
+type Check = { name: string; open: (page: Page) => Promise<void>; main: (page: Page) => Locator[]; bar: boolean; answers?: number };
 
 /** Wait until the app has saved the mode, so the next page.goto() opens in that mode. */
 async function modeStored(page: Page, mode: "live" | "replay") {
@@ -61,11 +63,17 @@ async function verdictFor(page: Page, town: string) {
 }
 
 const verdictMain = (page: Page) => [page.locator("#verdict-h"), page.locator("section[aria-labelledby=verdict-h] > div").nth(1)];
+/** A question's answers, all of them: three on Q1, four on Q2, six on Q3. */
+const answers = (page: Page) => [page.locator("main a[data-answer]")];
 
 const SCREENS: Check[] = [
   // Check: I smell smoke; and from 667 px tall, the Live/Replay toggle too.
-  { name: "01 Check", open: (p) => p.goto("/").then(), main: (p) => [p.locator('a[href="/q1"]'), ...(p.viewportSize()!.height >= 667 ? [p.locator("main [role=group]")] : [])], bar: false },
-  { name: "02 Q1", open: (p) => p.goto("/q1").then(), main: (p) => [p.locator('a[href="/emergency"]'), p.locator('main a[href="/location"]')], bar: true },
+  { name: "01 Check", open: (p) => p.goto("/").then(), main: (p) => [p.locator('a[href="/q1"]'), ...(p.viewportSize()!.height >= 667 ? [p.locator("main [role=group]")] : [])], bar: true },
+  { name: "02 Q1", open: (p) => p.goto("/q1").then(), main: answers, bar: true, answers: 3 },
+  { name: "03a Q2", open: (p) => p.goto("/q2").then(), main: answers, bar: true, answers: 4 },
+  { name: "03b Q3", open: (p) => p.goto("/q3").then(), main: answers, bar: true, answers: 6 },
+  // Nearby fire: its own red Call 911 button, and no bar.
+  { name: "03c Nearby fire", open: (p) => p.goto("/nearby-fire").then(), main: (p) => [p.locator('main a[href="tel:911"]')], bar: false },
   { name: "04 Emergency", open: (p) => p.goto("/emergency").then(), main: (p) => [p.locator('main a[href="tel:911"]')], bar: false },
   { name: "05 Location", open: (p) => p.goto("/location").then(), main: (p) => [p.locator('main a[href="/loading"]').first(), p.locator("input[type=search]")], bar: true },
   { name: "06 Loading", open: (p) => searchTown(p, "Moncton"), main: (p) => [p.locator("h1")], bar: true },
@@ -105,6 +113,23 @@ async function hidden(page: Page, check: Check) {
   return problems;
 }
 
+/** A question's answers that are under 56 px tall, or whose words are under 16 px, as "which: what". */
+const tooSmall = (page: Page) =>
+  page.locator("main a[data-answer]").evaluateAll((links) =>
+    links.flatMap((link) => {
+      const key = link.getAttribute("data-answer");
+      const found: string[] = [];
+      const { height } = link.getBoundingClientRect();
+      if (height < 56) found.push(`${key}: ${Math.round(height)} px tall`);
+      for (const el of [link, ...link.querySelectorAll("*")]) {
+        if (el.closest("svg")) continue;
+        const own = [...el.childNodes].some((n) => n.nodeType === Node.TEXT_NODE && n.textContent!.trim());
+        if (own && parseFloat(getComputedStyle(el).fontSize) < 16) found.push(`${key}: words at ${getComputedStyle(el).fontSize}`);
+      }
+      return found;
+    }),
+  );
+
 const RUNS = [...VIEWPORTS.map((viewport) => ({ viewport, screens: SCREENS })), { viewport: SAFARI_SE, screens: SCREENS.filter((s) => SAFARI_SE_SCREENS.includes(s.name)) }];
 
 for (const { viewport, screens } of RUNS) {
@@ -118,10 +143,18 @@ for (const { viewport, screens } of RUNS) {
           if (lang === "fr") await page.getByRole("button", { name: "Français" }).click();
           await check.open(page);
           for (const group of check.main(page)) await expect(group.first()).toBeVisible();
+          if (check.answers) await expect(page.locator("main a[data-answer]")).toHaveCount(check.answers); // all of them are checked below
           await page.evaluate(() => document.fonts.ready);
           expect(await hidden(page, check)).toEqual([]);
+          // However short the phone, an answer keeps 56 px to tap and words of 16 px or more.
+          if (check.answers) expect(await tooSmall(page)).toEqual([]);
           if (check.bar) await slimBar(page, lang);
-          else expect(await bars(page)).toHaveLength(0); // Check and Emergency: no bar
+          else {
+            // Call 911 now and Nearby fire: no bar. Their own Call 911 button is the only one, in the screen itself.
+            expect(await bars(page)).toHaveLength(0);
+            await expect(page.locator('a[href="tel:911"]')).toHaveCount(1);
+            await expect(page.locator('main a[href="tel:911"]')).toHaveCount(1);
+          }
         });
       }
     });

@@ -3,6 +3,7 @@
 // mode says where officials announce centres. Entry points on Emergency and the near-fire verdict notice. The two demo
 // scenarios, EN and FR.
 import { expect, test, type Page } from "@playwright/test";
+import { answer as tap } from "./look";
 import { navigations, texts } from "./navigations";
 
 const NBSP = String.fromCharCode(0xa0);
@@ -15,13 +16,13 @@ const OK_FR = "Je vais bien. Il y a un feu près de moi et je suis les consignes
 
 const L = {
   en: {
-    cta: "I smell smoke", yes: /I see flames/, no: /Just smoke or haze/, emergency: "Call 911 now",
+    cta: "I smell smoke", q1: "Do you see flames?", q2: "Which looks like your sky?", q3: "Is anything burning nearby?", emergency: "Call 911 now",
     entry: "Told to leave your home? What to do", where: "Where are you?", town: "Town or city", title: "If you’re told to leave",
     near: "Evacuation centres for the Long Lake fire (Annapolis County)", directions: "Get directions",
     drifting: "DRIFTING SMOKE", headline: "Likely from the Long Lake fire", banner: `Replay${NBSP}· Bridgetown${NBSP}·`,
   },
   fr: {
-    cta: "Je sens de la fumée", yes: /Je vois des flammes/, no: /Seulement de la fumée ou un voile/, emergency: "Appelez le 911 maintenant",
+    cta: "Je sens de la fumée", q1: /^Voyez-vous des flammes\s\?$/, q2: /^Quelle image ressemble à votre ciel\s\?$/, q3: /^Est-ce que quelque chose brûle près de vous\s\?$/, emergency: "Appelez le 911 maintenant",
     entry: /^On vous demande de partir\s\? Que faire$/, where: /^Où êtes-vous\s\?$/, town: "Ville ou village", title: "Si on vous demande de partir",
     near: "Centres d’évacuation pour le feu de Long Lake (comté d’Annapolis)", directions: "Itinéraire",
     drifting: "FUMÉE QUI DÉRIVE", headline: "Elle vient probablement du feu de Long Lake", banner: `Reprise${NBSP}· Bridgetown${NBSP}·`,
@@ -65,8 +66,13 @@ async function scenario1(page: Page, lang: "en" | "fr") {
   await start(page, "replay", lang);
   await listen(page, lang);
   await page.getByRole("link", { name: l.cta }).click();
-  await listen(page, lang);
-  await page.getByRole("link", { name: l.no }).click();
+  // The three questions: no flames, grey haze, nothing burning nearby.
+  for (const [question, key] of [[l.q1, "no"], [l.q2, "haze"], [l.q3, "nothing"]] as const) {
+    await expect(page.getByRole("heading", { name: question })).toBeVisible();
+    await listen(page, lang);
+    await tap(page, key);
+  }
+  await expect(page.getByRole("heading", { name: l.where })).toBeVisible();
   await listen(page, lang);
   await page.getByLabel(l.town).fill("Monc");
   await page.getByRole("option", { name: /^Moncton,/ }).click();
@@ -80,7 +86,8 @@ async function scenario2(page: Page, lang: "en" | "fr") {
   const l = L[lang];
   await start(page, "replay", lang);
   await page.getByRole("link", { name: l.cta }).click();
-  await page.getByRole("link", { name: l.yes }).click();
+  await expect(page.getByRole("heading", { name: l.q1 })).toBeVisible();
+  await tap(page, "yes"); // flames: the first question ends it
   await expect(page.getByRole("heading", { name: l.emergency })).toBeVisible();
   await listen(page, lang);
   await page.getByRole("link", { name: l.entry }).click();
@@ -112,7 +119,7 @@ async function scenario2(page: Page, lang: "en" | "fr") {
 }
 
 for (const lang of ["en", "fr"] as const) {
-  test(`Scenario 1 (${lang.toUpperCase()}): Replay → I smell smoke → No → Moncton → drifting verdict`, ({ page }) => scenario1(page, lang));
+  test(`Scenario 1 (${lang.toUpperCase()}): Replay → I smell smoke → No flames → Grey haze → Nothing nearby → Moncton → drifting verdict`, ({ page }) => scenario1(page, lang));
   test(`Scenario 2 (${lang.toUpperCase()}): Replay → I smell smoke → Yes → Emergency → Told to leave → Bridgetown → centres → Get directions`, ({ page }) => scenario2(page, lang));
 }
 

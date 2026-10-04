@@ -17,6 +17,7 @@
     "data:build": "node scripts/build-data.mjs",
     "icons": "node scripts/build-icons.mjs",
     "e2e:pixels": "playwright test --project=pixels",
+    "e2e:shots": "playwright test --project=screenshots",
     "e2e:real": "playwright test -c playwright.real.config.ts"
   },
   "dependencies": {

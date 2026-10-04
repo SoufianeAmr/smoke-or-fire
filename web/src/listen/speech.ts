@@ -52,7 +52,21 @@ export const checkVoice = (lang: Lang, replay: boolean, install: boolean) => [
   ...script(lang, "voice.check"),
   ...(install ? script(lang, "voice.check.install", { add: translate(lang, "keep.add") }) : []),
 ];
-export const q1Voice = (lang: Lang) => script(lang, "voice.q1");
+// The three questions name each answer as it is written on the screen.
+const notSure = (lang: Lang) => translate(lang, "look.notSure");
+export const q1Voice = (lang: Lang) => script(lang, "voice.q1", { yes: translate(lang, "q1.yes"), no: translate(lang, "q1.no"), notSure: notSure(lang) });
+export const q2Voice = (lang: Lang) =>
+  script(lang, "voice.q2", { column: translate(lang, "q2.column"), haze: translate(lang, "q2.haze"), smell: translate(lang, "q2.smell"), notSure: notSure(lang) });
+export const q3Voice = (lang: Lang) =>
+  script(lang, "voice.q3", {
+    firePit: translate(lang, "q3.firePit"),
+    mulch: translate(lang, "q3.mulch"),
+    people: translate(lang, "q3.people"),
+    other: translate(lang, "q3.other"),
+    nothing: translate(lang, "q3.nothing"),
+    notSure: notSure(lang),
+  });
+export const nearbyFireVoice = (lang: Lang) => script(lang, "voice.nearby", { check: translate(lang, "nearby.check") });
 export const locationVoice = (lang: Lang) => script(lang, "voice.location");
 export const loadingVoice = (lang: Lang) => script(lang, "voice.loading");
 export const emergencyVoice = (lang: Lang) => script(lang, "voice.emergency", { leave: translate(lang, "leave.entry") });

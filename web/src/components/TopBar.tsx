@@ -1,4 +1,4 @@
-import type { CSSProperties } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import { Link, useLocation, useNavigate } from "react-router";
 import { useApp, useT } from "../app/state";
 import type { Lang } from "../i18n";
@@ -34,9 +34,10 @@ export function LangToggle({ on = "page" }: { on?: "page" | "band" }) {
 
 /**
  * Back arrow on the left, language switch on the right (screens 02–06, 08, 09). `back` is a route, or -1 for the previous
- * screen. With `listen`, a Listen button before the language switch says those sentences aloud.
+ * screen. With `listen`, a Listen button before the language switch says those sentences aloud. Children sit right after
+ * the Back link (the questions' progress mark).
  */
-export function TopBar({ back, listen }: { back: string | -1; listen?: string[] }) {
+export function TopBar({ back, listen, children }: { back: string | -1; listen?: string[]; children?: ReactNode }) {
   const t = useT();
   const navigate = useNavigate();
   // Opened directly (a link or bookmark), there is no previous screen in the app: the link goes to Check.
@@ -47,6 +48,7 @@ export function TopBar({ back, listen }: { back: string | -1; listen?: string[] 
       <Link to={back === -1 ? "/" : back} onClick={onClick} aria-label={t("nav.back")} style={{ width: "56px", height: "56px", display: "flex", alignItems: "center", justifyContent: "center", color: "#1A1D21", borderRadius: "14px" }}>
         <BackIcon size={28} />
       </Link>
+      {children}
       <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
         {listen && <ListenButton sentences={listen} />}
         <LangToggle />

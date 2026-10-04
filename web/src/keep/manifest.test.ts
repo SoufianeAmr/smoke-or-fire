@@ -72,6 +72,10 @@ describe("index.html", () => {
     expect(find("meta", "name", "apple-mobile-web-app-title")?.attribs.content).toBe("Smoke or Fire");
   });
 
+  test("no referrer: a site opened from a link here is never told which screen the person was on", () => {
+    expect(find("meta", "name", "referrer")?.attribs.content).toBe("no-referrer");
+  });
+
   test("no service worker: nothing registers one, nothing is cached for use offline", () => {
     const files = ["index.html", ...readdirSync(new URL("src", WEB), { recursive: true, encoding: "utf8" }).map((f) => `src/${f.replace(/\\/g, "/")}`)]
       .filter((f) => /\.(html|tsx?)$/.test(f) && !f.endsWith(".test.ts"));

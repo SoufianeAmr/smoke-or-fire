@@ -1,6 +1,7 @@
 // Live checks through the deployed site against the real engine (playwright.real.config.ts).
 // The browser calls the engine from the site's origin, so these also prove CORS.
 import { expect, test, type Page } from "@playwright/test";
+import { toLocation } from "./look";
 
 const VERDICT_LABEL = /^(DRIFTING SMOKE|UNCLEAR|UNEXPLAINED SMOKE)$/;
 
@@ -22,7 +23,8 @@ test("Live check for Fredericton gets its verdict from the real engine", async (
   const statuses = engineAnswers(page);
   await openLive(page);
   await page.getByRole("link", { name: "I smell smoke" }).click();
-  await page.getByRole("link", { name: /Just smoke or haze/ }).click();
+  await expect(page.getByRole("heading", { name: "Do you see flames?" })).toBeVisible();
+  await toLocation(page); // no flames, grey haze, nothing burning nearby
   await page.getByLabel("Town or city").fill("Frederict");
   await page.getByRole("option", { name: /^Fredericton, NB/ }).click();
 

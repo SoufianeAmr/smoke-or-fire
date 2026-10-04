@@ -17,6 +17,7 @@ import { platformOf } from "../keep/keep";
 import type { Lang, StringKey } from "../i18n";
 import { LeaveMap, MarkerBadge } from "../leave/LeaveMap";
 import { leaveVoice } from "../listen/speech";
+import { ofTown } from "../look/where";
 import { PlaceSearch, useLocate } from "./Location";
 
 const CARD: CSSProperties = { background: "#FFFFFF", color: "#1A1D21", borderRadius: "18px", padding: "20px", display: "flex", flexDirection: "column", gap: "14px", boxShadow: "0 1px 2px rgba(26, 29, 33, 0.06), 0 8px 24px rgba(26, 29, 33, 0.07)" };
@@ -266,10 +267,6 @@ function CentreCard({ centre, origin }: { centre: Centre; origin?: LatLon }) {
     </section>
   );
 }
-
-/** "de Moncton" / "d’Edmundston" / "d’Halifax": French elides "de" before a vowel or a silent h. Only Halifax is listed:
- *  some place names start with a sounded h, which keeps "de". */
-const ofTown = (town: string) => (/^([aeiouyàâäéèêëîïôöùûü]|halifax\b)/i.test(town) ? `d’${town}` : `de ${town}`);
 
 /** "This evacuation was for people near the Long Lake fire in Annapolis County, 159 km from Moncton." */
 const farVars = (event: EvacuationEvent, place: Place, lang: Lang) => ({

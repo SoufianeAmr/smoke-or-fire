@@ -76,7 +76,7 @@
 
 ## Hard rules (unchanged)
 - Never "safe". Never "don't call 911" or any paraphrase.
-- 911 on every screen after the first; one Call 911 button per view.
+- 911 on every screen; one Call 911 button per view.
 - No green.
 - Colour + icon + word for every status.
 - Tokens:

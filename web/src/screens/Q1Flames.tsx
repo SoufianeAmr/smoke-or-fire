@@ -1,50 +1,51 @@
-// 02 · The question — Do you see flames or a smoke column? (design/screens/02-q1-flames.html)
-import { Link } from "react-router";
+// 02 · The first question: Do you see flames? Yes and Not sure go to Call 911 now; No goes on to the sky.
+import type { CSSProperties, ReactNode } from "react";
 import { useApp, useT } from "../app/state";
 import { ReplayBanner } from "../components/ReplayBanner";
 import { Screen } from "../components/Screen";
-import { CLEAR_OF_BAR, Sticky911 } from "../components/Sticky911";
+import { Sticky911 } from "../components/Sticky911";
 import { TopBar } from "../components/TopBar";
-import { FlameIcon } from "../components/icons";
+import type { StringKey } from "../i18n";
 import { q1Voice } from "../listen/speech";
+import { About, Answer, Answers, MAIN, Steps, TITLE, useTitleFocus, whole } from "../look/parts";
+import { CrossMark, Disc, FlameMark, QuestionMark } from "../look/pictures";
+import { Q1_ANSWERS, ROUTES, type Q1Answer } from "../look/routing";
+
+// Three rows of one height, whatever their words.
+const ROWS: CSSProperties = { display: "grid", gridAutoRows: "1fr", gap: "16px" };
+const ROW: CSSProperties = { display: "flex", alignItems: "center", gap: "16px", minHeight: "128px", padding: "12px 20px", borderRadius: "18px", textDecoration: "none" };
+// Red is for Yes alone. Its border is red too, so its disc and word line up with the two rows under it.
+const RED: CSSProperties = { ...ROW, background: "#D92D20", border: "3px solid #D92D20", color: "#FFFFFF", boxShadow: "0 10px 24px rgba(217, 45, 32, 0.22)" };
+const PLAIN: CSSProperties = { ...ROW, background: "#FFFFFF", border: "3px solid #1B2A4A", color: "#1B2A4A" };
+const LABEL: CSSProperties = { fontSize: "30px", fontWeight: "800", lineHeight: "1.05", letterSpacing: "-0.01em" };
+
+const LOOK: Record<Q1Answer, { label: StringKey; style: CSSProperties; disc: ReactNode }> = {
+  yes: { label: "q1.yes", style: RED, disc: <Disc tone="flame" size={64}><FlameMark /></Disc> },
+  no: { label: "q1.no", style: PLAIN, disc: <Disc tone="navy" size={64}><CrossMark /></Disc> },
+  notSure: { label: "look.notSure", style: PLAIN, disc: <Disc tone="amber" size={64}><QuestionMark /></Disc> },
+};
 
 export function Q1Flames() {
   const { lang } = useApp();
   const t = useT();
+  const title = useTitleFocus();
   return (
     <Screen>
       <ReplayBanner />
-      <TopBar back="/" listen={q1Voice(lang)} />
-      <main className="q1-main" style={{ flexGrow: "1", display: "flex", flexDirection: "column", gap: "28px", padding: `12px 16px ${CLEAR_OF_BAR}` }}>
-        <div className="q1-head" style={{ display: "flex", flexDirection: "column", gap: "10px", padding: "0 4px" }}>
-          <h1 style={{ margin: "0", fontSize: "34px", fontWeight: "800", lineHeight: "1.12", letterSpacing: "-0.02em" }}>{t("q1.title")}</h1>
-          <p style={{ margin: "0", fontSize: "18px", lineHeight: "1.45", color: "#4F5561" }}>{t("q1.hint")}</p>
-        </div>
-        <div className="q1-answers" style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-          <Link to="/emergency" className="press q1-answer" style={{ display: "flex", alignItems: "center", gap: "18px", minHeight: "136px", padding: "20px 24px", borderRadius: "18px", background: "#D92D20", color: "#FFFFFF", textDecoration: "none", boxShadow: "0 10px 24px rgba(217, 45, 32, 0.22)" }}>
-            <span style={{ flexShrink: "0", width: "68px", height: "68px", borderRadius: "50%", background: "#FFFFFF", color: "#D92D20", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <FlameIcon size={36} />
-            </span>
-            <span className="q1-words" style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-              <span className="q1-label" style={{ fontSize: "34px", fontWeight: "800", lineHeight: "1" }}>{t("q1.yes")}</span>
-              <span style={{ fontSize: "18px", fontWeight: "600", lineHeight: "1.35", textWrap: "balance" }}>{t("q1.yesSub")}</span>
-            </span>
-          </Link>
-          <Link to="/location" className="press q1-answer" style={{ display: "flex", alignItems: "center", gap: "18px", minHeight: "136px", padding: "20px 24px", borderRadius: "18px", background: "#FFFFFF", border: "3px solid #1B2A4A", color: "#1B2A4A", textDecoration: "none" }}>
-            <span style={{ flexShrink: "0", width: "68px", height: "68px", borderRadius: "50%", background: "#E9EDF5", color: "#1B2A4A", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <svg className="ic" width="34" height="34" viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M3 3l18 18" />
-                <path d="M10.6 5.1A10.4 10.4 0 0 1 12 5c5 0 8.5 4.2 9.5 7-.4 1.2-1.3 2.7-2.6 4" />
-                <path d="M6.6 6.6C4.6 8 3.1 10 2.5 12c1 2.8 4.5 7 9.5 7 1.9 0 3.6-.6 5-1.5" />
-                <path d="M9.9 9.9a3 3 0 0 0 4.2 4.2" />
-              </svg>
-            </span>
-            <span className="q1-words" style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-              <span className="q1-label" style={{ fontSize: "34px", fontWeight: "800", lineHeight: "1" }}>{t("q1.no")}</span>
-              <span style={{ fontSize: "18px", fontWeight: "600", lineHeight: "1.35", textWrap: "balance" }}>{t("q1.noSub")}</span>
-            </span>
-          </Link>
-        </div>
+      <TopBar back="/" listen={q1Voice(lang)}>
+        <Steps n={1} />
+      </TopBar>
+      <main className="look-main" style={MAIN}>
+        <h1 id="look-q" className="look-title" tabIndex={-1} ref={title} style={TITLE}>{whole(t("q1.title"))}</h1>
+        <Answers style={ROWS}>
+          {Q1_ANSWERS.map((answer) => (
+            <Answer key={answer} answer={answer} to={ROUTES.q1[answer]} shape="row" style={LOOK[answer].style}>
+              {LOOK[answer].disc}
+              <span className="look-label" style={LABEL}>{t(LOOK[answer].label)}</span>
+            </Answer>
+          ))}
+        </Answers>
+        <About />
       </main>
       <Sticky911 />
     </Screen>

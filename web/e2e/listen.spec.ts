@@ -1,9 +1,11 @@
 // "Listen", the guided voice on every screen. The browser's speech is replaced by a recorder that ends each sentence
 // after 10 ms, so the tests see exactly what is said, in order, with the pause between sentences. Each script comes from
-// the strings file (voice.*); its {…} values are read from the screen, and every button it names is on the screen.
+// the strings file (voice.*); its {…} values are read from the screen, and every button it names is on the screen. On
+// the three questions the values are the answers' labels: each answer is on the screen with that label, in that order.
 import { expect, test, type Locator, type Page, type Route } from "@playwright/test";
 import { readFileSync } from "node:fs";
 import { TEST_ENGINE_URL } from "./engine";
+import { answer } from "./look";
 
 type Lang = "en" | "fr";
 type Spoken = { text: string; lang: string; rate: number; pitch: number; volume: number; voice: string | null; at: number; end: number };
@@ -21,9 +23,14 @@ const RED = "rgb(217, 45, 32)";
 const WHITE = "rgb(255, 255, 255)";
 const SPELLED = { en: { "911": "nine-one-one", "811": "eight-one-one", "211": "two-one-one" }, fr: { "911": "neuf-un-un", "811": "huit-un-un", "211": "deux-un-un" } };
 
+/** A string from the strings file. A key that is not in the file fails the test that asks for it, by name. */
+function stringOf(lang: Lang, key: string) {
+  expect(STRINGS[lang][key], `"${key}" in ${lang}.json`).toBeDefined();
+  return STRINGS[lang][key];
+}
 /** A script from the strings file, as the app says it: split into sentences, then filled in. */
 const script = (lang: Lang, key: string, vars: Record<string, string | number> = {}) =>
-  STRINGS[lang][key].split(/(?<=[.?!])\s+(?=\S)/).map((s) => s.replace(/\{(\w+)\}/g, (match, name) => (name in vars ? String(vars[name]) : match)));
+  stringOf(lang, key).split(/(?<=[.?!])\s+(?=\S)/).map((s) => s.replace(/\{(\w+)\}/g, (match, name) => (name in vars ? String(vars[name]) : match)));
 const spokenKm = (lang: Lang, km: number) => (km < 1 ? STRINGS[lang]["voice.km.under"] : km === 1 ? STRINGS[lang]["voice.km.one"] : STRINGS[lang]["voice.km"].replace("{km}", String(km)));
 /** A label as the voice says it: "Call 911" → "Call nine-one-one"; no-break spaces as spaces. */
 const asSaid = (lang: Lang, label: string) => label.replace(/\s/g, " ").replace(/\b(911|811|211)\b/g, (n) => SPELLED[lang][n as "911"]);
@@ -113,6 +120,44 @@ async function named(locator: Locator, label: string, background?: string) {
   if (background) expect(await locator.first().evaluate((el) => getComputedStyle(el).backgroundColor)).toBe(background);
 }
 
+/**
+ * The answers on the three questions, in the order shown: the answer's name (its data-answer, and its {…} in the
+ * script), the strings key of its label, and where it leads. On the first question, its colour too: the script says
+ * "the red Yes button", so Yes is red and the other two are not.
+ */
+type Answer = { key: string; label: string; to: string; background?: string };
+const Q1: Answer[] = [
+  { key: "yes", label: "q1.yes", to: "/emergency", background: RED },
+  { key: "no", label: "q1.no", to: "/q2", background: WHITE },
+  { key: "notSure", label: "look.notSure", to: "/emergency", background: WHITE },
+];
+const Q2: Answer[] = [
+  { key: "column", label: "q2.column", to: "/emergency" },
+  { key: "haze", label: "q2.haze", to: "/q3" },
+  { key: "smell", label: "q2.smell", to: "/q3" },
+  { key: "notSure", label: "look.notSure", to: "/emergency" },
+];
+const Q3: Answer[] = [
+  { key: "firePit", label: "q3.firePit", to: "/nearby-fire" },
+  { key: "mulch", label: "q3.mulch", to: "/emergency" },
+  { key: "people", label: "q3.people", to: "/emergency" },
+  { key: "other", label: "q3.other", to: "/emergency" },
+  { key: "nothing", label: "q3.nothing", to: "/location" },
+  { key: "notSure", label: "look.notSure", to: "/emergency" },
+];
+/** What a question's script is filled with: its answers' labels, as { yes: "Yes", no: "No", notSure: "Not sure" }. */
+const labelled = (lang: Lang, answers: Answer[]) => Object.fromEntries(answers.map(({ key, label }) => [key, stringOf(lang, label)]));
+/** Every answer is on the screen, in the order the voice gives them, with its label, and leads where it should. */
+async function answersNamed(page: Page, lang: Lang, answers: Answer[]) {
+  const links = page.locator("main a.look-answer");
+  await expect(links).toHaveCount(answers.length);
+  for (const [i, { key, label, to, background }] of answers.entries()) {
+    await expect(links.nth(i)).toHaveAttribute("data-answer", key);
+    await expect(links.nth(i)).toHaveAttribute("href", to);
+    await named(links.nth(i), STRINGS[lang][label], background);
+  }
+}
+
 /** A label inside a sentence: "Very high risk" → "very high risk". */
 const lowerFirst = (lang: Lang, label: string) => (/^\p{Lu}\p{Ll}/u.test(label) ? label.charAt(0).toLocaleLowerCase(lang) + label.slice(1) : label);
 const sameText = (a: string, b: string) => a.replace(/\s/g, " ") === b.replace(/\s/g, " ");
@@ -194,7 +239,8 @@ async function verdictLabels(page: Page, lang: Lang) {
 
 /**
  * A screen: how to open it, its script as read from the screen, the buttons it names (on screen, with that label and
- * colour), and those buttons' on-screen labels, which the voice must say (numbers spelled out).
+ * colour), and those buttons' on-screen labels, which the voice must say (numbers spelled out). `heard`: anything more
+ * about what was said, given whole, in lower case with plain spaces.
  */
 type Screen = {
   name: string;
@@ -202,6 +248,7 @@ type Screen = {
   script: (page: Page, lang: Lang) => Promise<string[]>;
   buttons?: (page: Page, lang: Lang) => Promise<void>;
   labels?: (page: Page, lang: Lang) => Promise<string[]>;
+  heard?: (page: Page, lang: Lang, all: string) => Promise<void>;
   seconds?: number;
 };
 const keys = (...names: string[]) => async (_: Page, lang: Lang) => names.map((name) => STRINGS[lang][name]);
@@ -225,17 +272,40 @@ const SCREENS: Screen[] = [
   {
     name: "Q1",
     open: (page) => page.goto("/q1").then(),
-    script: async (_, lang) => script(lang, "voice.q1"),
-    buttons: async (page, lang) => {
-      // The two answers, top to bottom as the voice gives them.
-      const answers = page.locator("main a.q1-answer");
-      await expect(answers).toHaveCount(2);
-      await named(answers.nth(0), STRINGS[lang]["q1.yes"], RED); // "the red Yes button"
-      await expect(answers.nth(0)).toHaveAttribute("href", "/emergency");
-      await named(answers.nth(1), STRINGS[lang]["q1.no"], WHITE); // "tap No"
-      await expect(answers.nth(1)).toHaveAttribute("href", "/location");
+    script: async (_, lang) => script(lang, "voice.q1", labelled(lang, Q1)),
+    buttons: (page, lang) => answersNamed(page, lang, Q1), // the three answers, top to bottom as the voice gives them
+    labels: keys(...Q1.map(({ label }) => label)),
+    heard: async (page, lang, all) => {
+      // The voice asks the question on the screen, in the same words.
+      const title = await text(page, "main h1");
+      expect(title).toBe(STRINGS[lang]["q1.title"]);
+      expect(all).toContain(title.replace(/\s*\?$/, "").replace(/\s/g, " ").toLocaleLowerCase(lang));
     },
-    labels: keys("q1.yes", "q1.no"),
+  },
+  {
+    name: "Q2",
+    open: (page) => page.goto("/q2").then(),
+    script: async (_, lang) => script(lang, "voice.q2", labelled(lang, Q2)),
+    buttons: (page, lang) => answersNamed(page, lang, Q2), // the three pictures as the voice counts them, then Not sure
+    labels: keys(...Q2.map(({ label }) => label)),
+  },
+  {
+    name: "Q3",
+    open: (page) => page.goto("/q3").then(),
+    script: async (_, lang) => script(lang, "voice.q3", labelled(lang, Q3)),
+    buttons: (page, lang) => answersNamed(page, lang, Q3), // the six tiles, in the order the voice reads them
+    labels: keys(...Q3.map(({ label }) => label)),
+  },
+  {
+    name: "Nearby fire",
+    open: (page) => page.goto("/nearby-fire").then(),
+    script: async (page, lang) => script(lang, "voice.nearby", { check: await text(page, 'main a[href="/location"]') }),
+    buttons: async (page, lang) => {
+      await named(page.locator('main a[href="tel:911"]'), STRINGS[lang]["emergency.call"], RED); // "the big red button"
+      await expect(page.locator('a[href="tel:911"]')).toHaveCount(1); // the only one: no 911 bar under it
+      await named(page.locator('main a[href="/location"]'), STRINGS[lang]["nearby.check"]); // the link under it
+    },
+    labels: keys("nearby.check"),
   },
   {
     name: "Location",
@@ -271,6 +341,11 @@ const SCREENS: Screen[] = [
       await named(page.locator('main a[href="/leave"]'), STRINGS[lang]["leave.entry"]);
     },
     labels: keys("leave.entry"),
+    heard: async (_, __, all) => {
+      // The voice gives no reason: the screen is reached from every question, not only from flames or a smoke column.
+      expect(all).not.toContain("smoke column");
+      expect(all).not.toContain("colonne de fumée");
+    },
   },
   {
     name: "Told to leave, no place yet",
@@ -384,6 +459,7 @@ for (const lang of ["en", "fr"] as const) {
         // since a label may start in lower case after a colon).
         const all = said.map((u) => u.text).join(" ").replace(/\s/g, " ").toLocaleLowerCase(lang);
         expect(labels.filter((label) => !all.includes(asSaid(lang, label).toLocaleLowerCase(lang)))).toEqual([]);
+        if (screen.heard) await screen.heard(page, lang, all);
       });
     }
   });
@@ -513,8 +589,9 @@ test.describe("Listen: stopping", () => {
     await listenButton(page, "en").click();
     await expect.poll(async () => (await spoken(page)).length).toBeGreaterThan(0);
     const before = await cancels(page);
-    await page.locator('main a[href="/location"]').click();
-    await expect(page).toHaveURL(/\/location$/);
+    await expect(page.locator('main a[data-answer="no"]')).toBeVisible();
+    await answer(page, "no");
+    await expect(page).toHaveURL(/\/q2$/);
     const count = (await spoken(page)).length;
     await page.waitForTimeout(800); // longer than two pauses between sentences
     expect((await spoken(page)).length).toBe(count);
@@ -532,9 +609,10 @@ test.describe("Listen: stopping", () => {
     await expect(listenButton(page, "fr")).toBeVisible();
     expect(await cancels(page)).toBeGreaterThan(before);
     await page.evaluate(() => { (window as unknown as { __autoEnd: boolean }).__autoEnd = true; });
+    const french = script("fr", "voice.q1", labelled("fr", Q1)); // the answers named by their French labels
     await listenButton(page, "fr").click();
-    await expect.poll(async () => (await spoken(page)).length).toBe(1 + script("fr", "voice.q1").length);
-    expect((await spoken(page)).slice(1).map(({ text: t, lang, voice }) => ({ t, lang, voice }))).toEqual(script("fr", "voice.q1").map((t) => ({ t, lang: "fr-CA", voice: VOICE.fr })));
+    await expect.poll(async () => (await spoken(page)).length).toBe(1 + french.length);
+    expect((await spoken(page)).slice(1).map(({ text: t, lang, voice }) => ({ t, lang, voice }))).toEqual(french.map((t) => ({ t, lang: "fr-CA", voice: VOICE.fr })));
   });
 });
 
@@ -546,11 +624,12 @@ test.describe("without speech in the browser", () => {
     });
   });
 
-  for (const route of ["/", "/q1", "/location", "/emergency", "/leave", "/how-it-works", "/location-off", "/no-data"]) {
+  for (const route of ["/", "/q1", "/q2", "/q3", "/nearby-fire", "/location", "/emergency", "/leave", "/how-it-works", "/location-off", "/no-data"]) {
     test(`${route}: no Listen button`, async ({ page }) => {
       await start(page, "en");
       await page.goto(route);
       await expect(page.locator("h1").first()).toBeVisible();
+      await expect(page).toHaveURL(new RegExp(`${route}$`)); // the screen itself: an address the app doesn't know opens Check
       await expect(page.getByRole("button", { name: /^(Listen|Stop)$/ })).toHaveCount(0);
     });
   }

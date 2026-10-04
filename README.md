@@ -23,7 +23,7 @@ The information exists (active fires, satellite detections, wind, air quality), 
 
 ## The solution
 
-One question, your location, and a plain-language answer:
+Three questions answered with one tap each, your location, and a plain-language answer:
 
 | Verdict | Meaning |
 |---|---|
@@ -33,9 +33,11 @@ One question, your location, and a plain-language answer:
 
 Every answer comes with an honest **High / Medium / Low confidence**, official air-quality advice, and **911 one tap away on every screen**. The app never tells anyone not to call 911.
 
+**Pause and look, before the trace.** The app first asks what Moncton-area fire dispatch asked callers on Aug 25, 2025, as pictures: *Do you see flames? Which looks like your sky? Is anything burning nearby?* Any "yes" or "not sure" goes straight to **Call 911 now**. A neighbour's fire pit or bonfire gets its own short screen: it may explain the smell, 911 is one tap away if it is out of control or burning is banned, and a link goes on to the trace anyway. Only "no flames", then "grey haze" or "I only smell it", then "nothing burning" goes straight on to the trace. The answers are never stored or sent.
+
 **Scenario 1: smoke from far away (Moncton, Aug 25, 2025).** *Drifting smoke, likely from the Long Lake fire, 159 km away, low confidence.* The map shows the air traced backward and the fire's smoke traced forward meeting near Moncton. Then: official AQHI advice, Health Canada's advice to take a break in places with filtered air (one tap finds the nearest library), and the 811 nurse line.
 
-**Scenario 2: fire near you (Bridgetown, N.S.).** Flames or a smoke column → **Call 911 now**, with what to tell the dispatcher. *Told to leave?* → the reception centre **Annapolis County actually opened** during the Long Lake evacuation, register first, directions in the phone's Maps app, the officials' grab list, and a one-tap text to family with the user's location. It's shown only to people near that fire.
+**Scenario 2: fire near you (Bridgetown, N.S.).** Flames, a rising smoke column, something burning nearby, or simply not sure → **Call 911 now**, with what to tell the dispatcher and, on a tap, the phone's location to read out. *Told to leave?* → the reception centre **Annapolis County actually opened** during the Long Lake evacuation, register first, directions in the phone's Maps app, the officials' grab list, and a one-tap text to family with the user's location. It's shown only to people near that fire.
 
 **Built for seniors:** large text and targets (tested down to iPhone SE), a guided **Listen** voice on every screen (EN/FR), colour + icon + word for every status, and nothing to install (open a link, or add it to the home screen).
 
@@ -158,7 +160,7 @@ See `web/package.json` for all scripts. Current test counts are in [TECH-FACTS.m
 ## Design principles
 
 - **Never** the word "safe", and nothing that discourages calling 911.
-- 911 is visible on every screen after the first.
+- 911 is visible on every screen, the first included.
 - No green anywhere: smoke is never "all clear". Every status uses colour + icon + word.
 - Body text 18 px or more, touch targets 56 px or more, fully bilingual.
 - Every number on screen comes from the engine. Every place and phone number comes from an official, cited source.
@@ -186,6 +188,7 @@ See `web/package.json` for all scripts. Current test counts are in [TECH-FACTS.m
 | Satellite fire detections (VIIRS, MODIS) | NASA FIRMS | We acknowledge the use of data from NASA's FIRMS, part of NASA's ESDIS |
 | Air Quality Health Index | Environment and Climate Change Canada | Open Government Licence – Canada |
 | Wildfire smoke advice | Health Canada, "Wildfire smoke with extreme heat" | — |
+| The three questions before the trace | The questions Moncton-area fire dispatch asked callers on Aug 25, 2025: [yourgreatermoncton.ca](https://yourgreatermoncton.ca/128945-2/), Tara Clow, Aug 25, 2025 | — |
 | Hourly wind (GFS 0.25°) | Open-Meteo.com | CC BY 4.0 |
 | Community names and locations | NRCan, Canadian Geographical Names Database | Open Government Licence – Canada |
 | Province and marine outlines | Natural Earth | Public domain |

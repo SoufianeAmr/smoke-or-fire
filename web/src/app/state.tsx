@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { translate, type Lang, type StringKey, type Vars } from "../i18n";
+import type { Fix } from "../look/where";
 import type { VerdictJson } from "../verdict/types";
 
 export type Mode = "live" | "replay";
@@ -24,8 +25,9 @@ interface Stored {
   mode: Mode;
   lang: Lang;
   place: Place | null;
-  /** The phone’s location, once the person has shared it this session (Use my location). */
-  shared: { lat: number; lon: number } | null;
+  /** The phone’s location, once the person has shared it this session (Use my location): with when it was taken and
+   *  how accurate it is, when the phone said so. */
+  shared: Fix | null;
 }
 
 interface AppState extends Stored {
@@ -33,7 +35,7 @@ interface AppState extends Stored {
   setMode: (mode: Mode) => void;
   setLang: (lang: Lang) => void;
   setPlace: (place: Place | null) => void;
-  setShared: (shared: { lat: number; lon: number }) => void;
+  setShared: (shared: Fix) => void;
   setResult: (result: VerdictJson | null) => void;
   /** Start a new check: keep mode and language, forget the place and result. */
   reset: () => void;
@@ -80,7 +82,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     // shown under another town's name.
     setResult((r) => (r && place && Math.abs(r.location.lat - place.lat) < 1e-6 && Math.abs(r.location.lon - place.lon) < 1e-6 ? r : null));
   }, []);
-  const setShared = useCallback((shared: { lat: number; lon: number }) => setStored((s) => ({ ...s, shared })), []);
+  const setShared = useCallback((shared: Fix) => setStored((s) => ({ ...s, shared })), []);
   const reset = useCallback(() => {
     setStored((s) => ({ ...s, place: null }));
     setResult(null);

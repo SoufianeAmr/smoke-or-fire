@@ -3,6 +3,7 @@ import type { CSSProperties } from "react";
 import { Link } from "react-router";
 import { useApp, useT } from "../app/state";
 import { Screen } from "../components/Screen";
+import { CLEAR_OF_BAR, Sticky911 } from "../components/Sticky911";
 import { LangToggle } from "../components/TopBar";
 import { ChevronRightIcon } from "../components/icons";
 import { useInstall } from "../keep/keep";
@@ -41,7 +42,7 @@ export function Check() {
         <ListenButton sentences={checkVoice(lang, isReplay, install.offered)} />
         <LangToggle />
       </div>
-      <main style={{ position: "relative", zIndex: "1", flexGrow: "1", display: "flex", flexDirection: "column", padding: "8px 20px 20px" }}>
+      <main style={{ position: "relative", zIndex: "1", flexGrow: "1", display: "flex", flexDirection: "column", padding: `8px 20px ${CLEAR_OF_BAR}` }}>
         <div className="check-head" style={{ display: "flex", flexDirection: "column", gap: "14px", marginTop: "12px" }}>
           <svg width="64" height="64" viewBox="0 0 64 64" aria-hidden="true">
             <rect x="0" y="0" width="64" height="64" rx="18" style={{ fill: "#1B2A4A" }} />
@@ -81,6 +82,7 @@ export function Check() {
         </Link>
         <KeepOnPhone offered={install.offered} platform={install.platform} />
       </main>
+      <Sticky911 />
     </Screen>
   );
 }

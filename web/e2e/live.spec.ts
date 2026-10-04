@@ -1,8 +1,9 @@
-// Live mode in the browser: Check → Q1 → Location → Loading → Verdict from GET /verdict.
+// Live mode in the browser: Check → the three questions → Location → Loading → Verdict from GET /verdict.
 // The engine is answered with a real engine answer (data/demo/moncton.json), marked live.
 import { expect, test, type Page, type Route } from "@playwright/test";
 import { readFileSync } from "node:fs";
 import { TEST_ENGINE_URL } from "./engine";
+import { toLocation } from "./look";
 
 const LIVE_ANSWER = { ...JSON.parse(readFileSync(new URL("../../data/demo/moncton.json", import.meta.url), "utf8")), mode: "live" };
 const CORS = { "access-control-allow-origin": "*" };
@@ -31,11 +32,12 @@ async function openLive(page: Page) {
   await page.waitForFunction(() => sessionStorage.getItem("smoke-or-fire")?.includes(`"mode":"live"`));
 }
 
-test("Live: Check → Q1 → Location → Loading → Verdict from GET /verdict", async ({ page }) => {
+test("Live: Check → the three questions → Location → Loading → Verdict from GET /verdict", async ({ page }) => {
   const asked = await engine(page, answer);
   await openLive(page);
   await page.getByRole("link", { name: "I smell smoke" }).click();
-  await page.getByRole("link", { name: /Just smoke or haze/ }).click();
+  await expect(page.getByRole("heading", { name: "Do you see flames?" })).toBeVisible();
+  await toLocation(page); // no flames, grey haze, nothing burning nearby
 
   // Live search covers every Maritimes community, not only the replay towns.
   await page.getByLabel("Town or city").fill("Shedi");
@@ -46,6 +48,8 @@ test("Live: Check → Q1 → Location → Loading → Verdict from GET /verdict"
   await expect(page.getByText("DRIFTING SMOKE")).toBeVisible();
   await expect(page.getByRole("link", { name: "Exit" })).toHaveCount(0); // no replay banner
   expect(asked.map((q) => [q.get("lat"), q.get("lon"), q.get("mode")])).toEqual([["46.22127", "-64.53977", "live"]]);
+  // The three answers stay on the phone: the engine is asked about the spot and nothing else.
+  expect(asked.map((q) => [...q.keys()].sort())).toEqual([["lat", "lon", "mode"]]);
 });
 
 test.describe("Live: Use my location", () => {

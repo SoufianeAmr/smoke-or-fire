@@ -309,6 +309,37 @@ for (const lang of ["en", "fr"] as const) {
       await addLink(page, lang).click();
       await expect(sheet(page).locator("p")).toHaveText([`iPhone${STEPS.iphone[lang]}`, `Android${STEPS.android[lang]}`]);
     });
+
+    // The sheet covers the 911 bar, so it carries its own Call 911 button.
+    test("on a computer, the sheet ends with its own Call 911 button: one, red, 56 px or taller, after the steps; Close has the focus", async ({ page }) => {
+      await start(page, lang);
+      await addLink(page, lang).click();
+      await expect(sheet(page)).toBeVisible();
+      const call = sheet(page).locator('a[href="tel:911"]');
+      await expect(call).toHaveCount(1);
+      await expect(call).toBeVisible();
+      await expect(call).toHaveText(STRINGS[lang]["sticky.call"]);
+      await expect(call.locator("svg")).toHaveCount(1); // the phone
+      await expect(call).toHaveClass(/(^|\s)press(\s|$)/);
+      // Red with white text, 56 px to tap, in the flow of the sheet (not fixed over the steps).
+      const look = await call.evaluate((el) => { const s = getComputedStyle(el); return [s.backgroundColor, s.color, s.position]; });
+      expect(look.slice(0, 2)).toEqual(["rgb(217, 45, 32)", "rgb(255, 255, 255)"]);
+      expect(["static", "relative"]).toContain(look[2]);
+      const box = (await call.boundingBox())!;
+      expect(box.height).toBeGreaterThanOrEqual(56);
+      expect(box.y + box.height).toBeLessThanOrEqual(page.viewportSize()!.height);
+      // The last thing in the sheet's card, straight after the steps, and under them on the screen.
+      const place = await call.evaluate((el) => {
+        const card = el.closest("dialog")!.firstElementChild!;
+        return [el.parentElement === card, card.lastElementChild === el, el.previousElementSibling?.tagName];
+      });
+      expect(place).toEqual([true, true, "P"]);
+      const steps = sheet(page).locator("p");
+      await expect(steps).toHaveText([`iPhone${STEPS.iphone[lang]}`, `Android${STEPS.android[lang]}`]); // still the steps alone: the button is no paragraph
+      const last = (await steps.last().boundingBox())!;
+      expect(box.y).toBeGreaterThanOrEqual(last.y + last.height);
+      await expect(sheet(page).getByRole("button", { name: STRINGS[lang]["tip.close"] })).toBeFocused(); // as before: Close, not Call 911
+    });
   });
 }
 
@@ -361,9 +392,11 @@ test.describe("the two links: one row with the dot when they fit, else one under
   });
 });
 
-// Check, with the line: Listen and EN/FR, logo, title, tagline, I smell smoke, Live/Replay, How it works, the two links.
+// Check, with the line: Listen and EN/FR, logo, title, tagline, I smell smoke, Live/Replay, How it works, the two links;
+// and under them the 911 bar. On a short phone (up to 740 px tall) the logo is smaller and sits beside the title, so
+// that everything is above the bar with nothing to scroll.
 for (const [width, height] of [[375, 667], [390, 844]] as const) {
-  test.describe(`Check at ${width} × ${height}: all on screen, nothing overlaps, 16 px above I smell smoke, equal side margins`, () => {
+  test.describe(`Check at ${width} × ${height}: all on screen above the 911 bar, nothing to scroll, nothing overlaps, 16 px above I smell smoke, equal side margins`, () => {
     test.use({ viewport: { width, height } });
     for (const lang of ["en", "fr"] as const) {
       for (const mode of ["replay", "live"] as const) {
@@ -394,18 +427,39 @@ for (const [width, height] of [[375, 667], [390, 844]] as const) {
             expect(box.top, box.name).toBeGreaterThanOrEqual(0);
             expect(box.bottom, box.name).toBeLessThanOrEqual(height);
           }
+          // The 911 bar (the parent of its Call 911 button): fixed at the bottom, whole on the screen, and every part ends
+          // at or above its top.
+          const call = page.locator('a[href="tel:911"]');
+          await expect(call).toHaveCount(1);
+          expect(await call.locator("..").evaluate((el) => getComputedStyle(el).position)).toBe("fixed");
+          const bar = (await call.locator("..").boundingBox())!;
+          expect([bar.x >= -0.5, bar.y >= 0, bar.x + bar.width <= width + 0.5, bar.y + bar.height <= height + 0.5], `911 bar: ${JSON.stringify(bar)}`).toEqual([true, true, true, true]);
+          for (const box of boxes) expect(box.bottom, `${box.name}, above the 911 bar`).toBeLessThanOrEqual(bar.y);
           for (const [i, a] of boxes.entries()) {
             for (const b of boxes.slice(i + 1)) {
               const overlap = a.left < b.right - 0.5 && b.left < a.right - 0.5 && a.top < b.bottom - 0.5 && b.top < a.bottom - 0.5;
               expect(overlap, `${a.name} / ${b.name}`).toBe(false);
             }
           }
-          const [, langs, , , tagline, cta] = boxes;
+          const [, langs, logo, title, tagline, cta] = boxes;
           expect(cta.top - tagline.bottom).toBeGreaterThanOrEqual(16);
           // The same margin on both sides: the button, and EN/FR at the top right.
           expect(Math.round(width - cta.right)).toBe(Math.round(cta.left));
           expect(Math.round(width - langs.right)).toBe(Math.round(cta.left));
           expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
+          // Nothing to scroll: the page is as tall as the screen.
+          expect(await page.evaluate(() => document.documentElement.scrollHeight)).toBe(height);
+          // The logo: 64 px, above the title; on a short phone 44 px, beside the title on the same row.
+          const size = [logo.right - logo.left, logo.bottom - logo.top].map((px) => Math.round(px));
+          if (height <= 740) {
+            expect(size).toEqual([44, 44]);
+            expect(logo.right, "the logo is left of the title").toBeLessThanOrEqual(title.left);
+            const centre = (logo.top + logo.bottom) / 2;
+            expect([centre >= title.top, centre <= title.bottom], `logo ${logo.top}–${logo.bottom}, title ${title.top}–${title.bottom}`).toEqual([true, true]);
+          } else {
+            expect(size).toEqual([64, 64]);
+            expect(logo.bottom, "the logo is above the title").toBeLessThanOrEqual(title.top);
+          }
         });
       }
     }

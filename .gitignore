@@ -24,6 +24,7 @@ node_modules/
 web/dist/
 web/dist-e2e/
 web/test-results/
+web/screenshots/
 web/playwright-report/
 web/blob-report/
 *.tsbuildinfo

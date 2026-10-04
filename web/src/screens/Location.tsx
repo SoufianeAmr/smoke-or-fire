@@ -1,7 +1,8 @@
 // 05 · Where are you? (design/screens/05-location.html)
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import { useApp, useT, type Place } from "../app/state";
+import { useScreenBefore } from "../app/trail";
 import { REPLAY_TOWNS, nearestReplayTown, searchPlaces } from "../data/replay";
 import { loadCommunities, placeAt, usePlaces } from "../data/places";
 import { ReplayBanner } from "../components/ReplayBanner";
@@ -49,21 +50,29 @@ export function PlaceSearch({ id, places, query, setQuery, choose, href = "/load
 }
 
 /**
- * "Use my location": asks the phone where it is, remembers that for the text to family, and passes on the place
- * to check: in replay the nearest replay town, in live mode the spot itself, named after the nearest town.
+ * "Use my location": asks the phone where it is, remembers that (with when it was taken and how accurate it is) for
+ * the text to family and for Call 911 now, and passes on the place to check: in replay the nearest replay town, in live
+ * mode the spot itself, named after the nearest town.
  */
 export function useLocate(onPlace: (place: Place) => void, onOff: () => void) {
   const { mode, setShared } = useApp();
+  // Left the screen: a late answer is still remembered, but takes the person nowhere. They may be on Call 911 now.
+  const gone = useRef(false);
+  useEffect(() => {
+    gone.current = false;
+    return () => void (gone.current = true);
+  }, []);
   return (event: React.MouseEvent) => {
     event.preventDefault();
     if (!("geolocation" in navigator)) return onOff();
     navigator.geolocation.getCurrentPosition(
-      ({ coords }) => {
-        setShared({ lat: coords.latitude, lon: coords.longitude });
+      ({ coords, timestamp }) => {
+        setShared({ lat: coords.latitude, lon: coords.longitude, at: timestamp, accuracy: coords.accuracy });
+        if (gone.current) return;
         if (mode === "replay") return onPlace({ ...nearestReplayTown(coords.latitude, coords.longitude), source: "gps" });
-        loadCommunities().then((list) => onPlace({ ...placeAt(list, coords.latitude, coords.longitude), source: "gps" }));
+        loadCommunities().then((list) => !gone.current && onPlace({ ...placeAt(list, coords.latitude, coords.longitude), source: "gps" }));
       },
-      onOff,
+      () => !gone.current && onOff(),
       { enableHighAccuracy: false, timeout: 15000, maximumAge: 600000 },
     );
   };
@@ -75,6 +84,8 @@ export function Location() {
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
   const places = usePlaces(mode);
+  // Back returns to Nearby fire when the person came by its link; from anywhere else, to the last question.
+  const before = useScreenBefore();
 
   const choose = (chosen: Place) => {
     setPlace(chosen);
@@ -89,7 +100,7 @@ export function Location() {
   return (
     <Screen>
       <ReplayBanner />
-      <TopBar back="/q1" listen={locationVoice(lang)} />
+      <TopBar back={before === "/nearby-fire" ? "/nearby-fire" : "/q3"} listen={locationVoice(lang)} />
       <main style={{ flexGrow: "1", display: "flex", flexDirection: "column", gap: "16px", padding: `4px 16px ${CLEAR_OF_BAR}` }}>
         <div style={{ display: "flex", flexDirection: "column", gap: "8px", padding: "0 4px" }}>
           <h1 style={{ margin: "0", fontSize: "34px", fontWeight: "800", lineHeight: "1.12", letterSpacing: "-0.02em" }}>{t("location.title")}</h1>

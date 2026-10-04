@@ -23,9 +23,11 @@ const noFires = { ...json(halifax), noFiresInRange: true, nearestFire: null, clo
 const unsteady = json({ ...miramichi, heights: { ...miramichi.heights, agree: true }, wind: { ...miramichi.wind, steady: false, biggestShift: null } });
 const VERDICTS = [moncton, bridgetown, westDalhousie, miramichi, charlottetown, halifax, noFires, unsteady, { ...moncton, aqhi: null }].map(json);
 
-/** Everything the app can say, in both languages, across screens and states. */
-const everything = LANGS.flatMap((lang) => [
-  ...voice.checkVoice(lang, true, true), ...voice.checkVoice(lang, false, false), ...voice.q1Voice(lang), ...voice.locationVoice(lang),
+/** Everything the app can say, in both languages, across screens and states. Gathered when a test asks for it: a
+ *  screen with no script fails the tests that listen to everything, not every test in this file. */
+const everythingSaid = () => LANGS.flatMap((lang) => [
+  ...voice.checkVoice(lang, true, true), ...voice.checkVoice(lang, false, false), ...voice.q1Voice(lang), ...voice.q2Voice(lang), ...voice.q3Voice(lang),
+  ...voice.nearbyFireVoice(lang), ...voice.locationVoice(lang),
   ...voice.loadingVoice(lang), ...voice.emergencyVoice(lang), ...voice.howVoice(lang), ...voice.locationOffVoice(lang), ...voice.noDataVoice(lang),
   ...VERDICTS.flatMap((d) => verdictView(d, lang).voice),
   ...voice.leaveVoice(lang, { kind: "where" }),
@@ -43,12 +45,14 @@ describe("the scripts", () => {
   });
 
   test("phone numbers are spelled out, so voices say them digit by digit", () => {
+    const everything = everythingSaid();
     expect(everything.filter((sentence) => /\b(911|811|211)\b/.test(sentence))).toEqual([]);
     const all = everything.join(" ");
     expect(["nine-one-one", "eight-one-one", "two-one-one", "neuf-un-un", "huit-un-un", "deux-un-un"].filter((word) => !all.includes(word))).toEqual([]);
   });
 
   test("never the word safe, never anything against calling 911, and no {placeholder} left unfilled", () => {
+    const everything = everythingSaid();
     expect(everything.filter((s) => /safe|sécuri/i.test(s))).toEqual([]);
     // The wording src/i18n/strings.test.ts bans in every string.
     expect(everything.filter((s) => /(do not|don’t|never|no need to) call|ne (pas|jamais) appeler|n’appelez (pas|jamais)|9-1-1 for updates/i.test(s))).toEqual([]);
@@ -104,20 +108,81 @@ describe("screens", () => {
     }
   });
 
-  test("Q1, the only question: one sentence per utterance, in English and French", () => {
+  test("Q1, flames: one sentence per utterance, the three answers named as on screen, in English and French", () => {
     expect(voice.q1Voice("en")).toEqual([
       "Let’s start.",
       "Take a look outside, toward the smell.",
-      "Do you see flames, or a column of smoke rising from one spot?",
-      "If you do, tap the red Yes button, and I’ll help you call nine-one-one.",
-      "If it’s just smoke or haze, tap No, and I’ll find out where it’s coming from.",
+      "Do you see flames?",
+      "If you do, tap the red Yes button.",
+      "If you don’t, tap No.",
+      "If you can’t tell, tap Not sure.",
     ]);
     expect(voice.q1Voice("fr")).toEqual([
       "On commence.",
       "Regardez dehors, du côté de l’odeur.",
-      `Voyez-vous des flammes, ou une colonne de fumée qui monte d’un seul endroit${NBSP}?`,
-      "Si oui, touchez le bouton rouge Oui, et je vous aide à appeler le neuf-un-un.",
-      "Si c’est seulement de la fumée ou un voile, touchez Non, et je vais trouver d’où elle vient.",
+      `Voyez-vous des flammes${NBSP}?`,
+      "Si oui, touchez le bouton rouge Oui.",
+      "Sinon, touchez Non.",
+      "Si vous ne pouvez pas le dire, touchez Je ne sais pas.",
+    ]);
+  });
+
+  test("Q2, the sky: what each picture shows, then its caption as on screen; the third is for no smoke to see, or the dark", () => {
+    expect(voice.q2Voice("en")).toEqual([
+      "Now look at the sky.",
+      "Which picture looks like your sky?",
+      "The first picture is dark smoke rising from one spot: Rising column.",
+      "The second is grey haze hanging everywhere: Grey haze.",
+      "The third is for when you can’t see any smoke, or it’s dark out: I only smell it.",
+      "If you can’t tell, tap Not sure.",
+    ]);
+    expect(voice.q2Voice("fr")).toEqual([
+      "Maintenant, regardez le ciel.",
+      `Quelle image ressemble à votre ciel${NBSP}?`,
+      `La première image montre de la fumée sombre qui monte d’un seul endroit${NBSP}: Colonne de fumée.`,
+      `La deuxième montre un voile de fumée grise partout${NBSP}: Voile de fumée.`,
+      `La troisième, c’est quand vous ne voyez pas de fumée, ou qu’il fait noir${NBSP}: Je la sens seulement.`,
+      "Si vous ne pouvez pas le dire, touchez Je ne sais pas.",
+    ]);
+  });
+
+  test("Q3, nearby: the six answers in the order they are shown, each one its own utterance", () => {
+    expect(voice.q3Voice("en")).toEqual([
+      "Last question.",
+      "Is anything burning nearby?",
+      "Tap what you see.",
+      "Neighbour’s fire pit or bonfire.",
+      "Smouldering mulch or brush.",
+      "People outside who could be in danger.",
+      "Something else burning.",
+      "If nothing is burning, tap Nothing.",
+      "If you can’t tell, tap Not sure.",
+    ]);
+    expect(voice.q3Voice("fr")).toEqual([
+      "Dernière question.",
+      `Est-ce que quelque chose brûle près de vous${NBSP}?`,
+      "Touchez ce que vous voyez.",
+      "Foyer ou feu de camp d’un voisin.",
+      "Paillis ou broussailles qui fument.",
+      "Des gens dehors, peut-être en danger.",
+      "Autre chose qui brûle.",
+      "Si rien ne brûle, touchez Rien.",
+      "Si vous ne pouvez pas le dire, touchez Je ne sais pas.",
+    ]);
+  });
+
+  test("Nearby fire: it may explain the smell; out of control, or burning banned, the big red button calls nine-one-one; then the link on to the trace, named as on screen", () => {
+    expect(voice.nearbyFireVoice("en")).toEqual([
+      "Okay.",
+      "A neighbour’s fire pit or bonfire may explain the smell.",
+      "If it’s out of control, or if burning is banned right now, tap the big red button to call nine-one-one.",
+      "To check the drifting smoke anyway, tap: Check the drifting smoke anyway.",
+    ]);
+    expect(voice.nearbyFireVoice("fr")).toEqual([
+      "D’accord.",
+      "Le foyer ou le feu de camp d’un voisin peut expliquer l’odeur.",
+      "S’il est hors de contrôle, ou si les feux sont interdits en ce moment, touchez le grand bouton rouge pour appeler le neuf-un-un.",
+      `Pour vérifier quand même la fumée qui dérive, touchez${NBSP}: Vérifier la fumée qui dérive.`,
     ]);
   });
 
@@ -136,20 +201,26 @@ describe("screens", () => {
     expect(voice.loadingVoice("fr")).toEqual(["Merci.", "Donnez-moi quelques secondes.", "Je suis le vent à rebours, heure par heure, pour voir d’où vient votre air."]);
   });
 
-  test("Emergency: call nine-one-one now, the big white button, what to tell them, then told to leave, named as on screen", () => {
+  test("Emergency: call nine-one-one now, whatever led here, the big white button, what to tell them, the location on screen, then told to leave, named as on screen", () => {
     expect(voice.emergencyVoice("en")).toEqual([
       "Okay.",
-      "Flames or a smoke column can mean a fire near you, so let’s call nine-one-one now.",
+      "Let’s call nine-one-one now.",
       "Tap the big white button at the bottom.",
       "When they answer, tell them where you are, what you see, which way it’s moving if you can tell, and if anyone needs help.",
+      "If the screen shows your location, you can read it to them.",
       "Stay on the line, and if the fire is close, move away while you talk.",
       "You’re doing the right thing.",
       "If officials told you to leave, tap: Told to leave your home? What to do.",
     ]);
-    expect(voice.emergencyVoice("fr").slice(0, 3)).toEqual([
+    expect(voice.emergencyVoice("fr")).toEqual([
       "D’accord.",
-      "Des flammes ou une colonne de fumée peuvent signaler un feu près de vous, alors appelons le neuf-un-un maintenant.",
+      "Appelons le neuf-un-un maintenant.",
       "Touchez le grand bouton blanc, en bas.",
+      "Quand on vous répond, dites où vous êtes, ce que vous voyez, dans quelle direction ça se déplace si vous pouvez le dire, et si quelqu’un a besoin d’aide.",
+      "Si l’écran affiche votre position, vous pouvez la lire au répartiteur.",
+      "Restez en ligne, et si le feu est proche, éloignez-vous pendant l’appel.",
+      "Vous faites ce qu’il faut.",
+      `Si les autorités vous ont demandé de partir, touchez${NBSP}: On vous demande de partir${NBSP}? Que faire.`,
     ]);
   });
 });

@@ -1,17 +1,24 @@
 // The first milestone: the full replay flow for Moncton, in the browser.
 import { expect, test, type Locator, type Page } from "@playwright/test";
+import { answer } from "./look";
 
 const NBSP = String.fromCharCode(0xa0);
 // Health Canada, "Wildfire smoke with extreme heat".
 const EN_SOURCE = "https://www.canada.ca/en/health-canada/services/publications/healthy-living/combine-wildfire-smoke-heat.html";
 const FR_SOURCE = "https://www.canada.ca/fr/sante-canada/services/publications/vie-saine/effets-combines-fumee-feux-foret-chaleur.html";
 
-test("Moncton replay: Check → Q1 → Location → Loading → Verdict", async ({ page }) => {
+test("Moncton replay: Check → Q1 flames → Q2 sky → Q3 nearby → Location → Loading → Verdict", async ({ page }) => {
   await page.goto("/?mode=replay");
   await page.getByRole("link", { name: "I smell smoke" }).click();
 
-  await expect(page.getByRole("heading", { name: "Do you see flames or a smoke column?" })).toBeVisible();
-  await page.getByRole("link", { name: /Just smoke or haze/ }).click();
+  // The three questions: no flames, grey haze, nothing burning nearby. The way straight through to "Where are you?".
+  const question = page.getByRole("heading", { level: 1 });
+  await expect(question).toHaveText("Do you see flames?");
+  await answer(page, "no");
+  await expect(question).toHaveText("Which looks like your sky?");
+  await answer(page, "haze");
+  await expect(question).toHaveText("Is anything burning nearby?");
+  await answer(page, "nothing");
 
   await expect(page.getByRole("heading", { name: "Where are you?" })).toBeVisible();
   await page.getByLabel("Town or city").fill("Monc");
@@ -48,28 +55,63 @@ test.describe("reduced motion", () => {
   });
 });
 
-test("Q1 is the only question: Yes goes to Emergency, No straight to Location, in English and French", async ({ page }) => {
+test("Three questions, in English and French: No goes on to the sky question, Grey haze to the nearby question, Nothing to Location; Back steps back one question at a time; /q2 opens the sky question", async ({ page }) => {
+  const EN = {
+    q1: "Do you see flames?", q2: "Which looks like your sky?", q3: "Is anything burning nearby?", where: "Where are you?",
+    answers: ["Yes", "No", "Not sure"], back: "Back", counter: /Question \d of \d/,
+  };
+  const FR = {
+    q1: /^Voyez-vous des flammes\s\?$/, q2: /^Quelle image ressemble à votre ciel\s\?$/, q3: /^Est-ce que quelque chose brûle près de vous\s\?$/, where: /^Où êtes-vous\s\?$/,
+    answers: ["Oui", "Non", "Je ne sais pas"], back: "Retour", counter: /Question \d sur \d/,
+  };
+  const title = page.getByRole("heading", { level: 1 });
+  const answers = page.locator("main .look-answers a[data-answer]");
+
   await page.goto("/?mode=replay");
   await page.getByRole("link", { name: "I smell smoke" }).click();
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Do you see flames or a smoke column?");
-  await expect(page.getByText(/Question \d of \d/)).toHaveCount(0);
-  await expect(page.getByRole("link", { name: /^Yes\s*I see flames or a smoke column$/ })).toHaveAttribute("href", "/emergency");
-  await page.getByRole("link", { name: /^No\s*Just smoke or haze$/ }).click();
-  await expect(page).toHaveURL(/\/location$/);
-  await page.getByRole("link", { name: "Back" }).click(); // back to the question
-  await expect(page).toHaveURL(/\/q1$/);
+  for (const l of [EN, FR]) {
+    if (l === FR) await page.getByRole("button", { name: "Français" }).click();
+    await expect(page).toHaveURL(/\/q1$/);
+    await expect(title).toHaveText(l.q1);
+    // The three answers, top to bottom, and where each one leads.
+    await expect(answers.locator(".look-label")).toHaveText(l.answers);
+    expect(await answers.evaluateAll((els) => els.map((el) => [el.getAttribute("data-answer"), el.getAttribute("href")]))).toEqual([["yes", "/emergency"], ["no", "/q2"], ["notSure", "/emergency"]]);
+    await expect(page.getByText(l.counter)).toHaveCount(0); // the progress mark is three dots, with no words
 
-  await page.getByRole("button", { name: "Français" }).click();
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText(/^Voyez-vous des flammes ou une colonne de fumée\s\?$/);
-  await expect(page.getByText(/Question \d sur \d/)).toHaveCount(0);
-  await expect(page.getByRole("link", { name: /^Oui\s*Je vois des flammes ou une colonne de fumée$/ })).toHaveAttribute("href", "/emergency");
-  await page.getByRole("link", { name: /^Non\s*Seulement de la fumée ou un voile$/ }).click();
-  await expect(page.getByRole("heading", { name: /^Où êtes-vous\s\?$/ })).toBeVisible();
+    await answer(page, "no");
+    await expect(page).toHaveURL(/\/q2$/);
+    await expect(title).toHaveText(l.q2);
+    await expect(page.getByText(l.counter)).toHaveCount(0);
+    await answer(page, "haze");
+    await expect(page).toHaveURL(/\/q3$/);
+    await expect(title).toHaveText(l.q3);
+    await expect(page.getByText(l.counter)).toHaveCount(0);
+    await answer(page, "nothing");
+    await expect(page).toHaveURL(/\/location$/);
+    await expect(title).toHaveText(l.where);
 
-  // The second question is gone: its old address opens Check.
+    // Back, one question at a time.
+    for (const [address, question] of [[/\/q3$/, l.q3], [/\/q2$/, l.q2], [/\/q1$/, l.q1]] as const) {
+      await page.getByRole("link", { name: l.back, exact: true }).click();
+      await expect(page).toHaveURL(address);
+      await expect(title).toHaveText(question);
+    }
+  }
+
+  // The second question has its own address: opened directly, it is the sky question (that address used to open Check).
   await page.goto("/q2");
-  await expect(page.getByRole("link", { name: "Je sens de la fumée" })).toBeVisible();
-  await expect(page).not.toHaveURL(/q2/);
+  await expect(title).toHaveText(FR.q2);
+  await expect(page).toHaveURL(/\/q2$/);
+  await page.getByRole("button", { name: "EN", exact: true }).click();
+  await expect(title).toHaveText(EN.q2);
+});
+
+test("an address the app doesn’t know opens Check", async ({ page }) => {
+  await page.goto("/?mode=replay");
+  await page.waitForFunction(() => sessionStorage.getItem("smoke-or-fire")?.includes('"mode":"replay"'));
+  await page.goto("/q4");
+  await expect(page.getByRole("link", { name: "I smell smoke" })).toBeVisible();
+  await expect(page).not.toHaveURL(/q4/);
 });
 
 test("the loading counter reads Heure {n} sur 24 in French", async ({ page }) => {
