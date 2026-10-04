@@ -1,0 +1,222 @@
+{
+  "strings": {
+    "title": {
+      "en": "Protect your home from smoke",
+      "fr": "Protégez votre maison de la fumée"
+    },
+    "intro": {
+      "en": "Advice from Health Canada. Tap each one to read it in full.",
+      "fr": "Conseils de Santé Canada. Touchez un conseil pour le lire en entier."
+    },
+    "tiles": {
+      "en": "Health Canada’s advice",
+      "fr": "Conseils de Santé Canada"
+    },
+    "band": {
+      "en": "Air quality: {risk}",
+      "fr": "Qualité de l’air\u00a0: {risk}"
+    },
+    "band.none": {
+      "en": "Air quality: no recent reading",
+      "fr": "Qualité de l’air\u00a0: aucune mesure récente"
+    },
+    "band.detail": {
+      "en": "Air Quality Health Index: {n}, at {station}. Measured: {when}.",
+      "fr": "Cote air santé\u00a0: {n}, à {station}. Heure de la mesure\u00a0: {when}."
+    },
+    "source.by": {
+      "en": "Source: {publisher}",
+      "fr": "Source\u00a0: {publisher}"
+    },
+    "source.modified": {
+      "en": "Date modified: {date}",
+      "fr": "Date de modification\u00a0: {date}"
+    },
+    "atRisk.label": {
+      "en": "I have asthma or COPD",
+      "fr": "J’ai de l’asthme ou une MPOC"
+    },
+    "atRisk.yes": {
+      "en": "Yes",
+      "fr": "Oui"
+    },
+    "atRisk.no": {
+      "en": "No",
+      "fr": "Non"
+    },
+    "atRisk.help": {
+      "en": "Tap the switch to see the official message for people at risk. Your answer stays on this device.",
+      "fr": "Touchez l’interrupteur pour voir le message officiel destiné aux personnes à risque. Votre réponse reste sur cet appareil."
+    },
+    "atRisk.kicker": {
+      "en": "Official message for people at risk:",
+      "fr": "Message officiel pour les personnes à risque\u00a0:"
+    },
+    "atRisk.noReading": {
+      "en": "There is no recent air quality reading, so there is no message to show right now.",
+      "fr": "Il n’y a pas de mesure récente de la qualité de l’air, donc pas de message à afficher pour l’instant."
+    },
+    "atRisk.saved": {
+      "en": "Your answer is saved on this device only.",
+      "fr": "Votre réponse est enregistrée sur cet appareil seulement."
+    },
+    "atRisk.notSaved": {
+      "en": "This device could not save it. It will be forgotten when you leave this screen.",
+      "fr": "Cet appareil n’a pas pu l’enregistrer. Ce sera oublié quand vous quitterez cet écran."
+    },
+    "atRisk.forget": {
+      "en": "Forget my answer",
+      "fr": "Oublier ma réponse"
+    },
+    "atRisk.forgotten": {
+      "en": "Forgotten. Your answer is no longer on this device.",
+      "fr": "Oublié. Votre réponse n’est plus sur cet appareil."
+    },
+    "voice.title": {
+      "en": "Protect your home from smoke.",
+      "fr": "Protégez votre maison de la fumée."
+    },
+    "voice.intro": {
+      "en": "Here is Health Canada’s advice to protect your home from wildfire smoke.",
+      "fr": "Voici les conseils de Santé Canada pour protéger votre maison de la fumée des feux de forêt."
+    },
+    "voice.band": {
+      "en": "Air quality right now: {risk}.",
+      "fr": "Qualité de l’air en ce moment\u00a0: {risk}."
+    },
+    "voice.band.none": {
+      "en": "I don’t have an air quality reading from the last two hours.",
+      "fr": "Je n’ai pas de mesure de la qualité de l’air des deux dernières heures."
+    },
+    "voice.tap": {
+      "en": "On the screen, tap a piece of advice to see where it comes from.",
+      "fr": "À l’écran, touchez un conseil pour voir d’où il vient."
+    },
+    "voice.atRisk.off": {
+      "en": "At the bottom of this screen, a switch for people with asthma or COPD shows the official message for people at risk. Your answer stays on this device.",
+      "fr": "Au bas de cet écran, un interrupteur pour les personnes qui ont de l’asthme ou une MPOC affiche le message officiel pour les personnes à risque. Votre réponse reste sur cet appareil."
+    },
+    "voice.atRisk.on": {
+      "en": "Here is Environment and Climate Change Canada’s message for people at risk.",
+      "fr": "Voici le message d’Environnement et Changement climatique Canada pour les personnes à risque."
+    },
+    "voice.atRisk.none": {
+      "en": "There is no recent air quality reading, so I have no message for people at risk to read.",
+      "fr": "Il n’y a pas de mesure récente de la qualité de l’air, alors je n’ai pas de message pour les personnes à risque à vous lire."
+    },
+    "atRisk.notForgotten": {
+      "en": "This device did not let us remove it. To remove it, clear this site’s data in your browser.",
+      "fr": "Cet appareil n’a pas permis de l’effacer. Pour l’effacer, supprimez les données de ce site dans votre navigateur."
+    }
+  },
+  "tiles": [
+    {
+      "id": "windows",
+      "icon": "window",
+      "label": {
+        "en": "Keep windows and doors closed as much as possible",
+        "fr": "À l’intérieur, gardez les fenêtres et les portes fermées autant que possible"
+      },
+      "note": {
+        "en": "When there’s an extreme heat event occurring with a wildfire smoke event, prioritize keeping cool.",
+        "fr": "En cas d’épisode de chaleur extrême et de fumée de feux de forêt, la priorité est de demeurer au frais."
+      },
+      "quotes": [
+        {
+          "source": "hc-smoke-heat",
+          "en": "Keep windows and doors closed as much as possible. When there’s an extreme heat event occurring with a wildfire smoke event, prioritize keeping cool.",
+          "fr": "À l’intérieur, gardez les fenêtres et les portes fermées autant que possible. En cas d’épisode de chaleur extrême et de fumée de feux de forêt, la priorité est de demeurer au frais."
+        }
+      ]
+    },
+    {
+      "id": "fans",
+      "icon": "fan",
+      "label": {
+        "en": "Limit the use of exhaust fans, such as bathroom fans",
+        "fr": "Limitez l’utilisation des ventilateurs d’extraction, comme les ventilateurs de salle de bain"
+      },
+      "quotes": [
+        {
+          "source": "hc-smoke-heat",
+          "en": "Limit the use of exhaust fans, such as bathroom fans.",
+          "fr": "Limitez l’utilisation des ventilateurs d’extraction, comme les ventilateurs de salle de bain."
+        }
+      ]
+    },
+    {
+      "id": "cleaner",
+      "icon": "cleaner",
+      "label": {
+        "en": "Use a certified portable air cleaner",
+        "fr": "Utilisez un purificateur d’air portatif certifié"
+      },
+      "quotes": [
+        {
+          "source": "hc-smoke-heat",
+          "en": "Use a certified portable air cleaner that can filter fine particles.",
+          "fr": "Utilisez un purificateur d’air portatif certifié qui filtre les particules fines."
+        },
+        {
+          "source": "hc-air-cleaner",
+          "en": "To get the most out of your portable air cleaner:",
+          "fr": "Pour tirer le meilleur parti de votre purificateur d’air portatif\u00a0:",
+          "items": [
+            {
+              "en": "keep your doors and windows closed",
+              "fr": "gardez les portes et les fenêtres fermées"
+            },
+            {
+              "en": "operate your portable air cleaner in a room where you spend a lot of time",
+              "fr": "faites fonctionner votre appareil dans une pièce où vous passez beaucoup de temps"
+            },
+            {
+              "en": "follow manufacturer instructions for proper placement and use of your portable air cleaner.",
+              "fr": "suivez les consignes du fabricant pour vous assurer de placer et d’utiliser correctement votre purificateur d’air portatif."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "filter",
+      "icon": "filter",
+      "label": {
+        "en": "Use the highest quality air filter that your ventilation system can handle",
+        "fr": "Utilisez un filtre à air de la meilleure qualité possible pour votre système de ventilation"
+      },
+      "quotes": [
+        {
+          "source": "hc-smoke-heat",
+          "en": "Use the highest quality air filter that your ventilation system can handle based on the manufacturer’s recommendations.",
+          "fr": "Utilisez un filtre à air de la meilleure qualité possible pour votre système de ventilation, conformément aux recommandations du fabricant."
+        }
+      ]
+    }
+  ],
+  "atRisk": {
+    "source": "eccc-aqhi-messages",
+    "messages": {
+      "low": {
+        "en": "Enjoy your usual outdoor activities.",
+        "fr": "Profitez de vos activités habituelles en plein air."
+      },
+      "moderate": {
+        "en": "Consider reducing or rescheduling strenuous activities outdoors if you are experiencing symptoms.",
+        "fr": "Envisagez de réduire ou de réorganiser les activités exténuantes en plein air si vous éprouvez des symptômes."
+      },
+      "high": {
+        "en": "Reduce or reschedule strenuous activities outdoors. Children and the elderly should also take it easy.",
+        "fr": "Réduisez ou réorganisez les activités exténuantes en plein air. Les enfants et les personnes âgées devraient également modérer leurs activités."
+      },
+      "very_high": {
+        "en": "Avoid strenuous activities outdoors. Children and the elderly should also avoid outdoor physical exertion.",
+        "fr": "Évitez les activités exténuantes en plein air. Les enfants et les personnes âgées devraient également éviter de se fatiguer en plein air."
+      }
+    },
+    "doctor": {
+      "en": "People with heart or breathing problems are at greater risk. Follow your doctor’s usual advice about exercising and managing your condition.",
+      "fr": "Les personnes qui souffrent de maladies cardiaques ou respiratoires sont plus à risque. Suivez les conseils de votre médecin en ce qui concerne l’activité physique et la gestion de votre maladie."
+    }
+  }
+}

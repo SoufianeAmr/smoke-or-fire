@@ -1,0 +1,47 @@
+Source: Santé Canada
+Title: Utiliser un purificateur d’air portatif pour améliorer l’air intérieur
+URL: https://www.canada.ca/fr/sante-canada/services/qualite-air/contaminants-air-interieur/choisir-purificateur-portatif.html
+Date modified: 2021-12-24
+Retrieved: 2026-10-04
+Below: the text of the page's main content, one block (heading, paragraph, list item, table cell) per line.
+---
+Utiliser un purificateur d’air portatif pour améliorer l’air intérieur
+Télécharger en format PDF (1,33 Mo, 2 pages)
+Organisation : Santé Canada
+Publiée : 2024-05-31
+Les purificateurs d'air peuvent vous aider à améliorer la qualité de l'air intérieur en éliminant les fines particules qui peuvent présenter un risque pour votre santé. Les contaminants de l'air (particules, poussière, pollen) peuvent pénétrer dans les habitations par les fenêtres, les portes, les bouches d'aération, les prises d'air et d'autres ouvertures. Les contaminants de l'air peuvent également être produits par des sources intérieures (cuisson, bougies, poêles à bois).
+Sur cette page
+Conseils sur le choix du meilleur purificateur d'air pour votre maison
+Utilisation de votre purificateur d'air portatif
+Moment idéal pour ventiler votre maison
+Conseils sur le choix du meilleur purificateur d'air pour votre maison
+Recherchez un appareil certifié par l'Association of Home Appliance Manufacturers (AHAM).
+La capacité des purificateurs d'air portatifs est évaluée en fonction de la superficie de la pièce, mesurée en pieds carrés. Mesurez les dimensions de la pièce où vous utiliserez votre purificateur d'air et calculez la superficie en pieds carrés.
+Par exemple, une pièce de 10 pieds sur 12 pieds a une superficie de 120 pieds carrés.
+La capacité des purificateurs d'air est calculée en fonction de plafonds de 8 pieds. Si vos plafonds sont plus hauts, vous aurez besoin d'un purificateur d'air destiné à une pièce plus grande que la vôtre.
+Consultez les dimensions de pièce suggérées et le débit d'air propre (CADR) sur l'étiquette de l'AHAM. Choisissez un appareil dont la capacité convient à la taille de la pièce choisie.
+Le CADR décrit dans la mesure dans laquelle l'appareil réussit à éliminer la fumée de tabac, la poussière et le pollen. Ces 3 sources correspondent à 3 tailles différentes de particules. Pour réduire les particules fines, choisissez l'appareil ayant le CADR le plus élevé pour la fumée de tabac, dans les limites de votre budget. Plus le CADR pour la fumée de tabac est élevé, plus l'appareil peut éliminer de particules fines. Cette règle s'applique aussi à l'utilisation d'un purificateur d'air portatif pour filtrer la fumée des feux de forêt, car la fumée des feux de forêt contient des matières particulaires fines (PM2,5).
+Calculez le CADR minimal pour la fumée de tabac qui convient à la pièce choisie : en règle générale, le CADR pour la fumée de tabac de votre purificateur d'air doit être égal à au moins les deux tiers de la superficie de la pièce.
+Par exemple, dans une pièce d'une superficie de 120 pieds carrés, il est préférable de choisir un purificateur d'air dont le CADR pour la fumée de tabac est d'au moins 80.
+Les purificateurs d'air portatifs atteignent souvent un CADR élevé grâce à l'utilisation d'un filtre à particules à haute efficacité (HEPA). Le débit d'air et l'efficacité du filtre ont une influence sur le rendement de l'appareil.
+Certains appareils comprennent également un filtre au charbon actif ou un autre filtre absorbant. Ils peuvent aider à éliminer les gaz, comme les composés organiques volatils (COV). Il n'existe cependant pas de système largement utilisé d'évaluation de l'efficacité des filtres conçus pour éliminer les gaz.
+Évitez les purificateurs d'air qui produisent de l'ozone, car l'ozone peut avoir des effets nocifs sur votre santé. Le California Air Regulatory Board (CARB) répertorie les appareils qui ont réussi les essais sur les émissions d'ozone.
+Envisagez d'acheter un appareil peu bruyant.
+Utilisation de votre purificateur d'air portatif
+Pour tirer le meilleur parti de votre purificateur d'air portatif :
+gardez les portes et les fenêtres fermées
+faites fonctionner votre appareil dans une pièce où vous passez beaucoup de temps
+suivez les consignes du fabricant pour vous assurer de placer et d'utiliser correctement votre purificateur d'air portatif. Conseils généraux :
+Nettoyez ou remplacez le filtre selon les recommandations du fabricant
+Positionnez le purificateur d'air pour qu'il ne souffle pas directement sur ou entre les personnes présentes dans la pièce
+Placez le purificateur d'air portatif là où le flux d'air ne sera pas bloqué par les murs, les meubles ou d'autres objets dans la pièce
+Plus le ventilateur tourne vite et plus la durée de fonctionnement est longue, plus la quantité d'air filtrée est importante
+Moment idéal pour ventiler votre maison
+Les filtres des purificateurs d'air portatifs peuvent aider à capter certains contaminants, mais les meilleurs moyens d'améliorer l'air intérieur sont d'éliminer la source des contaminants et de faire circuler de l'air extérieur propre dans la maison.
+Avant d'ouvrir les fenêtres ou les portes, renseignez-vous sur les conditions de qualité de l'air extérieur dans votre région :
+Prévisions de la cote air santé (CAS)
+Prévisions Info-Smog pour le Québec
+Alertes météorologiques actives et avis sur la qualité de l'air
+Sites Web des gouvernements provinciaux et territoriaux
+Pour en savoir plus sur la façon d'assurer la qualité de l'air intérieur, consultez www.canada.ca/air-sante.
+2021-12-24

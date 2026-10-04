@@ -9,6 +9,7 @@ import { CLEAR_OF_BAR, CLEAR_OF_CALL, Sticky911 } from "../components/Sticky911"
 import { LangToggle } from "../components/TopBar";
 import { BackIcon, ChevronRightIcon } from "../components/icons";
 import { ListenButton } from "../listen/ListenButton";
+import { ProtectLink } from "../protect/ProtectLink";
 import { AnswerInFull, Badges, GlanceLine, GlanceShape, Why } from "../verdict/card";
 import { AirQualityCard, ConfidenceCard, TwoPossibilitiesCard, VERDICT_ICONS, WhatToDoCard, WhyCard } from "../verdict/cards";
 import { GLANCE } from "../verdict/glance";
@@ -79,6 +80,7 @@ export function Verdict() {
           <AirQualityCard view={view} />
           <WhyCard view={view} startOpen />
         </Why>
+        <ProtectLink />
       </main>
       <Sticky911 callFirst={view.card.callFirst} />
     </Screen>

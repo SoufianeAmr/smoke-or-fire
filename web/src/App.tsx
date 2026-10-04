@@ -2,6 +2,7 @@ import { useLayoutEffect } from "react";
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-router";
 import { AppProvider } from "./app/state";
 import { Trail } from "./app/trail";
+import { Protect } from "./protect/Protect";
 import { Check } from "./screens/Check";
 import { Emergency } from "./screens/Emergency";
 import { HowItWorks } from "./screens/HowItWorks";
@@ -40,6 +41,7 @@ export function App() {
             <Route path="/location" element={<Location />} />
             <Route path="/loading" element={<Loading />} />
             <Route path="/verdict" element={<Verdict />} />
+            <Route path="/protect" element={<Protect />} />
             <Route path="/emergency" element={<Emergency />} />
             <Route path="/leave" element={<Leave />} />
             <Route path="/how-it-works" element={<HowItWorks />} />
