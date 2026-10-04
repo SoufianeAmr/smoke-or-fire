@@ -13,4 +13,4 @@ export const GLANCE: Record<Verdict, { shape: GlanceShape; icon: GlanceIcon; bac
 };
 
 /** A badge's state, told by its outline and by a word in its label: filled, outlined, or dashed. */
-export type BadgeTone = "active" | "none" | "notChecked";
+export type BadgeTone = "active" | "none" | "notChecked" | "noBurn" | "restricted" | "permitted";

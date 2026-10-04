@@ -220,7 +220,8 @@ function directionSaid(lang: Lang, short: string) {
 const cardParts = async (page: Page) => (await page.locator("#verdict-h .glance-part").allTextContents()).map((part) => part.replace(/\s*·$/, "").trim());
 /** A button's name as the voice says it in a sentence: without the question mark it ends with ("Why?" → "Why"). */
 const nameSaid = (label: string) => label.replace(/\s*[?!.]+$/, "");
-/** The three badges' full names, in order (on a small phone each shows on a tap; it is always the button's name). */
+/** The badges' full names, in order: the verdict's three, and in New Brunswick the burn status (on a small phone each
+ *  shows on a tap; it is always the button's name). */
 const badgeLabels = async (page: Page) => (await page.locator("main .badge .badge-label").allTextContents()).map((label) => label.trim());
 
 /** The card's line as the voice says it. */
@@ -283,11 +284,13 @@ async function cardScript(page: Page, lang: Lang) {
   const s = STRINGS[lang];
   const [state] = await cardParts(page);
   const line = await lineScript(page, lang);
-  const [fire, trace, alert] = await badgeLabels(page);
+  const [fire, trace, alert, burn] = await badgeLabels(page);
   return [
     ...line,
     ...(await noticeScript(page, lang)),
     ...script(lang, "voice.card.badges", { fire, trace, alert }),
+    // In New Brunswick the burn status is the fourth badge of the row: named after the other three.
+    ...(burn ? [`${burn}.`] : []),
     ...script(lang, "voice.card.why", { why: nameSaid(await text(page, "main .why-toggle")) }),
     // Nothing explains the smoke: Call 911 is the screen's main action, and the voice sends to "the big red button".
     ...script(lang, state === s["card.unexplained"] ? "voice.card.call" : "voice.verdict.call"),
@@ -298,9 +301,10 @@ async function cardButtons(page: Page, lang: Lang) {
   const s = STRINGS[lang];
   if ((await noticeLink(page, lang).count()) > 0) await named(noticeLink(page, lang), s["leave.entry"]);
   // The badges, top to bottom as the voice names them: the fire detection, the wind trace, ECCC's alert.
+  // In New Brunswick the burn status follows them, the fourth of the row.
   const badges = page.locator("main .badge");
-  await expect(badges).toHaveCount(3);
-  for (const [i, id] of ["fire", "trace", "alert"].entries()) {
+  expect([3, 4]).toContain(await badges.count());
+  for (const [i, id] of ["fire", "trace", "alert", "burn"].slice(0, await badges.count()).entries()) {
     await expect(badges.nth(i)).toHaveAttribute("data-badge", id);
     await expect(badges.nth(i)).toBeVisible();
   }
@@ -758,9 +762,10 @@ test.describe("Listen: stopping", () => {
     const before = await cancels(page);
     await page.locator("main .why-toggle").click();
     await stopped(page, before);
-    // One Listen button, in the card: a tap on it reads the card and nothing of what was closed.
+    // One Listen button, the card's (beside the sheet's handle at this height): a tap on it reads the card and
+    // nothing of what was closed.
     await expect(listenButton(page, "en")).toHaveCount(1);
-    await expect(page.locator("section.glance").getByRole("button", { name: "Listen", exact: true })).toBeVisible();
+    await expect(page.locator(".sheet-top").getByRole("button", { name: "Listen", exact: true })).toBeVisible();
   });
 
   test("the 811 line stops it too (any phone number)", async ({ page }) => {

@@ -31,13 +31,13 @@ test("Moncton replay: Check → Q1 flames → Q2 sky → Q3 nearby → Location 
   await expect(page.getByText(`Replay${NBSP}· Moncton${NBSP}· Aug 25, 2025${NBSP}·`)).toBeVisible();
 
   // As the verdict opens: the map, and over its foot the glance card, its line as the screen's title. One tap up
-  // ("Sources and why"): the three source badges, and "Why?" closed.
+  // ("Sources and why"): the three source badges, the burn status (Moncton is in New Brunswick), and "Why?" closed.
   await expect(page.locator("section.glance")).toHaveAttribute("data-state", "drifting");
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(`Drifting smoke${NBSP}· Long Lake fire${NBSP}· 159 km SSW`);
   await expect(page.getByRole("region", { name: "Map", exact: true })).toBeVisible();
   const badges = page.locator("main .badge");
-  await expect(badges.locator(".badge-label")).toHaveText(["Satellite fire detection", "Wind trace", "ECCC air quality alert: active"]);
-  expect(await badges.evaluateAll((els) => els.map((el) => el.getAttribute("data-badge")))).toEqual(["fire", "trace", "alert"]);
+  await expect(badges.locator(".badge-label")).toHaveText(["Satellite fire detection", "Wind trace", "ECCC air quality alert: active", "Burning: Not checked"]);
+  expect(await badges.evaluateAll((els) => els.map((el) => el.getAttribute("data-badge")))).toEqual(["fire", "trace", "alert", "burn"]);
   for (const badge of await badges.all()) await expect(badge).toBeHidden();
   await page.getByRole("button", { name: "Sources and why" }).click();
   await sheetTo(page, "half");

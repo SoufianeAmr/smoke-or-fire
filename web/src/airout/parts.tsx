@@ -66,6 +66,19 @@ export function AirOutMark({ state, size }: { state: AirOutView["state"]; size: 
   );
 }
 
+/**
+ * The same answer as a chip: one of the two in the sheet's row at its half height, where the map must stay in view. A
+ * short label and the answer in a few words ("Tue 5 to 8 a.m.", "Not now"); a tap opens the same screen.
+ */
+export function AirOutChip({ view }: { view: AirOutView }) {
+  return (
+    <Link to="/air-out" className="chip airout-chip press" data-state={view.state}>
+      <span className="chip-label">{view.chip.label}</span>
+      <span className="chip-answer">{view.chip.answer}</span>
+    </Link>
+  );
+}
+
 /** On the verdict screen: the one answer, and a tap to its screen. */
 export function AirOutTile({ view }: { view: AirOutView }) {
   return (

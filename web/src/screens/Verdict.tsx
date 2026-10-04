@@ -1,7 +1,8 @@
 // 07a–07d · Verdict: the answer lives on the map. The map fills the screen between the top bar and the 911 bar; over
 // its foot a sheet holds the answer, at three heights:
 //   peek  the glance card (and the fire-is-close notice): what the screen opens on;
-//   half  the three source badges and "Why?";
+//   half  compact, so the map stays in view: the card small, the source badges in one row (in New Brunswick the burn
+//         status is a fourth), two chips (Protect your home, when to air out), and "Why?";
 //   full  everything screens 7a–7d say (design/screens/07a-verdict-drifting.html, 07b, 07c, 07d, 07a-fr).
 // The sheet moves by its buttons ("Sources and why", "Show the map", "Why?"); a flick on its handle does the same.
 // Back lowers it. Call 911 stays at the foot of the screen at every height.
@@ -9,12 +10,14 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperti
 import { Link, Navigate } from "react-router";
 import { useBackState } from "../app/back";
 import { useApp, useT } from "../app/state";
-import { AirOutTile } from "../airout/parts";
+import { AirOutChip, AirOutTile } from "../airout/parts";
 import { airOutView } from "../airout/view";
 import { Boundary } from "../components/Boundary";
 import { ReplayBanner } from "../components/ReplayBanner";
 import { Screen } from "../components/Screen";
+import { burnBadge, withBurnBadge } from "../burn/badge";
 import { BurnCard } from "../burn/BurnCard";
+import { useBurnView } from "../burn/useBurn";
 import { Sticky911 } from "../components/Sticky911";
 import { LangToggle } from "../components/TopBar";
 import { BackIcon, ChevronDownIcon, ChevronRightIcon, ChevronUpIcon } from "../components/icons";
@@ -26,12 +29,12 @@ import { MapStage } from "../map/MapStage";
 import { readMap } from "../map/model";
 import { mapText, type Basemap } from "../map/text";
 import { startMap as startMapFor } from "../map/warm";
-import { ProtectLink } from "../protect/ProtectLink";
+import { ProtectChip, ProtectLink } from "../protect/ProtectLink";
 import { AnswerInFull, Badges, GlanceLine, GlanceShape, Why } from "../verdict/card";
 import { AirQualityCard, ConfidenceCard, TwoPossibilitiesCard, WhatToDoCard, WhyCard } from "../verdict/cards";
 import { GLANCE } from "../verdict/glance";
 import { VERDICT_ICONS } from "../verdict/marks";
-import { room, useOpenedHeight } from "../verdict/room";
+import { chipsAfterWhy, room, useOpenedHeight } from "../verdict/room";
 import type { VerdictJson } from "../verdict/types";
 import { VerdictMap } from "../verdict/VerdictMap";
 import { verdictView } from "../verdict/view";
@@ -72,6 +75,11 @@ export function Verdict() {
   const text = useMemo(() => (result && view && model ? mapText(result, view, model, lang, basemap) : null), [result, view, model, lang, basemap]);
   const shown = result !== null;
   const open = detent === "full";
+  // New Brunswick's burn status: the fourth badge of the row, and the card at the sheet's full height. One view for both.
+  const burn = useBurnView(result);
+  const badges = useMemo(() => (view ? (burn ? [...view.badges, burnBadge(burn, lang)] : view.badges) : []), [view, burn, lang]);
+  // What Listen reads at half: the card's line and the badges' names, the burn badge's after the other three.
+  const halfVoice = useMemo(() => (view ? (burn ? withBurnBadge(view.card.voice, view.badges, badges[badges.length - 1]) : view.card.voice) : []), [view, burn, badges]);
   // Everything "Why?" opens. Drawn once for an answer, not again each time the screen measures itself or the map
   // reports in: it is out of sight until "Why?" is pressed, and it holds a map of its own.
   const whyAll = useMemo(
@@ -186,11 +194,18 @@ export function Verdict() {
   };
   // What Listen says with only the card showing: the answer, what the map shows, where the rest is, then 911.
   const peekVoice = [...view.card.lead, ...text.said, ...script(lang, "voice.card.more", { more: t("sheet.more") }), ...view.card.call];
+  const chipsLast = chipsAfterWhy(height);
+  const chips = (
+    <div className="sheet-chips" role="group" aria-label={t("sheet.chips")}>
+      <ProtectChip quiet={view.card.callFirst} />
+      <AirOutChip view={airOutView(result, lang)} />
+    </div>
+  );
 
   return (
     // How much room there is: a tighter card on a small phone (verdict/room.ts, styles.css). The screen is as tall as
     // the phone and does not scroll: the sheet does.
-    <Screen className={`verdict-screen ${room(height, view.notice !== null)}`} style={{ minHeight: "0", paddingBottom: `${bar}px` }}>
+    <Screen className={`verdict-screen ${room(height, view.notice !== null || view.card.callFirst)}`} style={{ minHeight: "0", paddingBottom: `${bar}px` }}>
       <ReplayBanner />
       <div className="stage-wrap">
         <div className="glance-top" inert={overTop} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 12px 0 4px", height: "64px" }}>
@@ -214,19 +229,23 @@ export function Verdict() {
         </Boundary>
         <div ref={sheet} className="answer-sheet" data-detent={detent} data-whole={whole || undefined} inert={legend === "open"}>
           <div ref={held}>
-          <button type="button" className="sheet-handle" onClick={onHandle} onKeyDown={onKey} onPointerDown={onDown} onPointerUp={onUp} onPointerCancel={() => (flick.current = null)}>
-            <span className="sheet-grip" aria-hidden="true" />
-            <span className="sheet-handle-label">
-              {detent === "peek" ? t("sheet.more") : mapAtPeek ? t("sheet.less") : t("sheet.close")}
-              {detent === "peek" ? <ChevronUpIcon size={22} /> : <ChevronDownIcon size={22} />}
-            </span>
-          </button>
+          {/* The handle, and at half Listen beside it: the card under them is then small, so the map stays in view. */}
+          <div className="sheet-top">
+            <button type="button" className="sheet-handle" onClick={onHandle} onKeyDown={onKey} onPointerDown={onDown} onPointerUp={onUp} onPointerCancel={() => (flick.current = null)}>
+              <span className="sheet-grip" aria-hidden="true" />
+              <span className="sheet-handle-label">
+                {detent === "peek" ? t("sheet.more") : mapAtPeek ? t("sheet.less") : t("sheet.close")}
+                {detent === "peek" ? <ChevronUpIcon size={22} /> : <ChevronDownIcon size={22} />}
+              </span>
+            </button>
+            {detent === "half" && <ListenButton sentences={halfVoice} />}
+          </div>
           <section aria-labelledby="verdict-h" className="glance" data-state={view.card.state} style={{ background: look.background, color: look.ink, padding: "14px 20px 20px", display: "flex", flexDirection: "column" }}>
-            {/* Listen reads the line, then what shows under it: the map at peek, the badges' names at half. With "Why?"
-                open it sits there, with what it then reads. */}
+            {/* Listen reads the line, then what shows under it: the map at peek (here), the badges' names at half
+                (beside the handle). With "Why?" open it sits there, with what it then reads. */}
             <div className="glance-head" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "14px" }}>
               <GlanceShape state={view.card.state} />
-              {detent !== "full" && <ListenButton sentences={detent === "peek" ? peekVoice : view.card.voice} />}
+              {detent === "peek" && <ListenButton sentences={peekVoice} />}
             </div>
             <GlanceLine card={view.card} />
           </section>
@@ -249,16 +268,25 @@ export function Verdict() {
             )}
             {/* Out of reach at peek, not only out of sight: nothing in it takes the focus. */}
             <div className="sheet-more" hidden={detent === "peek"}>
-              <Badges badges={view.badges} title={t("badges.title")} />
+              {/* The sources, in one row. In New Brunswick the burn status is the fourth: its shape, its word, and on a
+                  tap what the province allows and where that comes from. */}
+              <Badges badges={badges} title={t("badges.title")} />
+              {/* At half, two chips in one row: what a person can do next. Where nothing explains the smoke they
+                  are both quiet: Call 911 is the screen's main action. On a short screen they come after "Why?". */}
+              {detent === "half" && !chipsLast && chips}
               <Why card={view.card} open={open} onToggle={() => setDetent(open ? "half" : "full")}>
                 {whyAll}
               </Why>
-              {/* Protect your home from smoke: with the sources and "Why?", at the sheet's half and full heights. */}
-              <ProtectLink />
-              {/* The best time to air out, from ECCC's smoke forecast: the one answer here, its 48 hours on a screen of its own. */}
-              {!view.card.callFirst && <AirOutTile view={airOutView(result, lang)} />}
-              {/* Is burning allowed today? New Brunswick only: the province's burn status for the person's county. */}
-              <BurnCard json={result} />
+              {detent === "half" && chipsLast && chips}
+              {/* With "Why?" open, everything in full, as before: the way to Protect your home, the best time to air
+                  out (where nothing explains the smoke it is with the other details, above), and the burn card. */}
+              {open && (
+                <>
+                  <ProtectLink />
+                  {!view.card.callFirst && <AirOutTile view={airOutView(result, lang)} />}
+                  {burn && <BurnCard view={burn} />}
+                </>
+              )}
             </div>
           </main>
           </div>

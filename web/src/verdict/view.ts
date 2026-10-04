@@ -2,7 +2,7 @@
 import { translate, type Lang, type StringKey, type Vars } from "../i18n";
 import { lowerFirst, script, spokenKm } from "../listen/speech";
 import type { BadgeTone } from "./glance";
-import type { AqhiCategory, Confidence, Fire, LastSeen, Verdict, VerdictJson } from "./types";
+import type { AqhiCategory, BurnState, Confidence, Fire, LastSeen, Verdict, VerdictJson } from "./types";
 
 const NBSP = String.fromCharCode(0xa0); // no-break space: keeps a fire's name on one line in French
 const NBH = String.fromCharCode(0x2011); // no-break hyphen
@@ -17,10 +17,13 @@ export type SmokeBreak = { windows: string; text: string; library: { label: stri
 
 /** One source under the card. A tap shows `lines` (what was found and when, then the source) and `links`. */
 export interface Badge {
-  id: "fire" | "trace" | "alert";
+  /** "burn": New Brunswick's burn status, a fourth badge the screen adds beside the verdict's three (burn/badge.ts). */
+  id: "fire" | "trace" | "alert" | "burn";
   tone: BadgeTone;
   /** A satellite for a detection; a flame for a fire known only from Canada's official list. */
-  icon: "satellite" | "flame" | "wind" | "bell";
+  icon: "satellite" | "flame" | "wind" | "bell" | "burn";
+  /** The burn badge's state: its icon is that state's own shape (an octagon, a triangle, a flame in a ring…). */
+  burn?: BurnState;
   /** On the badge, and what Listen says of it. */
   label: string;
   /** A word or two of the label, shown under the icon where the three badges share one row (a small phone). It says the

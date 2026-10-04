@@ -10,9 +10,10 @@
 .protect-link:hover{color:#1B2A4A}
 .protect-link-name{flex-grow:1;min-width:0;overflow-wrap:anywhere}
 .protect-link[data-tone="raised"],.protect-link[data-tone="raised"]:hover{background:#1B2A4A;color:#FFFFFF}
-.verdict-tight .protect-link{min-height:56px}
-/* Its name takes two lines at most, so Call 911 stays the largest thing to tap: under 360 px wide, smaller words and
-   no icon. */
+/* Its name takes two lines at most, so Call 911 stays the largest thing to tap: on a tightened screen (where the
+   Call 911 button is 60 px) and under 360 px wide, smaller words and no icon. */
+.verdict-tight .protect-link{min-height:56px;font-size:18px}
+.verdict-tight .protect-link .protect-art{display:none}
 @media (max-width: 359px){.protect-link{font-size:18px}.protect-link .protect-art{display:none}}
 
 /* The screen. */

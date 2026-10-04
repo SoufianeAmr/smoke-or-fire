@@ -74,6 +74,9 @@ export interface AirOutView {
   links: { label: string; host: string; url: string }[];
   /** "Protect your home", for the screen that holds it. */
   protect: string;
+  /** The chip in the sheet's row of two, at its half height: a short label, and the answer in a few words ("Tue 5 to
+   *  8 a.m.", "Not now", "No forecast"). */
+  chip: { label: string; answer: string };
   /** What Listen says, one sentence per item. */
   voice: string[];
 }
@@ -145,6 +148,7 @@ export function airOutView(json: VerdictJson, lang: Lang): AirOutView {
       ...common,
       state: "notAvailable",
       answer,
+      chip: { label: t("airout.chip"), answer: t("airout.chip.notAvailable") },
       title: t("airout.title", { label, answer }),
       lines: [t(replay ? "airout.notAvailable.replay" : "airout.notAvailable.body")],
       strip: null,
@@ -240,6 +244,8 @@ export function airOutView(json: VerdictJson, lang: Lang): AirOutView {
     ...common,
     state: window ? "window" : "none",
     answer,
+    // The chip keeps the answer when there is a time to give; else two words.
+    chip: { label: t("airout.chip"), answer: window ? answer : t("airout.chip.none") },
     title,
     lines,
     strip: {

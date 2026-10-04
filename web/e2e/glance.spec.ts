@@ -119,8 +119,8 @@ test.describe("the card: one line under a large icon", () => {
         // The dots never start a line: each follows its part after a no-break space.
         expect((await line(page).locator(".glance-part").allTextContents()).slice(0, -1).every((part) => part.endsWith(`${NBSP}Â·`))).toBe(true);
         // The badges are on the page, out of sight and out of reach until the sheet is raised.
-        await expect(badges(page)).toHaveCount(3);
-        expect(await badges(page).evaluateAll((all) => all.map((b) => b.getAttribute("data-badge")))).toEqual(["fire", "trace", "alert"]);
+        // (In New Brunswick the burn status is a fourth, after the verdict's three: Moncton, Miramichi.)
+        expect(await badges(page).evaluateAll((all) => all.map((b) => b.getAttribute("data-badge")))).toEqual(["fire", "trace", "alert", ...(state.town === "Halifax" ? [] : ["burn"])]);
         for (const b of await badges(page).all()) await expect(b).toBeHidden();
         await sheetTo(page, "half");
         for (const b of await badges(page).all()) await expect(b).toBeVisible();
@@ -528,7 +528,7 @@ test.describe("Call 911", () => {
   });
 });
 
-test.describe("on a small phone: with the sheet at half, the three badges and â€œWhy?â€ show above the 911 bar without scrolling", () => {
+test.describe("on a small phone: with the sheet at half, the badges and â€œWhy?â€ show above the 911 bar without scrolling", () => {
   type Box = { top: number; bottom: number; left: number; right: number; width: number; height: number };
   type Measures = { scrolled: number; width: number; bar: number; under: number; badges: Box[]; why: Box; line: Box };
   /** Where things are as the screen stands: how far the sheet is scrolled, the 911 bar's top edge, the foot of the
@@ -546,19 +546,26 @@ test.describe("on a small phone: with the sheet at half, the three badges and â€
         line: box(document.querySelector("#verdict-h")!),
       };
     });
-  /** The three badges, 56 px or more each way, side by side in one row, and "Why?" under them: all whole above the bar. */
-  function expectAllAboveTheBar(m: Measures) {
-    expect([m.scrolled, m.badges.length]).toEqual([0, 3]); // as the sheet comes up: nothing scrolled
+  /** New Brunswick's replay towns: there the burn status is a fourth badge. */
+  const NEW_BRUNSWICK = ["Moncton", "Miramichi", "Bathurst", "Edmundston"];
+  const badgesIn = (town: string) => (NEW_BRUNSWICK.includes(town) ? 4 : 3);
+  /**
+   * The badges (`count`: three, or four with the burn status), 56 px or more each way, side by side in one row (four
+   * on a phone under 360 px wide: two by two), and "Why?" under them: all whole above the bar.
+   */
+  function expectAllAboveTheBar(m: Measures, count = 3) {
+    expect([m.scrolled, m.badges.length]).toEqual([0, count]); // as the sheet comes up: nothing scrolled
     for (const b of m.badges) {
       expect(Math.min(b.width, b.height)).toBeGreaterThanOrEqual(56);
       expect([b.left >= 0, b.right <= m.width, b.top >= m.line.bottom]).toEqual([true, true, true]); // on the screen, under the card
       expect(b.bottom).toBeLessThanOrEqual(m.bar + 0.5);
     }
-    // One row, left to right, none over another.
-    expect(new Set(m.badges.map((b) => Math.round(b.top))).size).toBe(1);
-    expect(m.badges[0].right <= m.badges[1].left && m.badges[1].right <= m.badges[2].left).toBe(true);
+    // One row (or two rows of two), left to right, none over another.
+    const rows = count === 4 && m.width < 360 ? 2 : 1;
+    expect(new Set(m.badges.map((b) => Math.round(b.top))).size).toBe(rows);
+    m.badges.forEach((b, i) => { if (i % (count / rows) > 0) expect(m.badges[i - 1].right).toBeLessThanOrEqual(b.left); });
     expect(m.why.height).toBeGreaterThanOrEqual(56);
-    expect([m.why.left >= 0, m.why.right <= m.width, m.why.top >= m.badges[0].bottom]).toEqual([true, true, true]);
+    expect([m.why.left >= 0, m.why.right <= m.width, m.why.top >= Math.max(...m.badges.map((b) => b.bottom))]).toEqual([true, true, true]);
     expect(m.why.bottom).toBeLessThanOrEqual(m.bar + 0.5);
   }
   /** What a badge shows: its word (text on the page, drawn or not), how it is drawn, and whether its full name is drawn. */
@@ -596,11 +603,11 @@ test.describe("on a small phone: with the sheet at half, the three badges and â€
 
       for (const lang of LANGS) {
         for (const town of PHONES.includes(viewport) ? TOWNS : TIGHTEST) {
-          test(`${lang.toUpperCase()} ${town} replay: one row of three badges and â€œWhy?â€, whole above the bar`, async ({ page }) => {
+          test(`${lang.toUpperCase()} ${town} replay: the ${badgesIn(town)} badges and â€œWhy?â€, whole above the bar`, async ({ page }) => {
             await replay(page, lang, town);
             await page.evaluate(() => document.fonts.ready);
 
-            expectAllAboveTheBar(await measure(page));
+            expectAllAboveTheBar(await measure(page), badgesIn(town));
           });
         }
 
@@ -652,7 +659,9 @@ test.describe("on a small phone: with the sheet at half, the three badges and â€
 
           // Two words: they sit inside the dashed outline (on two lines where one would touch it).
           expect(await shown(page, "alert")).toEqual({ word: word(lang, "notChecked"), wordSeen: true, wordInside: true, nameSeen: false, drawn: "white dashed", type: 16 });
-          expectAllAboveTheBar(await measure(page));
+          // Moncton: the burn status is the fourth badge, and here it is not checked either: its words are inside too.
+          expect(await shown(page, "burn")).toMatchObject({ wordSeen: true, wordInside: true, nameSeen: false, drawn: "white dashed", type: 16 });
+          expectAllAboveTheBar(await measure(page), 4);
         });
 
         test(`${lang.toUpperCase()} a tap on a badge shows its full name, then its source, its time and its link, where they can be read`, async ({ page }) => {
@@ -732,9 +741,10 @@ test.describe("on a small phone: with the sheet at half, the three badges and â€
       await page.setViewportSize({ width: 390, height: 740 }); // a 390 px phone in a browser, its bars showing
       await replay(page, "en", "Moncton");
       expect(await tops(page)).toBe(1);
-      const before = await line(page).evaluate((el) => getComputedStyle(el).fontSize);
 
       await openWhy(page);
+      // (The card is smaller at the sheet's half height: its size is read with "Why?" open, as it stays.)
+      const before = await line(page).evaluate((el) => getComputedStyle(el).fontSize);
       // Taller than any phone: a layout that followed the height would put the badges back in a column, with a larger line.
       await page.setViewportSize({ width: 390, height: 1040 });
       await expect.poll(() => page.evaluate(() => window.innerHeight)).toBe(1040);
@@ -747,7 +757,7 @@ test.describe("on a small phone: with the sheet at half, the three badges and â€
     test("the screen is turned (a new width): the layout is chosen again", async ({ page }) => {
       await page.setViewportSize({ width: 480, height: 1024 }); // a tall screen: one badge under the other
       await replay(page, "en", "Moncton");
-      expect(await tops(page)).toBe(3);
+      expect(await tops(page)).toBe(4); // the verdict's three, and New Brunswick's burn status
 
       await page.setViewportSize({ width: 1024, height: 480 });
       await expect.poll(() => tops(page)).toBe(1);

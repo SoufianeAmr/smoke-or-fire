@@ -94,7 +94,7 @@ The engine's free host puts it to sleep when idle and wipes its disk, so the fir
 The verdict screen (7a–7d) opens on a map. Nothing it said is gone; where it sits has changed. The reasons are in [docs/decisions/0003-map.md](../docs/decisions/0003-map.md).
 
 - **The screen.** The top bar (New check, EN/FR), the map, and over the map's foot a sheet; the 911 bar under it, as before. The screen is as tall as the phone and does not scroll: the sheet does. With only the card showing, the sheet never covers the top bar: New check and EN/FR stay in reach.
-- **The sheet has three heights, each as tall as what it holds.** Peek: the glance card, and the fire-is-close notice, which stays in front. Half: the three badges in one row, and "Why?". Full: everything "Why?" opens, unchanged, in the same order. The screen opens at peek.
+- **The sheet has three heights, each as tall as what it holds.** Peek: the glance card, and the fire-is-close notice, which stays in front. Half: the badges in one row, and "Why?" (and, since the amendment "The sheet at half is compact" below, two chips between them). Full: everything "Why?" opens, unchanged, in the same order. The screen opens at peek.
 - **It moves by buttons with words.** The handle reads "Sources and why", then "Show the map"; "Why?" opens and closes the full height. A flick on the handle and the arrow keys do the same. Back lowers the sheet, and coming back from another screen finds it as it was left. On a screen with no room for a map (a small window at 200% zoom) the handle reads "Show less", not "Show the map".
 - **This replaces one line of the Oct 3 amendment.** "The three badges and Why? show above the 911 bar as the screen opens" becomes: they show above it with the sheet at half, on the same phones (from about 550 px tall; on the smallest the sheet then stands over the top bar). The badges share one row on every phone (under 980 px tall); the column with their full names stays on taller screens. The fire-is-close exception is as it was: the notice first, and "Why?" may need a scroll.
 - **The map.** The Maritimes from OpenStreetMap, in the app's colours: land, water, built-up areas, main roads, borders, place names in the app's language. No green.
@@ -109,12 +109,25 @@ The verdict screen (7a–7d) opens on a map. Nothing it said is gone; where it s
 
 ## Amendment: "Is burning allowed today?" (Oct 4, 2026)
 
-One card on the verdict screen, after "Why?", in New Brunswick only ([docs/decisions/0005-burn.md](../docs/decisions/0005-burn.md)). Nothing above it moves.
+One card on the verdict screen, after "Why?", in New Brunswick only ([docs/decisions/0005-burn.md](../docs/decisions/0005-burn.md)). Nothing above it moves. With the sheet at half the same status is the fourth badge of the row (the amendment "The sheet at half is compact", below).
 
-- **The status block:** a 48 px shape and the status in a few words, 22 px extrabold. No burning = white octagon with a red cross, on red, white text. Restricted = white triangle, outlined near-black, with a clock, on amber, near-black text. Burning permitted = green circle with a white flame, on white with a green outline. Fire season closed = outlined navy square with a bar. Not checked = dashed navy ring with a question mark, as on the source badges.
-- **Green: the one exception to "No green".** #1E7B3A, on this card only, as the outline and shape of the province's "burn permitted". Never a fill behind text, and never about the smoke. **No check mark:** under a verdict that says to look outside, a tick could read as "all is well".
+- **The status block:** a 48 px shape and the status in a few words, 22 px extrabold. No burning = white octagon with a red cross, on red, white text. Restricted = white triangle, outlined near-black, with a clock, on amber, near-black text. Burning permitted = a green flame in a green ring, on white with a green outline, its words green. Fire season closed = outlined navy square with a bar. Not checked = dashed navy ring with a question mark, as on the source badges.
+- **Green: the one exception to "No green".** #1E7B3A, for the province's "Burning permitted" only: an outline, a flame and a word, never a fill, and never about the smoke. Its exact scope is in the amendment "The sheet at half is compact", below. **No check mark:** under a verdict that says to look outside, a tick could read as "all is well".
 - **Type:** every word on the card is 18 px or more, hosts under links included.
 - **Its own Listen**, named "Listen: is burning allowed today?" for a screen reader. One voice at a time: starting one Listen stops the other.
+
+## Amendment: the sheet at half is compact (Oct 4, 2026)
+
+With "Protect your home", "Best time to air out" and the burn card in the sheet, its half height stood over the whole map. It is now small enough that the map stays in view on a phone. Nothing is gone: the full height holds everything, as before.
+
+- **Half, top to bottom:** the handle, with Listen beside it; the card, small (its shape beside its line: 56 px and 26 px; on a phone 740 px tall or less, 48 px and 22 px); the badges in one row; one row of two chips; "Why?". Listen reads the card's line and the badges' names, the burn badge's after the other three.
+- **The burn status is the fourth badge**, in New Brunswick only: "Burning: No burn" / « Brûlage : interdit ». Its state's own shape above one or two words: No burn, Restricted, Permitted, Season closed, Not checked / Interdit, Restreint, Permis, Hors saison, Non vérifié. A tap shows, as on the other badges, its name, then the shape, the status in full, the county, what the province allows, until when, who was asked and when, and Fire Watch. No burning is a filled red pill with white words; restricted a filled amber pill with near-black words; permitted a white pill outlined in green; season closed is outlined navy; not checked is dashed navy. Four badges are each as wide as their word needs, never under 56 px; under 360 px wide they are two by two, and a panel opens under its own row.
+- **The two chips**, 56 px or more, words 18 px, outlined navy on white: "Protect your home" / « Protégez votre maison » (for a screen reader its name is the button's, "Protect your home from smoke") and "When to air out" / « Quand aérer » with the answer in a few words under it ("Mon 5 to 8 a.m.", "Not now", "Not available"). The first is filled navy when the air calls for it (moderate risk and up), as the button is.
+- **Full:** everything "Why?" opens, then the button to Protect your home, the air-out tile and the burn card, unchanged. The chips are at half only; the button, the tile and the card at full only.
+- **Unexplained smoke:** Call 911 stays the main action and the largest thing to tap at every height. Both chips are outlined, never filled. On a phone 740 px tall or less this screen takes the tighter layout (the top bar 56 px, the bar's line in 16 px above a 60 px Call 911 button), so the map still shows; the button to Protect your home is then in 18 px with no icon, and stays smaller than Call 911.
+- **What is tested:** on 390 × 844 and 375 × 667, in English and French, with the sheet at half the map shows the person and the fire, whole above the sheet and under no button: Moncton (four badges), Halifax (unexplained smoke), Fredericton (both). Measured in the replay: 174 px of map or more on 390 × 844, 87 px or more on 375 × 667.
+- **Where the map does not show at half:** with the fire-is-close notice in front (the notice comes first, as before); on a phone 660 px tall or less, where there is room for it only in some answers (there the chips come after "Why?", so the badges and "Why?" still show above the 911 bar); and wherever less than 84 px of map would be left: the sheet then stands over it, as before.
+- **Green: its exact scope.** #1E7B3A is used for the province's "Burning permitted" and nothing else, and on the burn badge only: its outline, its flame and its word ("Permitted" on the pill; "Burning permitted" in the pill's panel and on the same status block at the head of the burn card). Never a fill: the pill, the disc under the flame and the block are white. Never on the verdict card, nor on the map, a chip, a button or the 911 bar. It is about burning, never about the smoke: it never means the smoke is safe. No check mark.
 
 ## Amendment: Listen keeps what it reads on the phone (Oct 4, 2026)
 
@@ -123,7 +136,7 @@ Some of a browser's voices are voice services: the words go to a server to be sp
 ## Hard rules (unchanged)
 - Never "safe". Never "don't call 911" or any paraphrase.
 - 911 on every screen; one Call 911 button per view.
-- No green.
+- No green. (One exception, the province's "Burning permitted" on the burn badge: see "The sheet at half is compact".)
 - Colour + icon + word for every status.
 - Tokens:
   - Colours: bg #FAF6F0, cards #FFFFFF, text #1A1D21, navy #1B2A4A, orange #E8590C, red #D92D20, amber #F79009.

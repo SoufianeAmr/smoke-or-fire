@@ -135,19 +135,19 @@ test.describe("the sheet: the card, then the badges, then everything, each by a 
       await expect(page.getByRole("heading", { level: 1 })).toHaveCount(1);
       await expect(page.locator("#verdict-h")).toBeVisible();
       await expect(handle(page)).toHaveAccessibleName(s(lang, "sheet.more"));
-      await expect(page.locator("main .badge")).toHaveCount(3);
+      await expect(page.locator("main .badge")).toHaveCount(4); // the verdict's three, and New Brunswick's burn status
       for (const hiddenThing of ["main .badge >> nth=0", "main .why-toggle", "#why-all"]) await expect(page.locator(hiddenThing)).toBeHidden();
       expect((await layout(page)).sheetTop - (await layout(page)).stage.y).toBeGreaterThanOrEqual(280); // most of the room is the map's
 
-      // Half: the three badges in one row, "Why?" and, under it, what a person can do next (Protect your home), whole
-      // above the 911 bar. The map is an extra and gives way to them: a strip of it still shows above the sheet where
-      // the phone has room for one (84 px, its Legend button's); where it has not, the sheet stands over the whole
-      // map, and its handle brings the map back.
+      // Half: the badges in one row, two chips (what a person can do next: Protect your home, when to air out) and
+      // "Why?", whole above the 911 bar. The map is an extra and gives way to them: a strip of it still shows above
+      // the sheet where the phone has room for one (84 px, its Legend button's); where it has not, the sheet stands
+      // over the whole map, and its handle brings the map back.
       await handle(page).click();
       await expect(sheet(page)).toHaveAttribute("data-detent", "half");
       await expect(handle(page)).toHaveAccessibleName(s(lang, "sheet.less"));
       const bar = (await call(page).locator("..").boundingBox())!.y;
-      for (const shown of [...(await page.locator("main .badge").all()), page.locator("main .why-toggle"), page.locator("main a.protect-link")]) {
+      for (const shown of [...(await page.locator("main .badge").all()), ...(await page.locator("main .sheet-chips a").all()), page.locator("main .why-toggle")]) {
         await expect(shown).toBeVisible();
         const box = (await shown.boundingBox())!;
         expect(box.y + box.height).toBeLessThanOrEqual(bar + 0.5);
@@ -309,13 +309,8 @@ test.describe("the map opens on the person and the fire, both whole above the sh
     });
   }
 
-  // Where a strip of the map is still left above the sheet at half: a tall phone (430 × 932), and an answer with no
-  // burn status, as the engine gives outside New Brunswick. On a 390 × 844 phone, and in the province on any phone,
-  // the sheet at half holds enough (Protect your home, the best time to air out, the burn card) to stand over the
-  // map: the next test.
   test("the frame follows the sheet while the map has not been touched: at half, the two are still whole above it", async ({ page }) => {
-    await page.setViewportSize({ width: 430, height: 932 });
-    await live(page, "en", { ...liveAnswer("moncton"), burn: null });
+    await replay(page, "en", "Moncton");
     await tiles(page);
     const before = await layout(page);
     await sheetTo(page, "half");
@@ -324,23 +319,97 @@ test.describe("the map opens on the person and the fire, both whole above the sh
     expect(after.sheetTop).toBeLessThan(before.sheetTop - 60);
     expect(after.focus!.y).toBeLessThan(before.focus!.y - 30); // the map moved up with it
   });
+});
 
-  test("in New Brunswick the sheet at half also holds “Is burning allowed today?”: taller than the map’s room, it stands over the map and the top bar, and its handle brings both back", async ({ page }) => {
-    await replay(page, "en", "Moncton");
-    await tiles(page);
-    await sheetTo(page, "half");
-    // Every fact is in the sheet as text, and the map is an extra: it gives way to what the sheet holds.
-    await expect(page.locator("main section.burn")).toBeVisible();
-    await expect(sheet(page)).toHaveAttribute("data-whole", "true");
-    await expect(stage(page)).toHaveAttribute("inert", "");
-    await expect(call(page)).toBeVisible(); // Call 911 stays at the foot of the screen
-    // One press on the handle: the map again, with New check and EN/FR in reach.
-    await expect(handle(page)).toHaveAccessibleName(s("en", "sheet.less"));
-    await handle(page).click();
-    await expect(sheet(page)).toHaveAttribute("data-detent", "peek");
-    await expect(stage(page)).not.toHaveAttribute("inert", "");
-    await page.getByRole("link", { name: s("en", "nav.newCheck") }).click({ trial: true });
-  });
+// --- The sheet at half is compact: the map stays in view ------------------------------------------------------------
+
+// At half the sheet holds the card, small; the source badges in one row (in New Brunswick the burn status is a fourth);
+// one row of two chips (Protect your home, when to air out); then "Why?". Everything else waits for "Why?". So on a
+// phone the map still shows the person and the fire above it.
+test.describe("the sheet at half is compact: the map still shows the person and the fire", () => {
+  /** What the sheet shows at half, top to bottom, and where the 911 bar starts. */
+  const half = (page: Page) =>
+    page.evaluate(() => {
+      const box = (el: Element) => { const r = el.getBoundingClientRect(); return { top: r.top, bottom: r.bottom, width: r.width, height: r.height }; };
+      const all = (selector: string) => [...document.querySelectorAll(selector)].filter((el) => (el as HTMLElement).offsetParent !== null).map(box);
+      return {
+        badges: all("main .badge"),
+        chips: all("main .sheet-chips a"),
+        why: all("main .why-toggle"),
+        full: all("main section.burn, main a.protect-link, main a.airout-tile").length,
+        bar: document.querySelector("[data-bar911]")!.getBoundingClientRect().top,
+        call: box(document.querySelector('a[href="tel:911"]')!),
+      };
+    });
+
+  for (const viewport of [{ width: 390, height: 844 }, { width: 375, height: 667 }]) {
+    for (const lang of LANGS) {
+      test(`${viewport.width} × ${viewport.height} ${lang.toUpperCase()} Moncton (New Brunswick): four badges, two chips and “Why?” above the 911 bar, and the map shows the person and the fire`, async ({ page }, info) => {
+        await page.setViewportSize(viewport);
+        await replay(page, lang, "Moncton");
+        await tiles(page);
+        await sheetTo(page, "half");
+        // The sheet does not stand over the whole map: the person and the fire are whole above it, under no button.
+        await expect(sheet(page)).not.toHaveAttribute("data-whole", "true");
+        await expect.poll(async () => { const at = await layout(page); return [...hidden("the person", at.you, at), ...hidden("the fire", at.focus, at)]; }).toEqual([]);
+        const at = await layout(page);
+        const strip = at.sheetTop - at.stage.y;
+        info.annotations.push({ type: "map above the sheet at half", description: `${Math.round(strip)} px` });
+        expect(strip).toBeGreaterThanOrEqual(84);
+
+        const shown = await half(page);
+        // Four badges in one row: the verdict's three, and the burn status.
+        expect(await page.locator("main .badge").evaluateAll((all) => all.map((b) => b.getAttribute("data-badge")))).toEqual(["fire", "trace", "alert", "burn"]);
+        expect(new Set(shown.badges.map((b) => Math.round(b.top))).size).toBe(1);
+        // Then one row of two chips, then "Why?", each 56 px or more, all above the 911 bar.
+        expect(shown.chips).toHaveLength(2);
+        expect(new Set(shown.chips.map((c) => Math.round(c.top))).size).toBe(1);
+        expect(shown.why).toHaveLength(1);
+        for (const target of [...shown.badges, ...shown.chips, ...shown.why]) {
+          expect(target.height).toBeGreaterThanOrEqual(56);
+          expect(target.bottom).toBeLessThanOrEqual(shown.bar + 0.5);
+        }
+        expect(Math.max(...shown.badges.map((b) => b.bottom))).toBeLessThanOrEqual(shown.chips[0].top + 0.5);
+        expect(Math.max(...shown.chips.map((c) => c.bottom))).toBeLessThanOrEqual(shown.why[0].top + 0.5);
+        // The burn card, the button to Protect your home and the air-out tile wait for "Why?".
+        expect(shown.full).toBe(0);
+        await page.locator("main .why-toggle").click();
+        await expect(sheet(page)).toHaveAttribute("data-detent", "full");
+        await expect(page.locator("main section.burn")).toBeVisible();
+        await expect(page.locator("main a.protect-link")).toBeVisible();
+        await expect(page.locator("main a.airout-tile")).toBeVisible();
+        await expect(page.locator("main .sheet-chips")).toHaveCount(0);
+      });
+
+      // Nothing explains the smoke: the 911 bar is the taller one. Fredericton is in New Brunswick too: four badges.
+      for (const [town, badges] of [["Halifax", 3], ["Fredericton", 4]] as const) {
+      test(`${viewport.width} × ${viewport.height} ${lang.toUpperCase()} ${town} (nothing explains the smoke, ${badges} badges): Call 911 stays the main action, the two chips are quiet, and the map shows the person and the fire`, async ({ page }, info) => {
+        await page.setViewportSize(viewport);
+        await replay(page, lang, town);
+        await tiles(page);
+        await sheetTo(page, "half");
+        await expect(sheet(page)).not.toHaveAttribute("data-whole", "true");
+        await expect.poll(async () => { const at = await layout(page); return [...hidden("the person", at.you, at), ...hidden("the fire", at.focus, at)]; }).toEqual([]);
+        const at = await layout(page);
+        info.annotations.push({ type: "map above the sheet at half", description: `${Math.round(at.sheetTop - at.stage.y)} px` });
+
+        const shown = await half(page);
+        expect(at.sheetTop - at.stage.y).toBeGreaterThanOrEqual(84);
+        expect(shown.badges).toHaveLength(badges); // outside New Brunswick: no burn status
+        expect(new Set(shown.badges.map((b) => Math.round(b.top))).size).toBe(1);
+        expect(shown.chips).toHaveLength(2);
+        // Both chips are outlined, never filled, and Call 911 is the largest thing to tap.
+        expect(await page.locator("main .sheet-chips a").evaluateAll((all) => all.map((a) => getComputedStyle(a).backgroundColor))).toEqual(["rgb(255, 255, 255)", "rgb(255, 255, 255)"]);
+        await expect(page.locator(".sticky-first")).toBeVisible();
+        for (const target of [...shown.badges, ...shown.chips, ...shown.why]) {
+          expect(target.bottom).toBeLessThanOrEqual(shown.bar + 0.5);
+          expect(shown.call.width * shown.call.height).toBeGreaterThan(target.width * target.height);
+        }
+        await expect(page.locator('a[href="tel:911"]')).toHaveCount(1);
+      });
+      }
+    }
+  }
 });
 
 // --- The overlay ------------------------------------------------------------------------------------------------------

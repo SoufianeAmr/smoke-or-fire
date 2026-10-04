@@ -5,7 +5,7 @@
 import { expect, test, type Locator, type Page, type Route } from "@playwright/test";
 import { readFileSync } from "node:fs";
 import { TEST_ENGINE_URL } from "./engine";
-import { openWhy, sheetTo } from "./verdict";
+import { openBadge, openWhy, sheetTo, type Detent } from "./verdict";
 
 // Several of these tests open the verdict more than once: slow on a busy machine.
 test.describe.configure({ timeout: 90_000 });
@@ -58,17 +58,17 @@ async function start(page: Page, lang: Lang, mode: "replay" | "live") {
     await page.waitForFunction(() => sessionStorage.getItem("smoke-or-fire")?.includes('"lang":"fr"'));
   }
 }
-async function search(page: Page, town: string) {
+async function search(page: Page, town: string, detent: Detent = "full") {
   await page.goto("/location");
   await page.locator("input[type=search]").fill(town);
   await page.getByRole("option", { name: new RegExp(`^${town},`) }).first().click();
   await expect(page.locator("#verdict-h")).toBeVisible({ timeout: 15_000 });
-  // The card is in the sheet, under "Why?": one tap up from the answer ("Sources and why").
-  await sheetTo(page, "half");
+  // The card is in the sheet at its full height, after everything "Why?" opens. (At half the status is a badge.)
+  await sheetTo(page, detent);
 }
-async function replay(page: Page, lang: Lang, town: string) {
+async function replay(page: Page, lang: Lang, town: string, detent: Detent = "full") {
   await start(page, lang, "replay");
-  await search(page, town);
+  await search(page, town, detent);
 }
 /** The phone's clock: the time of the engine's recorded answer (9 a.m. Atlantic on Aug 25, 2025), unless a test moves it. */
 const CHECKED = "2025-08-25T12:00:00Z";
@@ -77,11 +77,11 @@ async function later(page: Page, time: string) {
   await page.clock.setFixedTime(new Date(time));
   await page.evaluate(() => document.dispatchEvent(new Event("visibilitychange")));
 }
-async function live(page: Page, lang: Lang, answer: object, town = "Moncton") {
+async function live(page: Page, lang: Lang, answer: object, town = "Moncton", detent: Detent = "full") {
   await page.clock.setFixedTime(new Date(CHECKED));
   await page.route(`${TEST_ENGINE_URL}/verdict**`, (route: Route) => route.fulfill({ json: answer, headers: { "access-control-allow-origin": "*" } }));
   await start(page, lang, "live");
-  await search(page, town);
+  await search(page, town, detent);
 }
 
 const card = (page: Page) => page.locator("main section.burn");
@@ -98,7 +98,7 @@ const look = (page: Page) =>
 const STATES: { state: State; shape: string; background: string; border: string; ink: string }[] = [
   { state: "no_burn", shape: "octagon", background: RED, border: `solid ${RED}`, ink: WHITE },
   { state: "restricted", shape: "triangle", background: AMBER, border: `solid ${AMBER}`, ink: "rgb(26, 29, 33)" },
-  { state: "permitted", shape: "circle", background: WHITE, border: `solid ${GREEN}`, ink: "rgb(26, 29, 33)" },
+  { state: "permitted", shape: "circle", background: WHITE, border: `solid ${GREEN}`, ink: GREEN },
   { state: "season_closed", shape: "square", background: WHITE, border: `solid ${NAVY}`, ink: "rgb(26, 29, 33)" },
   { state: "not_checked", shape: "ring", background: WHITE, border: `dashed ${NAVY}`, ink: "rgb(26, 29, 33)" },
 ];
@@ -197,10 +197,12 @@ test.describe("the status: a shape, a word and a colour, for the person’s coun
     });
   }
 
-  test("burning permitted is a flame in a green circle, never a check mark", async ({ page }) => {
+  test("burning permitted is a green flame in a green ring, never a fill, never a check mark", async ({ page }) => {
     await live(page, "en", liveAnswer(burnOf("permitted")));
-    const drawn = await block(page).locator(".burn-shape").evaluate((svg) => [...svg.children].map((el) => `${el.tagName} ${getComputedStyle(el).fill}`));
-    expect(drawn).toEqual([`circle ${GREEN}`, `path ${WHITE}`]);
+    const drawn = await block(page).locator(".burn-shape").evaluate((svg) => [...svg.children].map((el) => `${el.tagName} ${getComputedStyle(el).fill} ${getComputedStyle(el).stroke}`));
+    expect(drawn).toEqual([`circle ${WHITE} ${GREEN}`, `path ${GREEN} none`]);
+    // The word is green too, on white: the block is never filled with it.
+    expect(await card(page).locator(".burn-word").evaluate((el) => getComputedStyle(el).color)).toBe(GREEN);
   });
 
   test("a county that could not be told: not checked, and no county is named", async ({ page }) => {
@@ -395,6 +397,142 @@ test.describe("built for seniors: large words, large targets, the keyboard, smal
   });
 });
 
+// --- The badge --------------------------------------------------------------------------------------------------------
+
+// At the sheet's half height the status is the fourth badge of the row: its shape, a word, and on a tap what the card
+// says first, with where it comes from. The card itself waits at the full height.
+const pill = (page: Page) => page.locator('main .badge[data-badge="burn"]');
+const PILLS: Record<State, { tone: string; shape: string; background: string; border: string; ink: string }> = {
+  no_burn: { tone: "noBurn", shape: "octagon", background: RED, border: `solid ${RED}`, ink: WHITE },
+  restricted: { tone: "restricted", shape: "triangle", background: AMBER, border: `solid ${AMBER}`, ink: "rgb(26, 29, 33)" },
+  permitted: { tone: "permitted", shape: "circle", background: WHITE, border: `solid ${GREEN}`, ink: GREEN },
+  season_closed: { tone: "none", shape: "square", background: WHITE, border: `solid ${NAVY}`, ink: NAVY },
+  not_checked: { tone: "notChecked", shape: "ring", background: WHITE, border: `dashed ${NAVY}`, ink: NAVY },
+};
+/** "Burning: No burn". French writes the word in lower case after the colon: "Brûlage : interdit". */
+const pillName = (lang: Lang, state: State) => {
+  const word = s(lang, `badge.burn.short.${state}`);
+  return plain(s(lang, "badge.burn", { word: lang === "fr" ? word[0].toLowerCase() + word.slice(1) : word }));
+};
+/**
+ * Every use of the green on the screen: where it is ("burn": the burn badge, its panel or the burn card) and how (a
+ * fill behind something, a drawn shape, an outline or words).
+ */
+const greens = (page: Page) =>
+  page.evaluate((green) => {
+    const found: string[] = [];
+    for (const el of document.querySelectorAll("body *")) {
+      if (!el.checkVisibility()) continue;
+      const style = getComputedStyle(el);
+      const where = el.closest('[data-badge="burn"], #badge-burn, section.burn') ? "burn" : `${el.tagName.toLowerCase()}.${el.getAttribute("class") ?? ""}`;
+      if (style.backgroundColor === green) found.push(`${where}: a fill`);
+      if (el instanceof SVGElement && style.fill === green) found.push(`${where}: ${el.closest(".burn-shape") && el.tagName === "path" ? "the flame" : "a filled shape"}`);
+      if (el instanceof SVGElement && style.stroke === green) found.push(`${where}: an outline`);
+      if (!(el instanceof SVGElement) && style.borderTopStyle !== "none" && style.borderTopColor === green) found.push(`${where}: an outline`);
+      if (!(el instanceof SVGElement) && style.color === green && [...el.childNodes].some((node) => node.nodeType === Node.TEXT_NODE && node.textContent!.trim())) found.push(`${where}: words`);
+    }
+    return [...new Set(found)].sort();
+  }, GREEN);
+
+test.describe("the badge: the status as the fourth of the row, at the sheet’s half height", () => {
+  for (const lang of LANGS) {
+    for (const state of Object.keys(PILLS) as State[]) {
+      test(`${lang.toUpperCase()} ${state}: its name, its shape and its word; a tap shows what the province allows and where that comes from`, async ({ page }) => {
+        await live(page, lang, liveAnswer(burnOf(state)), "Moncton", "half");
+
+        // The fourth badge, after the verdict's three. The card is not at this height.
+        expect(await page.locator("main .badge").evaluateAll((all) => all.map((badge) => badge.getAttribute("data-badge")))).toEqual(["fire", "trace", "alert", "burn"]);
+        await expect(card(page)).toHaveCount(0);
+        expect(plain(await pill(page).getAttribute("aria-label"))).toBe(pillName(lang, state));
+        await expect(pill(page).locator(".badge-short")).toHaveText(s(lang, `badge.burn.short.${state}`));
+        const drawn = await pill(page).evaluate((el) => {
+          const style = getComputedStyle(el);
+          return { tone: el.getAttribute("data-tone"), shape: el.querySelector(".burn-shape")!.getAttribute("data-shape"), background: style.backgroundColor, border: `${style.borderTopStyle} ${style.borderTopColor}`, ink: style.color };
+        });
+        expect(drawn).toEqual(PILLS[state]);
+        expect((await pill(page).boundingBox())!.height).toBeGreaterThanOrEqual(56);
+        await expect(pill(page).locator("svg.burn-shape")).toHaveAttribute("aria-hidden", "true");
+
+        // A tap: the name, the shape, the status in full, the county, what the province allows, then Fire Watch.
+        const panel = await openBadge(page, "burn");
+        expect(plain(await panel.locator(".badge-name").textContent())).toBe(pillName(lang, state));
+        await expect(panel.locator(".burn-shape")).toHaveAttribute("data-shape", PILLS[state].shape);
+        const lines = (await panel.locator("p").allTextContents()).map(plain);
+        expect(lines.slice(0, 3)).toEqual([s(lang, `burn.word.${state}`), s(lang, "burn.county", { county: "Westmorland" }), s(lang, `burn.detail.${state}`)].map(plain));
+        expect(lines.length).toBeGreaterThanOrEqual(4); // and who was asked, and when
+        expect(lines.join(" ")).not.toMatch(NO_CALL);
+        const link = panel.getByRole("link");
+        await expect(link).toHaveCount(1);
+        await expect(link).toHaveAttribute("href", s(lang, "burn.fireWatch.url"));
+        expect((await link.boundingBox())!.height).toBeGreaterThanOrEqual(56);
+        // The words are 18 px or more, the host under the link and the source's line 16.
+        const sizes = await panel.locator("p, .badge-name, a span").evaluateAll((all) => all.map((el) => parseFloat(getComputedStyle(el).fontSize)));
+        expect(Math.min(...sizes)).toBeGreaterThanOrEqual(16);
+      });
+    }
+  }
+
+  test("green is “Burning permitted”’s alone, on the burn badge: its outline, its flame and its word. Never a fill, never on the verdict card", async ({ page }) => {
+    await live(page, "en", liveAnswer(burnOf("permitted")), "Moncton", "half");
+    // At half: the pill. Its outline, the flame in its ring, its word. Nothing else on the screen is green.
+    expect(await greens(page)).toEqual(["burn: an outline", "burn: the flame", "burn: words"]);
+    // The pill is white inside, and so is the disc the flame is drawn on.
+    expect(await pill(page).evaluate((el) => [getComputedStyle(el).backgroundColor, getComputedStyle(el.querySelector(".burn-shape circle")!).fill])).toEqual([WHITE, WHITE]);
+    // The verdict card keeps its own colour (drifting: orange), and none of its words or marks is green.
+    expect(await page.locator("section.glance").evaluate((el) => getComputedStyle(el).backgroundColor)).toBe("rgb(232, 89, 12)");
+    // Its panel: the same shape and the word "Burning permitted", green on white.
+    const panel = await openBadge(page, "burn");
+    expect(await panel.locator("p").first().evaluate((el) => [el.textContent, getComputedStyle(el).color])).toEqual(["Burning permitted", GREEN]);
+    expect(await greens(page)).toEqual(["burn: an outline", "burn: the flame", "burn: words"]);
+    // The card, at the full height: the same three, and still no fill.
+    await sheetTo(page, "full");
+    await expect(card(page)).toBeVisible();
+    expect(await greens(page)).toEqual(["burn: an outline", "burn: the flame", "burn: words"]);
+  });
+
+  for (const state of ["no_burn", "restricted", "season_closed", "not_checked"] as State[]) {
+    test(`${state}: no green anywhere, on the badge, in its panel or on the card`, async ({ page }) => {
+      await live(page, "en", liveAnswer(burnOf(state)), "Moncton", "half");
+      expect(await greens(page)).toEqual([]);
+      await openBadge(page, "burn");
+      expect(await greens(page)).toEqual([]);
+      await sheetTo(page, "full");
+      await expect(card(page)).toBeVisible();
+      expect(await greens(page)).toEqual([]);
+    });
+  }
+
+  for (const lang of LANGS) {
+    test(`${lang.toUpperCase()} the replay (Moncton, Aug 25, 2025): dashed, “${lang === "en" ? "Not checked" : "Non vérifié"}”, and a tap says why`, async ({ page }) => {
+      await replay(page, lang, "Moncton", "half");
+      await expect(pill(page)).toHaveAttribute("data-tone", "notChecked");
+      await expect(pill(page).locator(".badge-short")).toHaveText(s(lang, "badge.burn.short.not_checked"));
+      const panel = await openBadge(page, "burn");
+      const lines = (await panel.locator("p").allTextContents()).map(plain);
+      expect(lines.slice(0, 3)).toEqual([s(lang, "burn.word.not_checked"), s(lang, "burn.county", { county: "Westmorland" }), s(lang, "burn.detail.not_checked.replay")].map(plain));
+    });
+  }
+
+  test("outside New Brunswick (Halifax), or with no burn field in the answer: three badges, no burn status", async ({ page }) => {
+    await replay(page, "en", "Halifax", "half");
+    expect(await page.locator("main .badge").evaluateAll((all) => all.map((badge) => badge.getAttribute("data-badge")))).toEqual(["fire", "trace", "alert"]);
+    for (const burn of [null, undefined]) {
+      await page.unrouteAll();
+      await live(page, "en", liveAnswer(burn), "Moncton", "half");
+      expect(await page.locator("main .badge").evaluateAll((all) => all.map((badge) => badge.getAttribute("data-badge")))).toEqual(["fire", "trace", "alert"]);
+    }
+  });
+
+  test("a screen left open past the status’s validity: the badge turns dashed, as the card does", async ({ page }) => {
+    await live(page, "en", liveAnswer(burnOf("no_burn")), "Moncton", "half");
+    await expect(pill(page)).toHaveAttribute("data-tone", "noBurn");
+    await later(page, "2025-08-27T12:00:00Z");
+    await expect(pill(page)).toHaveAttribute("data-tone", "notChecked");
+    await expect(pill(page).locator(".badge-short")).toHaveText("Not checked");
+  });
+});
+
+
 // --- Listen -----------------------------------------------------------------------------------------------------------
 
 /** A speechSynthesis that records what is said and ends each sentence after 10 ms; cancel() interrupts the one being said. */
@@ -431,7 +569,8 @@ const spoken = (page: Page): Promise<{ text: string; lang: string }[]> =>
 const script = (lang: Lang, key: string, vars: Record<string, string | number> = {}) =>
   s(lang, key).split(/(?<=[.?!])\s+(?=\S)/).map((sentence) => sentence.replace(/\{(\w+)\}/g, (match, name) => (name in vars ? String(vars[name]) : match)));
 const hold = (page: Page) => page.evaluate(() => { (window as unknown as Record<string, unknown>).__autoEnd = false; });
-const verdictListen = (page: Page, lang: Lang): Locator => page.locator("section.glance").getByRole("button", { name: s(lang, "listen.play"), exact: true });
+// With the card in view ("Why?" open) the verdict's own Listen is under "Why?": the one button named just "Listen".
+const verdictListen = (page: Page, lang: Lang): Locator => page.getByRole("button", { name: s(lang, "listen.play"), exact: true });
 
 test.describe("Listen reads the card", () => {
   test.beforeEach(async ({ page }) => { await page.addInitScript(fakeSpeech); });
@@ -478,9 +617,10 @@ test.describe("Listen reads the card", () => {
     await verdictListen(page, "en").click();
     // The card's button is Listen again, and the verdict's is the one reading.
     await expect(listen(page, "en")).toBeVisible();
-    await expect(page.locator("section.glance").getByRole("button", { name: "Stop", exact: true })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Stop", exact: true })).toBeVisible();
     const afterVerdict = await spoken(page);
-    expect([afterVerdict.length, afterVerdict[0].text, /^Drifting smoke/.test(afterVerdict[1].text)]).toEqual([2, "Is burning allowed today?", true]);
+    // With "Why?" open the verdict's Listen reads the answer in full: its first sentence, nothing about burning.
+    expect([afterVerdict.length, afterVerdict[0].text, afterVerdict[1].text.length > 0, /burn/i.test(afterVerdict[1].text)]).toEqual([2, "Is burning allowed today?", true, false]);
 
     await listen(page, "en").click();
     await expect(verdictListen(page, "en")).toBeVisible();

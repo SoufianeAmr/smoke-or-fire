@@ -527,7 +527,7 @@ for (const viewport of PHONES) {
         expect(problems).toEqual([]);
       });
 
-      test("the verdict that nothing explains (Halifax): “Look outside…” above one red Call 911 as wide as the bar, 72 px or taller; the one button to tap, also scrolled to the bottom", async ({ page }) => {
+      test("the verdict that nothing explains (Halifax): “Look outside…” above one red Call 911 as wide as the bar, 72 px or taller (60 on a phone 740 px tall or less); the one button to tap, also scrolled to the bottom", async ({ page }) => {
         await verdictFor(page, lang, "Halifax");
         await expect(page.locator("section.glance")).toHaveAttribute("data-state", "unexplained");
         // One Call 911 on the page, in the one bar: the taller bar, not the slim one.
@@ -540,7 +540,8 @@ for (const viewport of PHONES) {
         await expect(button).toHaveAttribute("href", "tel:911");
         await expect(bar.locator("a, button")).toHaveCount(1); // nothing else to tap in the bar
         const [line, box, around] = [(await look.boundingBox())!, (await button.boundingBox())!, (await bar.boundingBox())!];
-        expect(box.height).toBeGreaterThanOrEqual(72);
+        // On a phone 740 px tall or less the bar is the tighter one, so the map keeps its room above the sheet.
+        expect(box.height).toBeGreaterThanOrEqual(page.viewportSize()!.height <= 740 ? 60 : 72);
         expect(box.width, "the bar's width, less its 16 px margins").toBeGreaterThanOrEqual(around.width - 32.5);
         expect(line.y + line.height, "the line is above the button").toBeLessThanOrEqual(box.y + 0.5);
         for (const state of ["as it opens", "scrolled to the bottom"]) {

@@ -1,11 +1,11 @@
-// Best time to air out your home: one answer from ECCC's FireWork smoke forecast, on a tile under "Why?" on the verdict
+// Best time to air out your home: one answer from ECCC's FireWork smoke forecast, on the verdict as a chip (the sheet at half) and a tile under "Why?",
 // and on a screen of its own, with the 48 hours it comes from. Live answers are the engine's shape, built in ./airout;
 // the replay (Aug 25, 2025) has no recorded forecast and says so. In English and French.
 import { expect, test, type Page } from "@playwright/test";
 import { existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { TEST_ENGINE_URL } from "./engine";
-import { FORECASTS, NOT_AVAILABLE, STRINGS, airOut, s, tileOnVerdict, verdict, type Lang } from "./airout";
+import { FORECASTS, NOT_AVAILABLE, STRINGS, airOut, chipOnVerdict, s, tileOnVerdict, verdict, type Lang } from "./airout";
 import { sheetTo } from "./verdict";
 
 const LANGS = ["en", "fr"] as const;
@@ -40,53 +40,77 @@ const smallTargets = (page: Page, selector: string) =>
 
 // --- the tile on the verdict ------------------------------------------------------------------------------------
 
-const TILES: [string, object | undefined, (lang: Lang) => string, string][] = [
-  ["a best time", FORECASTS.mondayMorning, (lang) => (lang === "en" ? "Mon 5 to 8 a.m." : "lun. 5 h à 8 h"), "window"],
-  ["no useful window", FORECASTS.none, (lang) => s(lang, "airout.none"), "none"],
-  ["the forecast could not be read", NOT_AVAILABLE, (lang) => s(lang, "airout.notAvailable"), "notAvailable"],
-  ["an older engine, with no forecast in its answer", undefined, (lang) => s(lang, "airout.notAvailable"), "notAvailable"],
+// What is asked, the forecast, the tile's answer (the sheet at full), the chip's (at half), the state.
+const TILES: [string, object | undefined, (lang: Lang) => string, (lang: Lang) => string, string][] = [
+  ["a best time", FORECASTS.mondayMorning, (lang) => (lang === "en" ? "Mon 5 to 8 a.m." : "lun. 5 h à 8 h"), (lang) => (lang === "en" ? "Mon 5 to 8 a.m." : "lun. 5 h à 8 h"), "window"],
+  ["no useful window", FORECASTS.none, (lang) => s(lang, "airout.none"), (lang) => s(lang, "airout.chip.none"), "none"],
+  ["the forecast could not be read", NOT_AVAILABLE, (lang) => s(lang, "airout.notAvailable"), (lang) => s(lang, "airout.chip.notAvailable"), "notAvailable"],
+  ["an older engine, with no forecast in its answer", undefined, (lang) => s(lang, "airout.notAvailable"), (lang) => s(lang, "airout.chip.notAvailable"), "notAvailable"],
 ];
+
+/** Every link and button on the screen now: how many are Call 911, and whether it is larger than every other. */
+const call911 = (page: Page) =>
+  page.evaluate(() => {
+    const area = (el: Element) => el.getBoundingClientRect().width * el.getBoundingClientRect().height;
+    const shown = [...document.querySelectorAll("a, button")].filter((el) => el.getBoundingClientRect().width > 0 && el.getBoundingClientRect().top < window.innerHeight);
+    const call = shown.filter((el) => el.getAttribute("href") === "tel:911");
+    return [call.length, area(call[0]) > Math.max(...shown.filter((el) => !call.includes(el)).map(area))];
+  });
 
 for (const lang of LANGS) {
   test.describe(`The tile on the verdict, ${lang.toUpperCase()}`, () => {
-    for (const [what, smoke, answer, state] of TILES) {
-      test(`${what}: the question and its one answer, under "Why?"`, async ({ page }) => {
+    for (const [what, smoke, answer, short, state] of TILES) {
+      test(`${what}: a chip beside Protect your home at half, and the question with its one answer under "Why?"`, async ({ page }) => {
         await verdict(page, lang, "live", smoke);
+        // At half: the chip, a short label and the answer in a few words, between the badges and "Why?". No tile yet.
+        const chip = await chipOnVerdict(page);
+        await expect(chip).toHaveCount(1);
+        await expect(chip).toHaveAttribute("data-state", state);
+        await expect(chip).toHaveAttribute("href", "/air-out");
+        expect(plain(await chip.innerText())).toBe(plain(`${s(lang, "airout.chip")} ${short(lang)}`));
+        const at = async (selector: string) => (await page.locator(selector).first().boundingBox())!;
+        const [badge, chipBox, whyAtHalf] = [await at("main .badge"), (await chip.boundingBox())!, await at("main .why-toggle")];
+        expect(chipBox.y).toBeGreaterThanOrEqual(badge.y + badge.height);
+        expect(chipBox.y + chipBox.height).toBeLessThanOrEqual(whyAtHalf.y);
+        expect(chipBox.height).toBeGreaterThanOrEqual(56);
+        expect(await smallText(page, "main .sheet-chips")).toEqual([]);
+        await expect(page.locator("main .airout-tile")).toHaveCount(0);
+        // At full: the tile, as before, and the chips are gone.
         const tile = await tileOnVerdict(page);
         await expect(tile).toHaveCount(1);
         await expect(tile).toHaveAttribute("data-state", state);
         await expect(tile).toHaveAttribute("href", "/air-out");
         expect(plain(await tile.innerText())).toBe(`${s(lang, "airout.label")} ${answer(lang)}`);
-        // Under "Why?", which keeps its place: the card, the badges and "Why?" are as they were.
         const [why, box] = [(await page.locator("main .why-toggle").boundingBox())!, (await tile.boundingBox())!];
         expect(box.y).toBeGreaterThanOrEqual(why.y + why.height);
         expect(box.height).toBeGreaterThanOrEqual(72);
         expect(await smallText(page, "main .airout-tile")).toEqual([]);
+        await expect(page.locator("main .sheet-chips")).toHaveCount(0);
       });
     }
 
-    test("the replay has no recorded forecast: forecast not available, never a guess", async ({ page }) => {
+    test("the replay has no recorded forecast: not available, never a guess", async ({ page }) => {
       await verdict(page, lang, "replay");
+      expect(plain(await (await chipOnVerdict(page)).innerText())).toBe(plain(`${s(lang, "airout.chip")} ${s(lang, "airout.chip.notAvailable")}`));
       expect(plain(await (await tileOnVerdict(page)).innerText())).toBe(`${s(lang, "airout.label")} ${s(lang, "airout.notAvailable")}`);
     });
   });
 }
 
 for (const mode of ["live", "replay"] as const) {
-  test(`nothing explains the smoke (Halifax, ${mode}): Call 911 stays the largest thing to tap, and the tile waits behind Why?`, async ({ page }) => {
+  test(`nothing explains the smoke (Halifax, ${mode}): Call 911 stays the largest thing to tap, the chip is quiet, and the tile waits behind Why?`, async ({ page }) => {
     await verdict(page, "en", mode, FORECASTS.mondayMorning, "Halifax");
     await expect(page.locator(".sticky-first")).toBeVisible();
     const tile = page.locator("main .airout-tile");
     await expect(tile).toHaveCount(1);
     await expect(tile).toBeHidden();
     // Every link and button on the screen as it opens: none is as large as Call 911.
-    const sizes = await page.evaluate(() => {
-      const area = (el: Element) => el.getBoundingClientRect().width * el.getBoundingClientRect().height;
-      const shown = [...document.querySelectorAll("a, button")].filter((el) => el.getBoundingClientRect().width > 0 && el.getBoundingClientRect().top < window.innerHeight);
-      const call = shown.filter((el) => el.getAttribute("href") === "tel:911");
-      return { calls: call.length, call: area(call[0]), largestOther: Math.max(...shown.filter((el) => !call.includes(el)).map(area)) };
-    });
-    expect([sizes.calls, sizes.call > sizes.largestOther]).toEqual([1, true]);
+    expect(await call911(page)).toEqual([1, true]);
+    // One tap up: the chip, outlined and never filled, and Call 911 is still the largest.
+    const chip = await chipOnVerdict(page);
+    expect(plain(await chip.innerText())).toBe(`When to air out ${mode === "live" ? "Mon 5 to 8 a.m." : "Not available"}`);
+    expect(await chip.evaluate((el) => getComputedStyle(el).backgroundColor)).toBe(WHITE);
+    expect(await call911(page)).toEqual([1, true]);
     // "Why?" pressed (it is in the sheet, one tap up from the card): the tile is there, after the reasons, and opens
     // its screen.
     await sheetTo(page, "full");
@@ -98,7 +122,7 @@ for (const mode of ["live", "replay"] as const) {
   });
 }
 
-test("the tile leaves the card, the badges and Why? above the 911 bar on a small phone", async ({ page }) => {
+test("the chips leave the card, the badges and Why? above the 911 bar on a small phone", async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 667 });
   await verdict(page, "en", "live", FORECASTS.mondayMorning);
   await sheetTo(page, "half");

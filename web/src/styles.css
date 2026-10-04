@@ -213,7 +213,9 @@ html:has(.verdict-screen),html:has(.verdict-screen) body{overscroll-behavior-y:n
 /* With only the card showing, the sheet never stands over the top bar: a card taller than the room scrolls in it. */
 .answer-sheet[data-detent="peek"]{max-height:calc(100% - var(--top))}
 .answer-sheet[data-detent="full"]{height:100%}
-.sheet-handle{position:sticky;top:0;z-index:3;width:100%;min-height:56px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:7px 16px 8px;border:0;border-radius:18px 18px 0 0;background:#FFFFFF;color:#1B2A4A;font-family:inherit;font-size:18px;font-weight:700;line-height:1.2;cursor:pointer;touch-action:none}
+.sheet-top{position:sticky;top:0;z-index:3;display:flex;align-items:center;gap:8px;border-radius:18px 18px 0 0;background:#FFFFFF}
+.sheet-top > button:not(.sheet-handle){flex-shrink:0;margin-right:12px}
+.sheet-handle{flex:1 1 auto;min-width:0;min-height:56px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:7px 16px 8px;border:0;border-radius:18px 18px 0 0;background:#FFFFFF;color:#1B2A4A;font-family:inherit;font-size:18px;font-weight:700;line-height:1.2;cursor:pointer;touch-action:none}
 .sheet-handle:focus-visible{outline-offset:-5px}
 .sheet-grip{width:44px;height:5px;border-radius:3px;background:#B9BFCB}
 .sheet-handle-label{display:flex;align-items:center;gap:6px}
@@ -222,6 +224,55 @@ html:has(.verdict-screen),html:has(.verdict-screen) body{overscroll-behavior-y:n
 .verdict-tight .sheet-more{gap:10px}
 .verdict-tight .answer-sheet .glance{padding-top:8px !important;padding-bottom:10px !important}
 .verdict-tight .answer-sheet .verdict-main{padding-bottom:10px !important}
+/* The sheet at half is compact, so the map stays in view above it: the card small (its shape beside its line; Listen
+   is beside the handle at this height), the badges in one row, two chips in one row, then "Why?". On a short phone
+   (verdict-short) smaller still. */
+.verdict-row .answer-sheet[data-detent="half"] .glance{display:grid !important;grid-template-columns:auto minmax(0,1fr);column-gap:12px;align-items:center;padding:10px 16px 12px !important}
+.verdict-row .answer-sheet[data-detent="half"] .glance-head{display:contents !important}
+.verdict-row .answer-sheet[data-detent="half"] .glance-shape{width:56px;height:56px}
+.verdict-row .answer-sheet[data-detent="half"] .glance-line{margin:0 !important;font-size:26px !important}
+.verdict-row .answer-sheet[data-detent="half"] .glance-arrow{width:24px;height:24px}
+.verdict-row .answer-sheet[data-detent="half"] .verdict-main{gap:12px !important;padding:12px 16px !important}
+.verdict-row .answer-sheet[data-detent="half"] .sheet-more{gap:12px}
+.verdict-row .answer-sheet[data-detent="half"] .why-toggle{min-height:56px !important}
+.verdict-short .answer-sheet[data-detent="half"] .glance{padding:8px 16px 8px !important}
+.verdict-short .answer-sheet[data-detent="half"] .glance-shape{width:48px;height:48px}
+.verdict-short .answer-sheet[data-detent="half"] .glance-line{font-size:22px !important}
+.verdict-short .answer-sheet[data-detent="half"] .glance-arrow{width:22px;height:22px}
+.verdict-short .answer-sheet[data-detent="half"] .verdict-main{gap:8px !important;padding:8px 16px !important}
+.verdict-short .answer-sheet[data-detent="half"] .sheet-more{gap:8px}
+.verdict-short .answer-sheet[data-detent="half"] .badge{min-height:56px;padding-top:4px;padding-bottom:4px}
+.verdict-short .answer-sheet[data-detent="half"] .chip{padding:5px 10px}
+/* Tighter still where the room is the smallest (verdict-tight: a short phone, or Call 911 as the main action on a
+   375 × 667 one): 6 px between things. */
+.verdict-tight .answer-sheet[data-detent="half"] .glance{padding:6px 16px 6px !important}
+.verdict-tight .answer-sheet[data-detent="half"] .verdict-main{gap:6px !important;padding:6px 16px !important}
+.verdict-tight .answer-sheet[data-detent="half"] .sheet-more{gap:6px}
+.verdict-tight .answer-sheet[data-detent="half"] .chip{padding:4px 10px}
+/* Four badges (New Brunswick: the burn status is the fourth): each as wide as its word needs, in one row; two by two
+   on the narrowest phones. The panel a tap opens is under them, the row's whole width. */
+.verdict-row .badges[data-count="4"]{display:grid;grid-template-columns:repeat(4,minmax(min-content,auto));gap:6px}
+.verdict-row .badges[data-count="4"] .badge{padding-left:6px;padding-right:6px}
+.verdict-row .badges[data-count="4"] .badge-panel{grid-column:1 / -1}
+/* A badge brought back into view sits a little under the sheet's handle (the sheet keeps the handle's room itself). */
+.verdict-row .badge{scroll-margin-top:12px}
+@media (max-width: 359px){
+  .verdict-row .badges[data-count="4"]{grid-template-columns:repeat(2,minmax(0,1fr))}
+  /* A panel opens under its own row: the first two badges, their panels, the other two, theirs. */
+  .verdict-row .badges[data-count="4"] .badge-slot:nth-child(n+3) .badge{order:2}
+  .verdict-row .badges[data-count="4"] .badge-slot:nth-child(n+3) .badge-panel{order:3}
+}
+/* The burn badge's filled states show their focus ring against their own colour, as a filled badge does. */
+.badge[data-tone="noBurn"]:focus-visible,.badge[data-tone="restricted"]:focus-visible{outline-offset:4px}
+/* The two chips: what a person can do next. Outlined navy, quiet; "Protect your home" is filled where the air calls
+   for it, never where Call 911 is the screen's main action. 56 px or more to tap, words 18 px. */
+.sheet-chips{display:flex;gap:8px}
+.chip{flex:1 1 0;min-width:0;min-height:56px;display:flex;flex-direction:column;justify-content:center;gap:1px;padding:6px 12px;border-radius:18px;border:2px solid #1B2A4A;background:#FFFFFF;color:#1B2A4A;text-decoration:none;font-size:18px;font-weight:700;line-height:1.2;overflow-wrap:anywhere}
+.chip:hover{color:#1B2A4A}
+.chip[data-tone="raised"],.chip[data-tone="raised"]:hover{background:#1B2A4A;color:#FFFFFF}
+.chip[data-tone="raised"]:focus-visible{outline-offset:4px}
+.chip-label{font-weight:500}
+.chip-answer{font-weight:700}
 /* Best time to air out (airout/): the 48-hour strip. One row for each day, 24 clock hours across. From the top: the
    band that says day or night, the hours' bars on their line, the clock under them. */
 .strip-card{container-type:inline-size}

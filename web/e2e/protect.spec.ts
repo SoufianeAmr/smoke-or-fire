@@ -4,7 +4,8 @@
 import { test, type BrowserContext, type Page, type Request } from "@playwright/test";
 import { readFileSync } from "node:fs";
 import { TEST_ENGINE_URL } from "./engine";
-import { BANDS, LANGS, TEST_TIMEOUT, answerAt, engine, expect, live, newCheck, open, protectButton, replay, start, verdictFor, type Band, type Lang } from "./protect";
+import { BANDS, LANGS, TEST_TIMEOUT, answerAt, engine, expect, live, newCheck, open, protectButton, protectChip, replay, start, verdictFor, type Band, type Lang } from "./protect";
+import { sheetTo } from "./verdict";
 
 test.describe.configure({ timeout: TEST_TIMEOUT });
 
@@ -78,13 +79,31 @@ function ownWords(lang: Lang) {
 }
 
 // =====================================================================================================================
-test.describe("on the verdict: one button, after “Why?”", () => {
+test.describe("on the verdict: a chip at half, one button after “Why?”", () => {
   for (const lang of LANGS) {
-    test(`${lang.toUpperCase()} Moncton (very high risk): the button is named “${CONTENT.strings.title[lang]}”, 56 px or more, filled; a tap opens the screen`, async ({ page }) => {
+    test(`${lang.toUpperCase()} Moncton (very high risk): the chip and the button are named “${CONTENT.strings.title[lang]}”, 56 px or more, filled; a tap opens the screen`, async ({ page }) => {
       await start(page, lang);
       await verdictFor(page, "Moncton");
 
+      // At half: the chip, the first words of the name, between the badges and "Why?". The button is not there yet.
+      const chip = await protectChip(page);
+      await expect(chip).toHaveCount(1);
+      await expect(chip).toHaveAccessibleName(CONTENT.strings.title[lang]);
+      await expect(chip).toHaveText(CONTENT.strings.chip[lang]);
+      expect(CONTENT.strings.title[lang].startsWith(CONTENT.strings.chip[lang])).toBe(true); // what is seen is in the name
+      await expect(chip).toHaveAttribute("href", "/protect");
+      const at = async (selector: string) => (await page.locator(selector).first().boundingBox())!;
+      const [badge, chipBox, whyAtHalf] = [await at("main .badge"), (await chip.boundingBox())!, await at("main .why-toggle")];
+      expect(chipBox.y).toBeGreaterThanOrEqual(badge.y + badge.height);
+      expect(chipBox.y + chipBox.height).toBeLessThanOrEqual(whyAtHalf.y);
+      expect(chipBox.height).toBeGreaterThanOrEqual(56);
+      expect(await chip.evaluate((el) => [el.getAttribute("data-tone"), getComputedStyle(el).backgroundColor, getComputedStyle(el).color])).toEqual(["raised", NAVY, WHITE]);
+      expect(parseFloat(await chip.evaluate((el) => getComputedStyle(el).fontSize))).toBeGreaterThanOrEqual(18);
+      await expect(page.locator("main a.protect-link")).toHaveCount(0);
+
+      // At full: the button, as before, and no chip.
       const link = await protectButton(page);
+      await expect(page.locator("main a.protect-chip")).toHaveCount(0);
       await expect(link).toHaveCount(1);
       await expect(link).toHaveAccessibleName(CONTENT.strings.title[lang]);
       await expect(link).toHaveAttribute("href", "/protect");
@@ -103,11 +122,21 @@ test.describe("on the verdict: one button, after “Why?”", () => {
 
   for (const viewport of [{ width: 390, height: 844 }, { width: 375, height: 667 }, { width: 320, height: 568 }]) {
     for (const lang of LANGS) {
-      test(`${lang.toUpperCase()} ${viewport.width} × ${viewport.height}, Halifax (low risk, nothing explains the smoke): the button is quiet, its name on two lines at most, and Call 911 is still the largest thing to tap`, async ({ page }) => {
+      test(`${lang.toUpperCase()} ${viewport.width} × ${viewport.height}, Halifax (low risk, nothing explains the smoke): the chip and the button are quiet, the name on two lines at most, and Call 911 is still the largest thing to tap`, async ({ page }) => {
         await page.setViewportSize(viewport);
         await start(page, lang);
         await verdictFor(page, "Halifax");
         await page.evaluate(() => document.fonts.ready);
+
+        // At half: the chip is outlined, never filled, and smaller than Call 911.
+        const chip = await protectChip(page);
+        expect(await chip.evaluate((el) => [el.getAttribute("data-tone"), getComputedStyle(el).backgroundColor, getComputedStyle(el).color])).toEqual(["calm", WHITE, NAVY]);
+        // Its words on two lines at most.
+        expect(await chip.evaluate((el) => { const words = document.createRange(); words.selectNodeContents(el); return new Set([...words.getClientRects()].map((line) => Math.round(line.top))).size; })).toBeLessThanOrEqual(2);
+        const [callAtHalf, chipBox] = [(await page.locator('a[href="tel:911"]').boundingBox())!, (await chip.boundingBox())!];
+        expect(chipBox.height).toBeGreaterThanOrEqual(56);
+        expect(callAtHalf.width * callAtHalf.height).toBeGreaterThan(chipBox.width * chipBox.height);
+        await expect(page.locator('a[href="tel:911"]')).toHaveCount(1);
 
         const link = await protectButton(page);
         expect(await link.evaluate((el) => [el.getAttribute("data-tone"), getComputedStyle(el).backgroundColor, getComputedStyle(el).color])).toEqual(["calm", WHITE, NAVY]);
@@ -144,16 +173,26 @@ test.describe("on the verdict: one button, after “Why?”", () => {
     await expect(main(page).locator(".protect-notice")).toHaveCount(0);
   });
 
-  test("the verdict keeps what it had: its three badges and “Why?” before the button, and one Listen", async ({ page }) => {
+  test("the verdict keeps what it had: its badges and “Why?” before the button, and one Listen", async ({ page }) => {
     await start(page, "en");
     await verdictFor(page, "Moncton");
 
-    // Their order, whatever else the screen gains: the badges, "Why?", what it opens, then the button.
-    const parts = await page.locator("main.verdict-main .sheet-more > *").evaluateAll((all) => all.map((el) => el.className.split(" ")[0] || el.id));
-    const order = ["badges", "why-toggle", "why-all", "protect-link"].map((part) => parts.indexOf(part));
-    expect(order.every((at) => at >= 0), parts.join(", ")).toBe(true);
-    expect(order).toEqual([...order].sort((a, b) => a - b));
-    await expect(page.locator("main .badge")).toHaveCount(3);
+    // Their order at half: the badges, the two chips, "Why?" (what it opens waits under it).
+    const parts = () => page.locator("main.verdict-main .sheet-more > *").evaluateAll((all) => all.map((el) => el.className.split(" ")[0] || el.id));
+    const inOrder = async (names: string[]) => {
+      const found = await parts();
+      const order = names.map((part) => found.indexOf(part));
+      expect(order.every((at) => at >= 0), found.join(", ")).toBe(true);
+      expect(order).toEqual([...order].sort((a, b) => a - b));
+    };
+    await sheetTo(page, "half");
+    await inOrder(["badges", "sheet-chips", "why-toggle", "why-all"]);
+    // The verdict's three, and New Brunswick's burn status as the fourth.
+    expect(await page.locator("main .badge").evaluateAll((all) => all.map((badge) => badge.getAttribute("data-badge")))).toEqual(["fire", "trace", "alert", "burn"]);
+    await expect(page.getByRole("button", { name: "Listen", exact: true })).toHaveCount(1);
+    // At full, whatever else the screen gains: the badges, "Why?", what it opens, then the button.
+    await sheetTo(page, "full");
+    await inOrder(["badges", "why-toggle", "why-all", "protect-link"]);
     await expect(page.getByRole("button", { name: "Listen", exact: true })).toHaveCount(1);
   });
 

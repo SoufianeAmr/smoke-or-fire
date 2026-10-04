@@ -43,22 +43,28 @@ export async function verdictFor(page: Page, town: string) {
   await expect(page.locator("#verdict-h"), "the verdict, after two checks").toBeVisible({ timeout: 1 });
 }
 
-/** The verdict's button: in the sheet with the sources and "Why?", one tap up from the card ("Sources and why"). */
-export async function protectButton(page: Page) {
+/** The verdict's chip: in the sheet at its half height, one tap up from the card ("Sources and why"). */
+export async function protectChip(page: Page) {
   await sheetTo(page, "half");
+  return page.locator("main a.protect-chip");
+}
+
+/** The verdict's button: in the sheet at its full height, under everything "Why?" opens. */
+export async function protectButton(page: Page) {
+  await sheetTo(page, "full");
   return page.locator("main a.protect-link");
 }
 
-/** The verdict's button, tapped: the screen is in front. */
+/** The verdict's chip, tapped: the screen is in front. */
 export async function open(page: Page) {
-  await (await protectButton(page)).click();
+  await (await protectChip(page)).click();
   await expect(page).toHaveURL(/\/protect$/);
   await expect(page.locator("main.protect-main h1")).toBeVisible();
 }
 
 /**
- * "New check", from the verdict. Its link is in the top bar, and a raised sheet may stand over that bar (in New
- * Brunswick the sheet at half also holds the burn card): the sheet is lowered first, as a person does ("Show the map").
+ * "New check", from the verdict. Its link is in the top bar, and a raised sheet may stand over that bar (always with
+ * "Why?" open): the sheet is lowered first, as a person does ("Show the map").
  */
 export async function newCheck(page: Page) {
   await sheetTo(page, "peek");

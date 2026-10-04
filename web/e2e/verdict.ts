@@ -1,5 +1,5 @@
 // The verdict screen as the browser tests use it: it opens on the map with the glance card in a sheet at its foot
-// (peek); "Sources and why" raises the sheet to the badges and "Why?" (half); "Why?" opens everything screens 7a–7d
+// (peek); "Sources and why" raises the sheet to the badges, two chips and "Why?" (half); "Why?" opens everything screens 7a–7d
 // say (full). The helpers move the sheet with its own buttons, as a person does.
 import { expect, type Page } from "@playwright/test";
 
@@ -29,7 +29,7 @@ export async function openWhy(page: Page) {
 }
 
 /** Tap a badge and give its panel: the source, its time and its link. The badges are one tap up from the card. */
-export async function openBadge(page: Page, id: "fire" | "trace" | "alert") {
+export async function openBadge(page: Page, id: "fire" | "trace" | "alert" | "burn") {
   if ((await at(page)) === "peek") await sheetTo(page, "half");
   await page.locator(`main .badge[data-badge="${id}"]`).click();
   const panel = page.locator(`#badge-${id}`);

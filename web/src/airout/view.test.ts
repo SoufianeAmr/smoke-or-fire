@@ -98,6 +98,29 @@ describe("the answer, in one line", () => {
   });
 });
 
+// On the verdict's sheet at its half height the same answer is a chip: one of two in a row, so the map stays in view.
+describe("the chip: a short label and the answer in a few words", () => {
+  const plain = (text: string) => text.replace(/\s/g, " ");
+  const chip = (smoke: SmokeForecast | undefined, lang: "en" | "fr" = "en", json = live(smoke)) => { const c = airOutView(json, lang).chip; return [c.label, plain(c.answer)]; };
+
+  test("a best time is given as on the tile: the day and the hours", () => {
+    expect(chip(windowAt(26, 29))).toEqual(["When to air out", "Mon 5 to 8 a.m."]);
+    expect(chip(windowAt(26, 29), "fr")).toEqual(["Quand aérer", "lun. 5 h à 8 h"]);
+  });
+
+  test("the chip’s time is the tile’s own answer, whatever the window", () => {
+    for (const smoke of [windowAt(26, 29), windowAt(0, 5), windowAt(20, 47)]) {
+      for (const lang of ["en", "fr"] as const) expect(airOutView(live(smoke), lang).chip.answer).toBe(airOutView(live(smoke), lang).answer);
+    }
+  });
+
+  test("no useful window, and no forecast: two words, never a guess", () => {
+    const none = forecast(run(4, 48), null);
+    expect([chip(none), chip(none, "fr")]).toEqual([["When to air out", "Not now"], ["Quand aérer", "Pas maintenant"]]);
+    expect([chip(NOT_AVAILABLE), chip(NOT_AVAILABLE, "fr"), chip(undefined)]).toEqual([["When to air out", "Not available"], ["Quand aérer", "Non disponible"], ["When to air out", "Not available"]]);
+  });
+});
+
 describe("under the answer", () => {
   test("a window later: what the forecast shows then, and that a forecast can be wrong", () => {
     expect(airOutView(live(windowAt(26, 29)), "en").lines).toEqual([

@@ -1,6 +1,7 @@
 // The glance card on the verdict screen: a large icon in its own shape, the answer in one line, the source badges
 // under it, and the "Why?" button that opens everything screens 7a–7d say.
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { BurnShape } from "../burn/Shape";
 import { BellIcon, ChevronDownIcon, ChevronUpIcon, ExternalIcon, FlameIcon, SatelliteIcon, WindIcon } from "../components/icons";
 import { GLANCE, type BadgeTone } from "./glance";
 import type { Verdict } from "./types";
@@ -82,6 +83,11 @@ const TONE: Record<BadgeTone, CSSProperties> = {
   active: { background: NAVY, color: "#FFFFFF", border: `2px solid ${NAVY}` },
   none: { background: "#FFFFFF", color: NAVY, border: `2px solid ${NAVY}` },
   notChecked: { background: "#FFFFFF", color: NAVY, border: `2px dashed ${NAVY}` },
+  // The burn badge's own three (burn/badge.ts), as the burn card's status block: the two restrictions fill the pill.
+  // "Permitted" is the app's one green: an outline, the flame and the word, on white. Never a fill.
+  noBurn: { background: "#D92D20", color: "#FFFFFF", border: "2px solid #D92D20" },
+  restricted: { background: "#F79009", color: "#1A1D21", border: "2px solid #F79009" },
+  permitted: { background: "#FFFFFF", color: "#1E7B3A", border: "2px solid #1E7B3A" },
 };
 // Size, layout and type are in styles.css (.badge): one under the other with their names, or one row on a small phone.
 const PILL: CSSProperties = { borderRadius: "28px", fontFamily: "inherit", fontWeight: "700", lineHeight: "1.25", cursor: "pointer" };
@@ -90,6 +96,7 @@ const ICONS: Record<Badge["icon"], (size: number) => ReactNode> = {
   flame: (size) => <FlameIcon size={size} />,
   wind: (size) => <WindIcon size={size} />,
   bell: (size) => <BellIcon size={size} />,
+  burn: (size) => <FlameIcon size={size} />, // the burn badge draws its state's own shape instead (below)
 };
 const SOURCE_LINK: CSSProperties = { minHeight: "56px", display: "flex", alignItems: "center", gap: "12px", padding: "8px 16px", borderRadius: "18px", border: `2px solid ${NAVY}`, color: NAVY, textDecoration: "none" };
 
@@ -105,15 +112,24 @@ export function Badges({ badges, title }: { badges: Badge[]; title: string }) {
   // Opened, the panel scrolls clear of the 911 bar. One taller than the room above the bar starts under its badge,
   // which stays in view (the panel's scroll margin, styles.css), and the page scrolls on to its end.
   useEffect(() => {
-    if (open) panel.current?.scrollIntoView({ block: "nearest" });
+    const shown = panel.current;
+    if (!open || !shown) return;
+    shown.scrollIntoView({ block: "nearest" });
+    // Where that leaves the panel's end out of sight, or its badge behind the sheet's handle (two rows of badges on a
+    // narrow phone: a panel of the first row closing moves the second), the badge goes right under the handle, its
+    // panel under it.
+    const [sheet, tapped] = [shown.closest(".answer-sheet"), shown.previousElementSibling];
+    const top = sheet?.querySelector(".sheet-top");
+    if (!sheet || !tapped || !top) return;
+    if (tapped.getBoundingClientRect().top < top.getBoundingClientRect().bottom || shown.getBoundingClientRect().bottom > sheet.getBoundingClientRect().bottom + 0.5) tapped.scrollIntoView({ block: "start" });
   }, [open]);
   return (
-    <div className="badges" role="group" aria-label={title}>
+    <div className="badges" role="group" aria-label={title} data-count={badges.length}>
       {badges.map((badge) => (
         <div key={badge.id} className="badge-slot">
           {/* The name is given as the label too: the short word a small phone shows instead is not part of it. */}
-          <button type="button" className="badge press" data-badge={badge.id} data-tone={badge.tone} aria-label={badge.label} aria-expanded={open === badge.id} aria-controls={`badge-${badge.id}`} onClick={() => setOpen(open === badge.id ? null : badge.id)} style={{ ...PILL, ...TONE[badge.tone] }}>
-            {ICONS[badge.icon](24)}
+          <button type="button" className="badge press" data-badge={badge.id} data-tone={badge.tone} data-burn={badge.burn} aria-label={badge.label} aria-expanded={open === badge.id} aria-controls={`badge-${badge.id}`} onClick={() => setOpen(open === badge.id ? null : badge.id)} style={{ ...PILL, ...TONE[badge.tone] }}>
+            {badge.burn ? <BurnShape state={badge.burn} size={24} /> : ICONS[badge.icon](24)}
             <span className="badge-label">{badge.label}</span>
             <span className="badge-short">{badge.short}</span>
             <span className="badge-chevron">{open === badge.id ? <ChevronUpIcon size={22} /> : <ChevronDownIcon size={22} />}</span>
@@ -122,8 +138,10 @@ export function Badges({ badges, title }: { badges: Badge[]; title: string }) {
           <div id={`badge-${badge.id}`} className="badge-panel" ref={open === badge.id ? panel : undefined} hidden={open !== badge.id}>
             <div style={{ display: "flex", flexDirection: "column", gap: "8px", margin: "8px 0 4px", padding: "16px", borderRadius: "18px", background: "#FFFFFF", boxShadow: "0 1px 2px rgba(26, 29, 33, 0.06), 0 8px 24px rgba(26, 29, 33, 0.07)" }}>
               <div className="badge-name">{badge.label}</div>
+              {/* The burn badge's panel opens on its state's shape, as its card does, and its word in the same ink. */}
+              {badge.burn && <BurnShape state={badge.burn} size={40} />}
               {badge.lines.map((line, i) => (
-                <p key={i} style={{ margin: "0", fontSize: i === badge.lines.length - 1 ? "16px" : "18px", fontWeight: i === 0 ? "700" : "400", lineHeight: "1.45", color: i === badge.lines.length - 1 ? "#4F5561" : "#1A1D21", textWrap: "pretty" }}>{line}</p>
+                <p key={i} style={{ margin: "0", fontSize: i === badge.lines.length - 1 ? "16px" : "18px", fontWeight: i === 0 ? "700" : "400", lineHeight: "1.45", color: i === badge.lines.length - 1 ? "#4F5561" : i === 0 && badge.burn === "permitted" ? TONE.permitted.color : "#1A1D21", textWrap: "pretty" }}>{line}</p>
               ))}
               {badge.links.map((link) => (
                 <a key={link.url} href={link.url} target="_blank" rel="noopener noreferrer" className="press" style={SOURCE_LINK}>

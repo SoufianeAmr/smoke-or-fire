@@ -25,6 +25,11 @@ feature has room for 18 px text, its own Listen, the usual Back, and the 911 bar
   could be read as defending the house from the fire.
 - The button is quiet at low risk (white, as "Why?") and filled navy from moderate up. Its name takes two lines at
   most, so Call 911 stays the largest target, down to a 320 px phone.
+- **Amended the same day:** with the sheet at half the way in is a chip, "Protect your home" / « Protégez votre
+  maison » (its name for a screen reader is the button's), in one row with the air-out chip, so the map stays in
+  view; the button is at the sheet's full height, after "Why?", as before. Where nothing explains the smoke the
+  chip is outlined, never filled; and on a tightened screen (a 60 px Call 911 button) the button is in 18 px with
+  no icon, so Call 911 stays the largest target.
 - With no reading, the button and the tiles follow the verdict, as the verdict's own advice does: clear when smoke is
   likely or possibly drifting in, quiet when nothing explains it (review).
 - Opened by its address with no check made, the screen goes back to Check, as the verdict does: it never shows a band

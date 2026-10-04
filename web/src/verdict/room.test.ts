@@ -1,6 +1,6 @@
 // How much room the verdict screen has, by the height it opened with: which layout it takes.
 import { expect, test } from "vitest";
-import { room } from "./room";
+import { chipsAfterWhy, room } from "./room";
 
 test("a tall screen (980 px or more, a tablet or a computer): the badges one under the other, nothing made smaller", () => {
   expect([room(980, false), room(1024, false), room(1180, true)]).toEqual(["", "", ""]);
@@ -18,6 +18,10 @@ test("660 px or less: everything tighter", () => {
   expect([room(660, false), room(568, false), room(550, true)]).toEqual(Array(3).fill("verdict-row verdict-short verdict-tight"));
 });
 
-test("with the fire-is-close notice on the screen, a 375 × 667 phone is tightened too, so the badges show under the notice", () => {
+test("the two chips come after “Why?” on a screen 660 px tall or less, before it on a taller one", () => {
+  expect([568, 640, 660, 661, 667, 844].map(chipsAfterWhy)).toEqual([true, true, true, false, false, false]);
+});
+
+test("with the fire-is-close notice on the screen, or Call 911 as its main action, a 375 × 667 phone is tightened too", () => {
   expect([room(667, true), room(740, true), room(741, true)]).toEqual(["verdict-row verdict-short verdict-tight", "verdict-row verdict-short verdict-tight", "verdict-row"]);
 });

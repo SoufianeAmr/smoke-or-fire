@@ -47,6 +47,15 @@ describe("the burn card", () => {
     expect([BURN_LOOK.permitted.fill, BURN_LOOK.not_checked.border, BURN_LOOK.season_closed.border]).toEqual(["#FFFFFF", "2px dashed #1B2A4A", "2px solid #1B2A4A"]);
   });
 
+  test("green is permitted’s alone: its outline, its flame and its word, never a fill", () => {
+    const green = "#1E7B3A";
+    expect([BURN_LOOK.permitted.border, BURN_LOOK.permitted.accent, BURN_LOOK.permitted.ink]).toEqual([`2px solid ${green}`, green, green]);
+    for (const state of STATES) {
+      expect(BURN_LOOK[state].fill).not.toBe(green);
+      if (state !== "permitted") expect(Object.values(BURN_LOOK[state]).join(" ")).not.toContain(green);
+    }
+  });
+
   test("the county is named, as the province's answer is for a county", () => {
     expect(LANGS.map((lang) => view(live({}), lang).county)).toEqual(["Westmorland County", "Comté de Westmorland"]);
     expect(LANGS.map((lang) => view(live({ county: "Saint John" }), lang).county)).toEqual(["Saint John County", "Comté de Saint John"]);

@@ -97,15 +97,21 @@ export async function verdict(page: Page, lang: Lang, mode: "replay" | "live", s
   await page.locator("#verdict-h").waitFor({ timeout: 45_000 });
 }
 
-/** The tile on the verdict: in the sheet under "Why?", one tap up from the card ("Sources and why"). */
-export async function tileOnVerdict(page: Page) {
+/** The chip on the verdict: in the sheet at its half height, one tap up from the card ("Sources and why"). */
+export async function chipOnVerdict(page: Page) {
   await sheetTo(page, "half");
+  return page.locator("main .airout-chip");
+}
+
+/** The tile on the verdict: in the sheet at its full height, under everything "Why?" opens. */
+export async function tileOnVerdict(page: Page) {
+  await sheetTo(page, "full");
   return page.locator("main .airout-tile");
 }
 
-/** The screen itself: the verdict, then a tap on its tile. */
+/** The screen itself: the verdict, then a tap on its chip. */
 export async function airOut(page: Page, lang: Lang, mode: "replay" | "live", smokeForecast?: object) {
   await verdict(page, lang, mode, smokeForecast);
-  await (await tileOnVerdict(page)).click();
+  await (await chipOnVerdict(page)).click();
   await page.locator("main.airout h1").waitFor();
 }

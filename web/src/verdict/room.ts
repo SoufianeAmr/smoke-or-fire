@@ -3,14 +3,23 @@ import { useEffect, useState } from "react";
 
 /**
  * The layout's class names (styles.css, "07 Verdict") for a screen `height` px tall:
- * - under 980 px (every phone): the three badges share one row. The sheet that holds them stands over the map: a
- *   column of three would leave none of it showing;
+ * - under 980 px (every phone): the badges share one row (three, or four with New Brunswick's burn status), and the
+ *   sheet at its half height is compact: a column of badges would leave none of the map showing;
  * - 740 px or less: a smaller shape and line on the card;
  * - 660 px or less: everything tighter. Also up to 740 px when `crowded`: the fire-is-close notice is on the screen,
- *   and takes the room of two rows of badges.
+ *   or Call 911 is the screen’s main action and its taller bar takes the room; the map must still show above the
+ *   sheet at its half height.
  */
 export function room(height: number, crowded: boolean): string {
   return [height < 980 && "verdict-row", height <= 740 && "verdict-short", (height <= 660 || (crowded && height <= 740)) && "verdict-tight"].filter(Boolean).join(" ");
+}
+
+/**
+ * On a screen 660 px tall or less the sheet at half has no room for the map anyway: there the two chips come after
+ * "Why?", so the badges and "Why?" still show above the 911 bar. Taller, the chips come first.
+ */
+export function chipsAfterWhy(height: number): boolean {
+  return height <= 660;
 }
 
 /**

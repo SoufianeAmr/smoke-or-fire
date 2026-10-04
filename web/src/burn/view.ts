@@ -22,14 +22,15 @@ export const PRECISE_M = 1000;
 
 /**
  * The status block's look. Each state has its own shape and its own word, so none is told by colour alone: a red
- * octagon (no burning), an amber triangle (restricted), a green circle (permitted). Clear when burning is banned, quiet
+ * octagon (no burning), an amber triangle (restricted), a flame in a green ring (permitted). Clear when burning is banned, quiet
  * when it is permitted: only the two restrictions fill the block. Season closed is outlined and not checked is dashed,
- * as on the source badges. `accent` is the state's own colour; `fill`, `ink` and `border` are the block's.
+ * as on the source badges. `accent` is the state's own colour; `fill`, `ink` and `border` are the block's. Green is
+ * permitted's outline, flame and word: never a fill.
  */
 export const BURN_LOOK: Record<BurnState, { shape: BurnShape; accent: string; fill: string; ink: string; border: string }> = {
   no_burn: { shape: "octagon", accent: "#D92D20", fill: "#D92D20", ink: "#FFFFFF", border: "2px solid #D92D20" },
   restricted: { shape: "triangle", accent: "#F79009", fill: "#F79009", ink: INK, border: "2px solid #F79009" },
-  permitted: { shape: "circle", accent: GREEN, fill: "#FFFFFF", ink: INK, border: `2px solid ${GREEN}` },
+  permitted: { shape: "circle", accent: GREEN, fill: "#FFFFFF", ink: GREEN, border: `2px solid ${GREEN}` },
   season_closed: { shape: "square", accent: NAVY, fill: "#FFFFFF", ink: INK, border: `2px solid ${NAVY}` },
   not_checked: { shape: "ring", accent: NAVY, fill: "#FFFFFF", ink: INK, border: `2px dashed ${NAVY}` },
 };

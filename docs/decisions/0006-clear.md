@@ -172,6 +172,12 @@ version of the tile broke: the tile was larger than the button). It is also wher
 knows fires already detected, and this smoke is from none of them. `airout.spec.ts` holds both: Call 911 the largest
 target as the screen opens, and the tile one tap away.
 
+**Amended the same day: a chip at the sheet's half height.** So the map stays in view there, the tile is at the
+sheet's full height only, and at half the same answer is a chip beside "Protect your home": a short label, "When to
+air out" / « Quand aérer » (the tile's own label does not fit half a row on one line), and the answer in a few words
+("Mon 5 to 8 a.m.", "Not now", "Not available"). Where nothing explains the smoke the chip is shown too, outlined
+and smaller than Call 911; the tile still waits behind "Why?".
+
 The mark beside the answer tells its state by shape as well as by words, as the badges do: an open window in a filled
 circle (a best time), a shut window in a filled square (keep windows closed), a window in a dashed circle (not
 available).

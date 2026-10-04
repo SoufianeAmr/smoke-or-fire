@@ -43,7 +43,8 @@ const CLEAR_OF_CALL = 176;
 
 /**
  * The call-first bar, on a verdict that nothing explains: "Look outside…" above the red Call 911 button (72 px or
- * taller, as wide as the bar, tel:911). Whole on the screen, no taller than the room kept for it, and no tiles.
+ * taller; 60 px or taller on a phone 740 px tall or less, where the bar is the tighter one so the map keeps its
+ * room; as wide as the bar, tel:911). Whole on the screen, no taller than the room kept for it, and no tiles.
  */
 async function callFirstBar(page: Page, lang: "en" | "fr") {
   const found = await bars(page);
@@ -57,7 +58,7 @@ async function callFirstBar(page: Page, lang: "en" | "fr") {
   await expect(page.locator('a[href="tel:911"]')).toHaveCount(1); // still the screen's one Call 911
   expect(await call.evaluate((el) => getComputedStyle(el).backgroundColor)).toBe("rgb(217, 45, 32)");
   const [look, button, box] = [(await bar.locator("p").boundingBox())!, (await call.boundingBox())!, (await bar.boundingBox())!];
-  expect(button.height).toBeGreaterThanOrEqual(72);
+  expect(button.height).toBeGreaterThanOrEqual(page.viewportSize()!.height <= 740 ? 60 : 72);
   expect(button.width).toBeGreaterThanOrEqual(0.8 * box.width);
   expect(look.y + look.height).toBeLessThanOrEqual(button.y); // the question, then the button
   const { width, height } = page.viewportSize()!;
