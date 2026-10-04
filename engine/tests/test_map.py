@@ -6,6 +6,7 @@ transport, then the recorded data of Aug 25, 2025 (no network).
 """
 
 import json
+import math
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -18,7 +19,7 @@ from smoke_engine.app import REPLAY_TIME, create_app
 from smoke_engine.feeds.live import LiveFeeds
 from smoke_engine.feeds.replay import ReplayFeeds
 from smoke_engine.geo import distance_km
-from smoke_engine.map import MAP_VERSION, SCHEMA_FILE, simplify_ring
+from smoke_engine.map import MAP_VERSION, SCHEMA_FILE, ZONE_MAX_POINTS, ZONE_TOLERANCE_DEG, _rings, _simplified, simplify_ring
 from tests.fakes import (
     ALERTS_ANSWERED_AT,
     FROST_ADVISORY,
@@ -111,6 +112,20 @@ def test_a_map_that_cannot_be_built_never_fails_the_verdict(monkeypatch):
     body = verdict(feeds)
 
     assert (body["map"], body["verdict"], body["confidence"]) == (None, expected["verdict"], expected["confidence"])
+
+
+def test_a_browser_that_asks_for_it_gets_the_answer_compressed_and_it_is_the_same_answer():
+    spots = [hotspot(46.09 + i / 1000, -65.78, "2025-08-25T06:00:00Z", satellite="N20", frp=float(i)) for i in range(300)]
+    client = TestClient(create_app({"live": FakeFeeds(wind=WEST_WIND, hotspots=spots)}))
+    query = {**MONCTON, "time": NOON_UTC, "mode": "live"}
+
+    plain = client.get("/verdict", params=query, headers={"Accept-Encoding": "identity"})
+    packed = client.get("/verdict", params=query, headers={"Accept-Encoding": "gzip"})
+
+    assert (plain.headers.get("content-encoding"), packed.headers.get("content-encoding")) == (None, "gzip")
+    assert packed.json() == plain.json() and len(packed.json()["map"]["detections"]) == 300
+    # Sent as fewer than a third of the bytes.
+    assert int(packed.headers["content-length"]) * 3 < int(plain.headers["content-length"])
 
 
 # --- what it draws -----------------------------------------------------------------------------------
@@ -284,6 +299,55 @@ def test_a_detailed_outline_is_simplified_to_what_a_map_this_size_can_show():
     assert zone == {"rings": [[[-65.5, 45.6], [-64.201, 45.6], [-64.2, 46.6], [-65.5, 46.6], [-65.5, 45.6]]]}
 
 
+def test_an_outline_too_detailed_to_send_even_simplified_is_not_sent_and_the_alert_stays_active():
+    # A saw of 1,000 teeth, each three degrees tall: no tolerance the map allows removes them.
+    saw = [[-70 + i / 100, 47.0 if i % 2 else 44.0] for i in range(2000)]
+    alert = weather_alert()
+
+    body = verdict(FakeFeeds(wind=WEST_WIND, alerts=[alert], zones=[zone_of(alert, [[*saw, saw[0]]])]))
+
+    assert (body["alerts"]["airQuality"]["state"], body["map"]["alertZone"]) == ("active", None)
+    assert body["map"]["layers"]["alertZone"]["outline"] is False
+    assert problems(body["map"]) == []
+
+
+def test_a_very_long_outline_is_thinned_first_and_still_drawn_whole():
+    # A circle of 300,000 points, about a point every metre: thinned to 20,000, then simplified as any other.
+    circle = [[-65.0 + 0.5 * math.cos(2 * math.pi * i / 300_000), 46.0 + 0.5 * math.sin(2 * math.pi * i / 300_000)] for i in range(300_000)]
+    alert = weather_alert()
+
+    zone = verdict(FakeFeeds(wind=WEST_WIND, alerts=[alert], zones=[zone_of(alert, [[*circle, circle[0]]])]))["map"]["alertZone"]
+
+    [ring] = zone["rings"]
+    assert ring[0] == ring[-1] and 12 <= len(ring) <= ZONE_MAX_POINTS
+    assert all(abs(math.hypot((x + 65.0) * math.cos(math.radians(46.0)), y - 46.0) - 0.5) < 0.16 for x, y in ring)  # still on the circle
+    lons, lats = [x for x, _ in ring], [y for _, y in ring]
+    assert (round(min(lons), 1), round(max(lons), 1), round(min(lats), 1), round(max(lats), 1)) == (-65.5, -64.5, 45.5, 46.5)
+
+
+def test_a_real_eccc_zone_outline_is_drawn_small_closed_and_within_500_m_of_the_original():
+    """One zone outline as ECCC's API gave it on Oct 4, 2026 (tests/data/): 801 points, simplified for the map."""
+    feature = json.loads((Path(__file__).parent / "data" / "eccc-alert-zone-2026-10-04.json").read_text(encoding="utf-8"))
+    original = _rings(feature["geometry"])
+
+    rings = _simplified(original)
+
+    assert (len(original), len(original[0])) == (1, 801)
+    [ring] = rings
+    assert ring[0] == ring[-1] and 20 <= len(ring) <= 80
+    k = math.cos(math.radians(sum(y for _, y in ring) / len(ring)))
+
+    def off_the_outline(x: float, y: float) -> float:
+        best = math.inf
+        for (ax, ay), (bx, by) in zip(ring, ring[1:]):
+            dx, dy = (bx - ax) * k, by - ay
+            f = 0.0 if dx == dy == 0 else max(0.0, min(1.0, (((x - ax) * k) * dx + (y - ay) * dy) / (dx * dx + dy * dy)))
+            best = min(best, math.hypot((x - ax) * k - f * dx, y - ay - f * dy))
+        return best
+
+    assert max(off_the_outline(x, y) for x, y in original[0]) <= ZONE_TOLERANCE_DEG + 1e-4  # 1e-4: the rounding to 4 decimals
+
+
 def test_simplifying_keeps_a_ring_closed_and_its_corners():
     square = [[0.0, 0.0], [0.5, 0.0001], [1.0, 0.0], [1.0, 1.0], [0.0, 1.0], [0.0, 0.0]]
 
@@ -346,6 +410,17 @@ def test_live_asks_eccc_for_the_zone_s_outline_only_when_an_alert_is_active_and_
     requests.clear()
     live_verdict(live_feeds(tmp_path, lambda request: httpx.Response(200, json=alerts_answer([])), requests))
     assert len([r for r in requests if "weather-alerts" in r.url.path]) == 1
+
+
+def test_live_asks_eccc_for_a_town_s_outline_once_in_15_minutes_and_for_the_alert_every_time(tmp_path):
+    requests = []
+    feeds = live_feeds(tmp_path, with_or_without_outline, requests)
+
+    first, second = live_verdict(feeds), live_verdict(feeds)
+
+    asked = ["skipGeometry" in r.url.params for r in requests if "weather-alerts" in r.url.path]
+    assert asked == [True, False, True]  # the alert check, the outline, the alert check again
+    assert first["map"]["alertZone"] == second["map"]["alertZone"] == {"rings": [MONCTON_ZONE]}
 
 
 def test_live_waits_at_most_5_seconds_for_the_outline_and_gives_the_verdict_without_it(tmp_path):

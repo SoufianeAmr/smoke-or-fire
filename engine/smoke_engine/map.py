@@ -24,6 +24,9 @@ MAX_DETECTIONS = 4000
 # A zone outline is read on a phone, where a pixel is several hundred metres: about 500 m is finer than it shows.
 ZONE_TOLERANCE_DEG = 0.005
 ZONE_MAX_POINTS = 600
+# An outline with more points than this (ECCC's zones run to several hundred; a traced coast could run to far more)
+# is thinned to about this many before it is simplified: the work stays small whatever comes.
+ZONE_READ_POINTS = 20_000
 
 
 def _iso(t: datetime | None) -> str | None:
@@ -198,14 +201,25 @@ def _points(ring) -> list[list[float]] | None:
 
 def _simplified(rings: list[list[list[float]]]) -> list | None:
     """Each ring simplified and rounded; coarser until the outline is small enough to send. Rings that
-    shrink to nothing (islets) are left out."""
+    shrink to nothing (islets) are left out. An outline still too large after that is not sent: the map then
+    says the zone could not be drawn."""
+    total = sum(len(ring) for ring in rings)
+    if total > ZONE_READ_POINTS:
+        step = -(-total // ZONE_READ_POINTS)
+        rings = [_thinned(ring, step) for ring in rings]
     tolerance = ZONE_TOLERANCE_DEG
     for _ in range(8):
         kept = [ring for ring in (simplify_ring(ring, tolerance) for ring in rings) if len(ring) >= 4]
         if sum(len(ring) for ring in kept) <= ZONE_MAX_POINTS:
-            break
+            return [[[round(x, 4), round(y, 4)] for x, y in ring] for ring in kept] or None
         tolerance *= 2
-    return [[[round(x, 4), round(y, 4)] for x, y in ring] for ring in kept] or None
+    return None
+
+
+def _thinned(ring: list[list[float]], step: int) -> list[list[float]]:
+    """Every `step`-th point of a closed ring, closed again; a ring too short for that is left as it is."""
+    points = ring[:-1][::step]
+    return [*points, list(points[0])] if len(points) >= 3 else ring
 
 
 def simplify_ring(ring: list[list[float]], tolerance: float) -> list[list[float]]:

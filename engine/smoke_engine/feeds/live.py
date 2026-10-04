@@ -327,17 +327,13 @@ class LiveFeeds:
 
     def alert_zones(self, lat, lon, at):
         """The alerts in effect at the point with their zones' outlines, for the map: asked only when an alert is
-        active, in a query of its own, so the alert check above stays as small and as quick as it was."""
+        active, in a query of its own, so the alert check above stays as small and as quick as it was. An answer
+        is kept 15 minutes for its point: checks from one town under one alert ask ECCC for the outline once."""
         if abs(self._now() - at) > CACHE_FOR:
             raise FeedUnavailable(f"{sources.ECCC_ALERTS}: no alerts kept for {at:%Y-%m-%dT%H:%MZ}")
-        try:
-            response = self._client.get(sources.ECCC_ALERTS, params=sources.alert_zones_params(lat, lon), timeout=ALERTS_TIMEOUT)
-            response.raise_for_status()
-            return response.json()
-        except (httpx.HTTPError, ValueError) as error:
-            raise FeedUnavailable(f"{sources.ECCC_ALERTS}: {type(error).__name__}: {error}") from error
+        return self._cached(("alert_zones", lat, lon), sources.ECCC_ALERTS, sources.alert_zones_params(lat, lon), timeout=ALERTS_TIMEOUT)
 
-    def _cached(self, key, url: str, params: dict):
+    def _cached(self, key, url: str, params: dict, timeout: float | None = None):
         now = time.monotonic()
         with self._lock:
             self._cache = {k: v for k, v in self._cache.items() if v[0] > now}
@@ -345,7 +341,7 @@ class LiveFeeds:
                 return self._cache[key][1]
         fetched_at = self._now()
         try:
-            response = self._client.get(url, params=params)
+            response = self._client.get(url, params=params, **({} if timeout is None else {"timeout": timeout}))
             response.raise_for_status()
             answer = response.json()
         except (httpx.HTTPError, ValueError) as error:

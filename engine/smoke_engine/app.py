@@ -7,6 +7,7 @@ from typing import Literal
 
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import JSONResponse
 
 from smoke_engine.alerts import AlertCheck, air_quality_alert
@@ -315,6 +316,9 @@ def create_app(feeds_by_mode: dict, now=_utc_now, lifespan=None) -> FastAPI:
     app = FastAPI(title="Smoke or Fire? engine", lifespan=lifespan)
     # The web app is served from another origin; the API is public and read-only.
     app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["GET"])
+    # A verdict with its map is tens of kilobytes of JSON: sent compressed to a browser that asks for it (a phone on
+    # a slow connection gets it several times sooner).
+    app.add_middleware(GZipMiddleware, minimum_size=1024)
 
     @app.get("/")
     def index():
