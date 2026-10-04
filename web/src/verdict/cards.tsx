@@ -192,8 +192,9 @@ export function AirQualityCard({ view }: { view: VerdictView }) {
   );
 }
 
-export function WhyCard({ view }: { view: VerdictView }) {
-  const [open, setOpen] = useState(false);
+/** `startOpen`: behind "Why?" the reasons are shown at once; a second tap to see them would hide them again. */
+export function WhyCard({ view, startOpen = false }: { view: VerdictView; startOpen?: boolean }) {
+  const [open, setOpen] = useState(startOpen);
   return (
     <section style={{ ...CARD, overflow: "hidden" }}>
       <button type="button" onClick={() => setOpen(!open)} aria-expanded={open} aria-controls="why-body" style={{ width: "100%", minHeight: "72px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", padding: "0 20px", border: "0", background: "transparent", fontFamily: "inherit", fontSize: "22px", fontWeight: "700", color: "#1A1D21", cursor: "pointer", textAlign: "left" }}>

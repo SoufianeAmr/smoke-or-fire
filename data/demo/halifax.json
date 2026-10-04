@@ -135,6 +135,8 @@
  "wind": {
   "level": "850hPa",
   "model": "gfs025",
+  "run": null,
+  "recordedAt": "2026-09-26T18:51:00Z",
   "steady": true,
   "spreadDeg": 2.2,
   "biggestShift": {
@@ -2145,6 +2147,14 @@
    "nameEn": "Halifax Downtown",
    "nameFr": "centre-ville d'Halifax",
    "km": 0
+  }
+ },
+ "alerts": {
+  "airQuality": {
+   "state": "none",
+   "source": "naad_archive",
+   "checkedAt": null,
+   "alert": null
   }
  },
  "sources": {

@@ -215,6 +215,8 @@
  "wind": {
   "level": "100m",
   "model": "gfs025",
+  "run": null,
+  "recordedAt": "2026-09-26T18:51:00Z",
   "steady": true,
   "spreadDeg": 9.9,
   "biggestShift": {
@@ -2426,6 +2428,14 @@
    "nameEn": "Miramichi",
    "nameFr": "Miramichi",
    "km": 0
+  }
+ },
+ "alerts": {
+  "airQuality": {
+   "state": "none",
+   "source": "naad_archive",
+   "checkedAt": null,
+   "alert": null
   }
  },
  "sources": {

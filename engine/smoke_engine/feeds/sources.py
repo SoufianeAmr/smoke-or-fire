@@ -12,6 +12,8 @@ USER_AGENT = "smoke-or-fire-engine/0.1 (+https://github.com/; wildfire smoke ver
 # --- Open-Meteo: hourly wind at the three trace heights ---------------------------------------
 OPEN_METEO_LIVE = "https://api.open-meteo.com/v1/forecast"
 OPEN_METEO_HISTORICAL = "https://historical-forecast-api.open-meteo.com/v1/forecast"
+# The newest run of WIND_MODEL that Open-Meteo holds: "last_run_initialisation_time", seconds since 1970.
+OPEN_METEO_MODEL_RUN = "https://api.open-meteo.com/data/ncep_gfs025/static/meta.json"
 WIND_VARIABLES = [f"wind_{kind}_{height}" for height in HEIGHTS for kind in ("speed", "direction")]
 OPEN_METEO_CHUNK = 300  # grid points per request, to keep URLs short
 # Free tier: 600 calls a minute, and each grid point is one call. 693 points need two minutes.
@@ -126,6 +128,22 @@ def readings_params(station_id: str, start: datetime, end: datetime) -> dict:
         "sortby": "-observation_datetime",
         "limit": 100,
     }
+
+
+# --- ECCC: weather alerts in effect at a point (MSC GeoMet OGC API) ------------------------------
+ECCC_ALERTS = "https://api.weather.gc.ca/collections/weather-alerts/items"
+# ECCC keeps no past alerts. The replay's come from the copies of ECCC's CAP-CP messages kept by the
+# NAAD System archive (scripts/fetch_alerts_replay.py converts them to the shape above).
+NAAD_ARCHIVE = "https://alertsarchive.pelmorex.com"
+
+
+def alerts_params(lat: float, lon: float) -> dict:
+    """The alerts whose forecast zone holds the point: a box of one point, longitude first.
+
+    Nothing else may narrow the answer. A filter on the alert type that matches nothing, like latitude
+    first, gets a 200 with no alerts: it would read as "none in effect".
+    """
+    return {"f": "json", "bbox": f"{lon},{lat},{lon},{lat}", "skipGeometry": "true", "limit": 50}
 
 
 # --- NASA FIRMS: satellite fire detections (VIIRS and MODIS) -------------------------------------

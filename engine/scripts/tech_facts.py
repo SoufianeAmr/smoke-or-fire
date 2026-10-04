@@ -106,6 +106,7 @@ def data_facts() -> dict:
         "aqhi_stations": len(json.loads((REPLAY_DIR / "aqhi-stations.json").read_text(encoding="utf-8"))["features"]),
         "aqhi_readings": len(json.loads((REPLAY_DIR / "aqhi-readings.json").read_text(encoding="utf-8"))["features"]),
         "aqhi_source": manifest["files"]["aqhi-readings.json"]["source"],
+        "alerts": manifest["files"]["alerts.json"],
         "wind_points": len(replay_wind),
         "wind_hours": len(hours),
         "wind_first": hours[0],
@@ -261,6 +262,7 @@ def document(arch: dict, data: dict, place, body: dict, merged: dict, tests: dic
     seen = fire["lastSeen"]
     fwd = body["forward"]
     aq = body["aqhi"]
+    alert = body["alerts"]["airQuality"]
     by_source = fire["detections"]["bySource"]
     satellites = fire["detections"]["satellites"]
 
@@ -372,10 +374,25 @@ def document(arch: dict, data: dict, place, body: dict, merged: dict, tests: dic
         f"{data['aqhi_stations']} stations and {data['aqhi_readings']} readings from: {data['aqhi_source']}. | The nearest "
         f"station only, and only a reading at most {span(aqhi.MAX_AGE)} old at the check; otherwise no reading is shown. "
         f"Categories: {', '.join(aqhi_bands())}. |",
+        f"| ECCC weather alerts | The air-quality alert in effect at your point: its code, its English and French name, "
+        f"its colour, the forecast zone, and when it was issued and expires. Live: `{sources.ECCC_ALERTS}` (MSC GeoMet "
+        f"OGC API, collection `weather-alerts`), asked at every check with a box of one point, never cached, with "
+        f"{num(live.ALERTS_TIMEOUT)} seconds to answer. Replay: {data['alerts']['features']} zone records from "
+        f"{data['alerts']['messages']} messages, covering {data['alerts']['covers'][0]} to {data['alerts']['covers'][1]}: "
+        f"{data['alerts']['source']}. | Three answers only: active, none in effect, not checked. Not checked when ECCC "
+        "does not answer, answers with anything but a whole list of alerts, lists an air-quality alert with a status "
+        "never seen before or past its expiry, the point is outside Canada (ECCC lists nothing there; in the strip "
+        "along the border, where the map's outlines cannot tell, only an alert ECCC lists there is taken as an answer), "
+        "or the check is for a time ECCC's list does not cover: live, any time but now; replay, any time outside the "
+        "recorded messages. ECCC keeps no "
+        "past alerts: the replay's are ECCC's own CAP-CP messages, converted from the copies the NAAD System archive "
+        f"keeps (`{sources.NAAD_ARCHIVE}`). Informational only: it never changes the verdict or the confidence "
+        "(`test_the_alert_never_changes_the_verdict` in `engine/tests/test_alerts.py`). |",
         f"| Open-Meteo | Hourly wind speed and direction at {listed(f'`{h}`' for h in heights)}, weather model "
         f"`{wind.WIND_MODEL}`, at {len(wind.GRID_POINTS)} grid points. Live: refreshed every "
         f"{span(live.WIND_REFRESH_EVERY)}. Replay: {data['wind_points']} points × {data['wind_hours']} hours, "
-        f"{data['wind_first']} to {data['wind_last']} UTC. | The free tier allows {sources.OPEN_METEO_POINTS_PER_MINUTE} "
+        f"{data['wind_first']} to {data['wind_last']} UTC. The newest model run in the live winds is read from "
+        f"`{sources.OPEN_METEO_MODEL_RUN}`; recorded winds name the day they were downloaded instead. | The free tier allows {sources.OPEN_METEO_POINTS_PER_MINUTE} "
         f"calls a minute and each grid point is one call. Traces stop at the grid edge ({lat_range}, {lon_range}). |",
         f"| NRCan CGNDB | Populated places for town names and \"fire near …\": {data['communities']} places "
         f"({listed(f'{v} in {k}' for k, v in data['communities_by_province'].items())}). | Only places in "
@@ -415,6 +432,9 @@ def document(arch: dict, data: dict, place, body: dict, merged: dict, tests: dic
         f"{fwd['closestReleasedAt']}, height `{fwd['closestHeight']}`, {len(fwd['paths'])} paths returned).",
         f"- AQHI: {aq['display']} ({aq['category'].replace('_', ' ')}) at {aq['station']['nameEn']} "
         f"(station {aq['station']['id']}, {aq['station']['km']} km away), observed {aq['observedAt']}.",
+        f"- ECCC air-quality alert: {alert['state']}"
+        + (f": {alert['alert']['nameEn']} for {alert['alert']['zoneEn']}, issued {alert['alert']['issued']} "
+           f"(recorded message: {alert['alert']['url']})." if alert["alert"] else "."),
         "",
         *validation_lines(valid),
         "## Tests",

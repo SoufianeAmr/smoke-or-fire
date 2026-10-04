@@ -1,7 +1,8 @@
 // Everything the verdict screens (7a–7d) say, from the engine's answer. Pure: no React, no DOM.
 import { translate, type Lang, type StringKey, type Vars } from "../i18n";
 import { lowerFirst, script, spokenKm } from "../listen/speech";
-import type { AqhiCategory, Confidence, Fire, LastSeen, VerdictJson } from "./types";
+import type { BadgeTone } from "./glance";
+import type { AqhiCategory, Confidence, Fire, LastSeen, Verdict, VerdictJson } from "./types";
 
 const NBSP = String.fromCharCode(0xa0); // no-break space: keeps a fire's name on one line in French
 const NBH = String.fromCharCode(0x2011); // no-break hyphen
@@ -14,8 +15,39 @@ export type AreaWide = { lead: string; text: string };
 /** Health Canada's windows advice and "take a break from the smoke", with map searches near the checked spot. */
 export type SmokeBreak = { windows: string; text: string; library: { label: string; url: string }; community: { label: string; url: string }; hours: string; source: string; sourceUrl: string };
 
+/** One source under the card. A tap shows `lines` (what was found and when, then the source) and `links`. */
+export interface Badge {
+  id: "fire" | "trace" | "alert";
+  tone: BadgeTone;
+  /** A satellite for a detection; a flame for a fire known only from Canada's official list. */
+  icon: "satellite" | "flame" | "wind" | "bell";
+  /** On the badge, and what Listen says of it. */
+  label: string;
+  lines: string[];
+  links: { label: string; host: string; url: string }[];
+}
+
 export interface VerdictView {
   variant: Variant;
+  /** The glance card: the answer in one line, under a large icon. Everything else on the screen is behind "Why?". */
+  card: {
+    state: Verdict;
+    /** The line's parts, shown with a middle dot between them. */
+    parts: string[];
+    line: string;
+    /** Beside the distance: an arrow from the person toward the fire, by the engine's compass. Null with no direction. */
+    arrow: { deg: number; label: string } | null;
+    /** Nothing explains the smoke: Call 911 is the screen's main action. */
+    callFirst: boolean;
+    /** The 911 bar's line. */
+    callTitle: string;
+    why: string;
+    /** The name of what "Why?" opens, for screen readers. */
+    answer: string;
+    /** What Listen says while "Why?" is closed: the line, the badges by name, where the rest is, then 911. */
+    voice: string[];
+  };
+  badges: Badge[];
   band: { label: string; headline: string; sub: string };
   confidence: { level: Confidence; chip: string; text: string };
   /** The fire the map and fire row feature: the closest approach's fire (7a, 7c) or the nearest fire (7b). */
@@ -67,6 +99,13 @@ function needle(level: number): string {
   const dx = Math.round(6.6 * Math.sin(angle) * 10) / 10;
   const dy = Math.round(-6.6 * Math.cos(angle) * 10) / 10;
   return `M12 18l${dx} ${dy}`;
+}
+
+/** "2025-08-25" and the hour and minute, in Atlantic time. */
+function atlantic(iso: string): { date: string; hour: string; minute: string } {
+  const f = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Halifax", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
+  const p = Object.fromEntries(f.formatToParts(new Date(iso)).map((x) => [x.type, x.value]));
+  return { date: `${p.year}-${p.month}-${p.day}`, hour: p.hour, minute: p.minute };
 }
 
 /** Local time words for when the wind shifted (Atlantic time). */
@@ -385,8 +424,164 @@ export function verdictView(json: VerdictJson, lang: Lang, townName?: string): V
     ...say("voice.verdict.call"),
   ];
 
+  // --- The glance card -------------------------------------------------------------------------------------------
+  const state = json.verdict;
+  const direction = fire && fire.km >= 1 && variant === "7a" ? fire.compass : null;
+  const parts =
+    variant === "7a"
+      ? [t("card.drifting"), fireTitle(fire!), direction ? t("card.distance", { km: fire!.km, direction: compassWord(direction, "abbr") }) : kmUnit(fire!.km)]
+      : variant === "7c"
+        ? [t("card.unclear"), t("card.unclear.fire", { fire: firePlain(fire!) }), t("card.look")]
+        : [t("card.unexplained"), variant === "7d" ? t("card.noFireWithin", { km: json.rules.fireRadiusKm }) : t("card.noFireUpwind")];
+  // French elides before a vowel: "vers le sud", "vers l’est".
+  const towardWord = (code: string) => {
+    const word = compassWord(code, "word");
+    const text = t("card.toward", { direction: word });
+    return lang === "fr" && /^[eo]/.test(word) ? text.replace(`le ${word}`, `l’${word}`) : text;
+  };
+  const arrow = direction && COMPASS.includes(direction) ? { deg: COMPASS.indexOf(direction) * 22.5, label: towardWord(direction) } : null;
+
+  // Times in a badge: "2025-08-25, 04:50 (Atlantic time)", "2025-08-25, 4 h 50 (heure de l’Atlantique)".
+  const at = (iso: string) => {
+    const { date, hour, minute } = atlantic(iso);
+    return t("time.atlantic", { date, hour: lang === "fr" ? Number(hour) : hour, minute });
+  };
+  const link = (key: "badge.fire.link.firms" | "badge.fire.link.cwfis" | "badge.trace.link" | "badge.alert.link" | "badge.alert.link.archive", vars?: Vars) => ({
+    label: t(key),
+    host: t(`${key}.host` as StringKey),
+    url: t(`${key}.url` as StringKey, vars),
+  });
+  const upperFirst = (text: string) => text.charAt(0).toLocaleUpperCase(lang) + text.slice(1);
+
+  // The fire badge. A featured fire (7a, 7c): its newest satellite sighting, else Canada's official list. Nothing
+  // explains the smoke (7b, 7d): the detections were checked and none is near. A source that did not answer is named.
+  const fireBadge = (): Badge => {
+    const s = json.sources;
+    const down = [...(s && !s.firms.ok ? [t("badge.fire.down.firms")] : []), ...(s && !s.cwfis.ok ? [t("badge.fire.down.cwfis")] : [])];
+    const sourceLine = (firms: boolean, cwfis: boolean) =>
+      [...(firms && cwfis ? [t("badge.fire.source.both")] : firms ? [t("badge.fire.source.firms")] : cwfis ? [t("badge.fire.source.cwfis")] : []), ...down].join(" ");
+    const links = (firms: boolean, cwfis: boolean) => [...(firms ? [link("badge.fire.link.firms")] : []), ...(cwfis ? [link("badge.fire.link.cwfis")] : [])];
+    if (variant === "7b" || variant === "7d") {
+      const [firms, cwfis] = [!s || s.firms.ok, !s || s.cwfis.ok];
+      const newest = s?.newestDetection ? t("fire.none.newest", { time: ago(s.newestDetection) }) : null;
+      return {
+        id: "fire",
+        tone: "none",
+        icon: "satellite",
+        label: variant === "7d" ? t("badge.fire.noneRange", { km: json.rules.fireRadiusKm }) : t("badge.fire.nonePath"),
+        lines: [second.body, ...(dataChecked() ?? newest ? [dataChecked() ?? newest!] : []), sourceLine(firms, cwfis)],
+        links: links(firms, cwfis),
+      };
+    }
+    const by = fire!.detections.bySource;
+    const sighted = fire!.lastSeen !== null || fire!.lastSeenHoursAgo !== null;
+    // Canada's list holds a fire only when it has a record there. A fire made of CWFIS hotspots alone (FIRMS down)
+    // has neither a record nor an observation time: it is still a satellite detection, with no time to give.
+    const satellite = sighted || fire!.cwfisIds.length === 0;
+    // Which source knows the fire: its detections of the last 24 hours, and Canada's list for a fire with a record.
+    const [firms, cwfis] = [by.FIRMS + by.both > 0, by.CWFIS + by.both > 0 || fire!.cwfisIds.length > 0];
+    return {
+      id: "fire",
+      tone: "active",
+      icon: satellite ? "satellite" : "flame",
+      label: satellite ? t("badge.fire.satellite") : t("badge.fire.list"),
+      lines: [seen(fire!) || t("badge.fire.hotspots", { n: json.rules.hotspotHours }), ...(fire!.lastSeen ? [t("badge.fire.detected", { when: at(fire!.lastSeen.time) })] : []), sourceLine(firms, cwfis)],
+      links: links(firms, cwfis),
+    };
+  };
+
+  // The trace badge: where the winds come from, and their newest model run (live) or when they were recorded (replay).
+  const traceBadge = (): Badge => ({
+    id: "trace",
+    tone: "active",
+    icon: "wind",
+    label: t("badge.trace"),
+    lines: [
+      t("badge.trace.source"),
+      json.wind.recordedAt ? t("badge.trace.recorded", { date: atlantic(json.wind.recordedAt).date }) : json.wind.run ? t("badge.trace.run", { when: at(json.wind.run) }) : t("badge.trace.run.none"),
+      t(json.path.hoursTraced === 1 ? "badge.trace.traced.one" : "badge.trace.traced", { n: json.path.hoursTraced, town }),
+    ],
+    links: [link("badge.trace.link")],
+  });
+
+  // ECCC's air-quality alert for the spot: active, none in effect, or not checked (also when an older engine says
+  // nothing). The alert's name and zone are ECCC's own, unaltered but for the first capital.
+  const alertBadge = (): Badge => {
+    const check = json.alerts?.airQuality;
+    const replay = check?.source === "naad_archive";
+    const source = t(replay ? "badge.alert.source.replay" : "badge.alert.source");
+    // ECCC's page for the place, the spot rounded to about 1 km; the replay has the archive instead.
+    const page = replay ? link("badge.alert.link.archive") : link("badge.alert.link", { lat: json.location.lat.toFixed(2), lon: json.location.lon.toFixed(2) });
+    const checked = check?.checkedAt ? [t("badge.alert.checked", { when: at(check.checkedAt) })] : [];
+    if (check?.state === "active" && check.alert) {
+      const a = check.alert;
+      const name = upperFirst((lang === "fr" ? a.nameFr : a.nameEn) ?? "");
+      const colour = lang === "fr" ? a.colourFr : a.colourEn;
+      return {
+        id: "alert",
+        tone: "active",
+        icon: "bell",
+        label: t("badge.alert.active"),
+        lines: [
+          colour ? t("badge.alert.name.colour", { name, colour }) : name,
+          upperFirst((lang === "fr" ? a.zoneFr : a.zoneEn) ?? ""),
+          t("badge.alert.issued", { when: at(a.issued) }),
+          t("badge.alert.until", { when: at(a.expires) }),
+          ...checked,
+          source,
+        ].filter(Boolean),
+        links: [a.url ? { label: t("badge.alert.link.message"), host: t("badge.alert.link.archive.host"), url: a.url } : page],
+      };
+    }
+    if (check?.state === "none") {
+      return {
+        id: "alert",
+        tone: "none",
+        icon: "bell",
+        label: t("badge.alert.none"),
+        lines: [replay ? t("badge.alert.none.replay", { when: at(json.time) }) : t("badge.alert.none.body"), ...checked, source],
+        links: [page],
+      };
+    }
+    return { id: "alert", tone: "notChecked", icon: "bell", label: t("badge.alert.notChecked"), lines: [t("badge.alert.notChecked.body"), source], links: [page] };
+  };
+  const badges = [fireBadge(), traceBadge(), alertBadge()];
+
+  // What Listen says while "Why?" is closed: the line in spoken words (distance and direction in full), the notice
+  // when there is one, each badge by its name, where the rest is, then 911.
+  const callFirst = state === "unexplained";
+  const spokenLine =
+    variant === "7a"
+      ? direction
+        ? say("voice.card.drifting", { fire: fireThe(fire!), distance: spokenKm(fire!.km, lang), direction: compassWord(direction, "at") })
+        : say("voice.card.drifting.under", { fire: fireThe(fire!) })
+      : variant === "7c"
+        ? say("voice.card.unclear", { fire: fireThe(fire!) })
+        : variant === "7d"
+          ? say("voice.card.noFires", { km: json.rules.fireRadiusKm })
+          : say("voice.card.unexplained");
+  const cardVoice = [
+    ...spokenLine,
+    ...(notice ? say("voice.verdict.notice", { link: notice.link }) : []),
+    ...say("voice.card.badges", { fire: badges[0].label, trace: badges[1].label, alert: badges[2].label }),
+    ...say("voice.card.why", { why: t("card.why") }),
+    ...say(callFirst ? "voice.card.call" : "voice.verdict.call"),
+  ];
+
   return {
     variant,
+    card: {
+      state,
+      parts,
+      line: parts.join(`${NBSP}· `),
+      arrow,
+      callFirst,
+      callTitle: t(callFirst ? "sticky.look" : "sticky.title"),
+      why: t("card.why"),
+      answer: t("card.answer"),
+      voice: cardVoice,
+    },
+    badges,
     band,
     confidence: { level: json.confidence, chip: t(`confidence.${json.confidence}` as StringKey), text: confidenceText },
     fire,

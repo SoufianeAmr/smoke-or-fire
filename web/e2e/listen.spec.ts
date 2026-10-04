@@ -2,10 +2,13 @@
 // after 10 ms, so the tests see exactly what is said, in order, with the pause between sentences. Each script comes from
 // the strings file (voice.*); its {…} values are read from the screen, and every button it names is on the screen. On
 // the three questions the values are the answers' labels: each answer is on the screen with that label, in that order.
+// A verdict is read twice: as it opens, the card (its line in spoken words, the badges by name, "Why?", then 911); with
+// "Why?" open, everything screens 7a–7d say, word for word as before the card.
 import { expect, test, type Locator, type Page, type Route } from "@playwright/test";
 import { readFileSync } from "node:fs";
 import { TEST_ENGINE_URL } from "./engine";
 import { answer } from "./look";
+import { openWhy } from "./verdict";
 
 type Lang = "en" | "fr";
 type Spoken = { text: string; lang: string; rate: number; pitch: number; volume: number; voice: string | null; at: number; end: number };
@@ -162,14 +165,117 @@ async function answersNamed(page: Page, lang: Lang, answers: Answer[]) {
 const lowerFirst = (lang: Lang, label: string) => (/^\p{Lu}\p{Ll}/u.test(label) ? label.charAt(0).toLocaleLowerCase(lang) + label.slice(1) : label);
 const sameText = (a: string, b: string) => a.replace(/\s/g, " ") === b.replace(/\s/g, " ");
 
-/** What a verdict screen shows, as the voice says it. */
+/** The fire-is-close notice's link (a fire under 25 km away). The notice stays in front of "Why?". */
+const noticeLink = (page: Page, lang: Lang) => page.locator("main > section").first().getByRole("link", { name: STRINGS[lang]["leave.entry"].replace(/\s/g, " ") });
+/** What the voice says of the notice, naming its link as on the screen; nothing when there is no notice. */
+async function noticeScript(page: Page, lang: Lang) {
+  const link = noticeLink(page, lang);
+  return (await link.count()) > 0 ? script(lang, "voice.verdict.notice", { link: ((await link.textContent()) ?? "").trim() }) : [];
+}
+
+/**
+ * The values a string on the screen was filled with, by its key in the strings file: "159 km SSW" is "{km} km
+ * {direction}" with km 159 and direction SSW. Null when the text is another string. No-break spaces count as spaces.
+ */
+function valuesOf(lang: Lang, key: string, shown: string): Record<string, string> | null {
+  const template = stringOf(lang, key);
+  const names = [...template.matchAll(/\{(\w+)\}/g)].map((match) => match[1]);
+  const pattern = template.split(/\{\w+\}/).map((piece) => piece.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/\s/g, "\\s")).join("(.+)");
+  const found = shown.match(new RegExp(`^${pattern}$`));
+  return found && Object.fromEntries(names.map((name, i) => [name, found[i + 1].replace(/\s/g, " ")]));
+}
+/**
+ * A fire as the voice says it ("the Long Lake fire", "du feu de Long Lake"), from how the card names it: as a title
+ * ("Long Lake fire", "Feu de Long Lake") or plainly ("a fire near Fontaine", "un feu près de Fontaine").
+ */
+function fireSaid(lang: Lang, form: "title" | "plain", shown: string) {
+  for (const kind of ["named", "near", "in"]) {
+    const values = valuesOf(lang, `fire.${form}.${kind}`, shown);
+    if (values) return stringOf(lang, `fire.the.${kind}`).replace(/\{(\w+)\}/g, (_, name: string) => values[name]);
+  }
+  throw new Error(`"${shown}" is none of fire.${form}.* in ${lang}.json`);
+}
+/** A direction as the voice says it, from its short form on the card: "SSW" → "south-southwest", "SSO" → "au sud-sud-ouest". */
+function directionSaid(lang: Lang, short: string) {
+  const key = Object.keys(STRINGS[lang]).find((k) => k.startsWith("compass.abbr.") && STRINGS[lang][k] === short);
+  expect(key, `"${short}" among compass.abbr.* in ${lang}.json`).toBeDefined();
+  return stringOf(lang, key!.replace(".abbr.", ".at."));
+}
+
+/** The card's line as shown, part by part, without the dots between them: "Drifting smoke", "Long Lake fire", "159 km SSW". */
+const cardParts = async (page: Page) => (await page.locator("#verdict-h .glance-part").allTextContents()).map((part) => part.replace(/\s*·$/, "").trim());
+/** The three badges' labels, top to bottom, exactly as on the screen. */
+const badgeLabels = async (page: Page) => (await page.locator("main .badge").allTextContents()).map((label) => label.trim());
+
+/**
+ * What the verdict shows as it opens ("Why?" closed), as the voice says it: the card's line in spoken words, the
+ * notice when it is on the screen, each badge by its label, where the rest is, then 911.
+ */
+async function cardScript(page: Page, lang: Lang) {
+  const s = STRINGS[lang];
+  const [state, second, third] = await cardParts(page);
+  let line: string[];
+  if (state === s["card.drifting"]) {
+    // "159 km SSW" is said in full: "159 kilometres south-southwest". Under 1 km the card gives no direction.
+    const fire = fireSaid(lang, "title", second);
+    const far = valuesOf(lang, "card.distance", third);
+    line = far
+      ? script(lang, "voice.card.drifting", { fire, distance: spokenKm(lang, Number(far.km)), direction: directionSaid(lang, far.direction) })
+      : script(lang, "voice.card.drifting.under", { fire });
+  } else if (state === s["card.unclear"]) {
+    line = script(lang, "voice.card.unclear", { fire: fireSaid(lang, "plain", valuesOf(lang, "card.unclear.fire", second)!.fire) });
+  } else {
+    const within = valuesOf(lang, "card.noFireWithin", second); // "No known fire within 500 km"; otherwise "No known fire upwind"
+    line = within ? script(lang, "voice.card.noFires", within) : script(lang, "voice.card.unexplained");
+  }
+  const [fire, trace, alert] = await badgeLabels(page);
+  return [
+    ...line,
+    ...(await noticeScript(page, lang)),
+    ...script(lang, "voice.card.badges", { fire, trace, alert }),
+    ...script(lang, "voice.card.why", { why: await text(page, "main .why-toggle") }),
+    // Nothing explains the smoke: Call 911 is the screen's main action, and the voice sends to "the big red button".
+    ...script(lang, state === s["card.unexplained"] ? "voice.card.call" : "voice.verdict.call"),
+  ];
+}
+/** Every button the card's script names: the notice's link when shown, the three badges, "Why?", and Call 911. */
+async function cardButtons(page: Page, lang: Lang) {
+  const s = STRINGS[lang];
+  if ((await noticeLink(page, lang).count()) > 0) await named(noticeLink(page, lang), s["leave.entry"]);
+  // The badges, top to bottom as the voice names them: the fire detection, the wind trace, ECCC's alert.
+  const badges = page.locator("main .badge");
+  await expect(badges).toHaveCount(3);
+  for (const [i, id] of ["fire", "trace", "alert"].entries()) {
+    await expect(badges.nth(i)).toHaveAttribute("data-badge", id);
+    await expect(badges.nth(i)).toBeVisible();
+  }
+  const why = page.locator("main .why-toggle");
+  await named(why, s["card.why"]);
+  await expect(why).toHaveAttribute("aria-expanded", "false"); // still closed: the voice read the card, not what is behind it
+  const call = page.locator('a.press[href="tel:911"]');
+  await named(call, s["sticky.call"], RED); // "the red button at the bottom to call nine-one-one"
+  await expect(page.locator('a[href="tel:911"]')).toHaveCount(1); // the only one
+  if ((await cardParts(page))[0] === s["card.unexplained"]) {
+    // "the big red button": 72 px tall or more, and wider than half the screen (the bar's usual button is 150 px at most).
+    const box = (await call.boundingBox())!;
+    expect(box.height).toBeGreaterThanOrEqual(72);
+    expect(box.width).toBeGreaterThan(page.viewportSize()!.width / 2);
+  }
+}
+/** The on-screen labels the card's script names: the notice's link when shown, the three badges, "Why?", Call 911. */
+async function cardLabels(page: Page, lang: Lang) {
+  const s = STRINGS[lang];
+  const notice = await noticeLink(page, lang).count();
+  return [...(notice ? [s["leave.entry"]] : []), ...(await badgeLabels(page)), s["card.why"], s["sticky.call"]];
+}
+
+/** What a verdict screen shows with "Why?" open, as the voice says it: everything screens 7a–7d say. */
 async function verdictScript(page: Page, lang: Lang) {
   const s = STRINGS[lang];
-  const label = await text(page, "section[aria-labelledby=verdict-h] > div:nth-child(2) > p");
-  const headline = await text(page, "#verdict-h");
-  const sub = await text(page, "#verdict-h + p");
-  const noticeLink = page.locator("main > section").first().getByRole("link", { name: s["leave.entry"].replace(/\s/g, " ") });
-  const notice = (await noticeLink.count()) > 0 ? script(lang, "voice.verdict.notice", { link: ((await noticeLink.textContent()) ?? "").trim() }) : [];
+  const label = await text(page, "section[aria-labelledby=answer-h] > p:first-child");
+  const headline = await text(page, "#answer-h");
+  const sub = await text(page, "#answer-h + p");
+  const notice = await noticeScript(page, lang);
   let answer: string[];
   if (label === s["verdict.label.drifting"]) {
     const fire = headline.replace(lang === "en" ? /^Likely from / : /^Elle vient probablement /, "");
@@ -215,11 +321,10 @@ async function verdictScript(page: Page, lang: Lang) {
     ...script(lang, "voice.verdict.call"),
   ];
 }
-/** Every button the verdict's script names. */
+/** Every button the verdict's script names, with "Why?" open. */
 async function verdictButtons(page: Page, lang: Lang) {
   const s = STRINGS[lang];
-  const notice = page.locator("main > section").first().getByRole("link", { name: s["leave.entry"].replace(/\s/g, " ") });
-  if ((await notice.count()) > 0) await named(notice, s["leave.entry"]);
+  if ((await noticeLink(page, lang).count()) > 0) await named(noticeLink(page, lang), s["leave.entry"]);
   const library = page.getByRole("link", { name: s["todo.break.library"] });
   if ((await library.count()) > 0) await named(library, s["todo.break.library"]);
   const official = page.locator("section[aria-labelledby=todo-h]").getByRole("link", { name: s["todo.officialLink"] });
@@ -231,7 +336,7 @@ async function verdictButtons(page: Page, lang: Lang) {
 /** The on-screen labels of the buttons a verdict's script names (the notice, Health Canada and the official link only when shown). */
 async function verdictLabels(page: Page, lang: Lang) {
   const s = STRINGS[lang];
-  const notice = await page.locator("main > section").first().getByRole("link", { name: s["leave.entry"].replace(/\s/g, " ") }).count();
+  const notice = await noticeLink(page, lang).count();
   const library = await page.getByRole("link", { name: s["todo.break.library"] }).count();
   const official = await page.locator("section[aria-labelledby=todo-h]").getByRole("link", { name: s["todo.officialLink"] }).count();
   return [...(notice ? [s["leave.entry"]] : []), ...(library ? [s["todo.break.library"]] : []), ...(official ? [s["todo.officialLink"]] : []), s["sticky.call"]];
@@ -252,6 +357,11 @@ type Screen = {
   seconds?: number;
 };
 const keys = (...names: string[]) => async (_: Page, lang: Lang) => names.map((name) => STRINGS[lang][name]);
+/** A verdict's two readings: the card as the screen opens, then, with "Why?" open, everything screens 7a–7d say. */
+const twoReadings = (name: string, open: Screen["open"]): Screen[] => [
+  { name, open, script: cardScript, buttons: cardButtons, labels: cardLabels, seconds: 20 },
+  { name: `${name}, Why? open`, open: async (page, lang) => { await open(page, lang); await openWhy(page); }, script: verdictScript, buttons: verdictButtons, labels: verdictLabels, seconds: 20 },
+];
 
 const SCREENS: Screen[] = [
   {
@@ -327,11 +437,11 @@ const SCREENS: Screen[] = [
     },
     script: async (_, lang) => script(lang, "voice.loading"),
   },
-  { name: "Verdict 7a (Moncton replay)", open: (page) => verdictFor(page, "Moncton"), script: verdictScript, buttons: verdictButtons, labels: verdictLabels, seconds: 20 },
-  { name: "Verdict 7a, fire close (Bridgetown replay)", open: (page) => verdictFor(page, "Bridgetown"), script: verdictScript, buttons: verdictButtons, labels: verdictLabels, seconds: 20 },
-  { name: "Verdict 7c (Miramichi replay)", open: (page) => verdictFor(page, "Miramichi"), script: verdictScript, buttons: verdictButtons, labels: verdictLabels, seconds: 20 },
-  { name: "Verdict 7b (Halifax replay)", open: (page) => verdictFor(page, "Halifax"), script: verdictScript, buttons: verdictButtons, labels: verdictLabels, seconds: 20 },
-  { name: "Verdict 7d (live, no fires in range)", open: async (page, lang) => { await start(page, lang, "live"); await noFiresVerdict(page); }, script: verdictScript, buttons: verdictButtons, labels: verdictLabels, seconds: 20 },
+  ...twoReadings("Verdict 7a (Moncton replay)", (page) => verdictFor(page, "Moncton")),
+  ...twoReadings("Verdict 7a, fire close (Bridgetown replay)", (page) => verdictFor(page, "Bridgetown")),
+  ...twoReadings("Verdict 7c (Miramichi replay)", (page) => verdictFor(page, "Miramichi")),
+  ...twoReadings("Verdict 7b (Halifax replay)", (page) => verdictFor(page, "Halifax")),
+  ...twoReadings("Verdict 7d (live, no fires in range)", async (page, lang) => { await start(page, lang, "live"); await noFiresVerdict(page); }),
   {
     name: "Emergency",
     open: (page) => page.goto("/emergency").then(),
@@ -558,9 +668,36 @@ test.describe("Listen: stopping", () => {
     await stopped(page, before);
   });
 
+  test("the verdict opening Why? stops it: the reading was of the card, not of what Why? shows", async ({ page }) => {
+    await start(page, "en");
+    await verdictFor(page, "Moncton");
+    await holdSentences(page);
+    await listenButton(page, "en").click();
+    await expect(page.getByRole("button", { name: "Stop", exact: true })).toBeVisible();
+    const before = await cancels(page);
+    await openWhy(page);
+    await stopped(page, before);
+  });
+
+  test("the verdict closing Why? stops it: what was being read is no longer shown, and Listen is the card’s again", async ({ page }) => {
+    await start(page, "en");
+    await verdictFor(page, "Moncton");
+    await openWhy(page);
+    await holdSentences(page);
+    await listenButton(page, "en").click();
+    await expect(page.getByRole("button", { name: "Stop", exact: true })).toBeVisible();
+    const before = await cancels(page);
+    await page.locator("main .why-toggle").click();
+    await stopped(page, before);
+    // One Listen button, in the card: a tap on it reads the card and nothing of what was closed.
+    await expect(listenButton(page, "en")).toHaveCount(1);
+    await expect(page.locator("section.glance").getByRole("button", { name: "Listen", exact: true })).toBeVisible();
+  });
+
   test("the 811 line stops it too (any phone number)", async ({ page }) => {
     await start(page, "en");
     await verdictFor(page, "Moncton");
+    await openWhy(page); // the 811 line is in What to do, behind "Why?"
     await holdSentences(page);
     await page.evaluate(() => document.addEventListener("click", (e) => { if ((e.target as Element).closest('a[href^="tel:"]')) e.preventDefault(); }));
     await listenButton(page, "en").click();

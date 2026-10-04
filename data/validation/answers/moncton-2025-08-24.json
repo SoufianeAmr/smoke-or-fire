@@ -239,6 +239,8 @@
  "wind": {
   "level": "850hPa",
   "model": "gfs025",
+  "run": null,
+  "recordedAt": "2026-09-27T03:16:30Z",
   "steady": true,
   "spreadDeg": 5.0,
   "biggestShift": {
@@ -2698,6 +2700,14 @@
    "nameEn": "Moncton",
    "nameFr": "Moncton",
    "km": 2
+  }
+ },
+ "alerts": {
+  "airQuality": {
+   "state": "not_checked",
+   "source": "naad_archive",
+   "checkedAt": null,
+   "alert": null
   }
  },
  "sources": {

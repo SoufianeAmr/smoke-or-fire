@@ -5,6 +5,7 @@
 import { expect, test, type Page } from "@playwright/test";
 import { answer as tap } from "./look";
 import { navigations, texts } from "./navigations";
+import { openWhy } from "./verdict";
 
 const NBSP = String.fromCharCode(0xa0);
 const SOURCE = "https://annapoliscounty.ca/government/news-media-releases/2204-west-dalhousie-wildfires-evacuees-registration";
@@ -19,12 +20,14 @@ const L = {
     cta: "I smell smoke", q1: "Do you see flames?", q2: "Which looks like your sky?", q3: "Is anything burning nearby?", emergency: "Call 911 now",
     entry: "Told to leave your home? What to do", where: "Where are you?", town: "Town or city", title: "If you’re told to leave",
     near: "Evacuation centres for the Long Lake fire (Annapolis County)", directions: "Get directions",
+    line: `Drifting smoke${NBSP}· Long Lake fire${NBSP}· 159 km SSW`,
     drifting: "DRIFTING SMOKE", headline: "Likely from the Long Lake fire", banner: `Replay${NBSP}· Bridgetown${NBSP}·`,
   },
   fr: {
     cta: "Je sens de la fumée", q1: /^Voyez-vous des flammes\s\?$/, q2: /^Quelle image ressemble à votre ciel\s\?$/, q3: /^Est-ce que quelque chose brûle près de vous\s\?$/, emergency: "Appelez le 911 maintenant",
     entry: /^On vous demande de partir\s\? Que faire$/, where: /^Où êtes-vous\s\?$/, town: "Ville ou village", title: "Si on vous demande de partir",
     near: "Centres d’évacuation pour le feu de Long Lake (comté d’Annapolis)", directions: "Itinéraire",
+    line: `Fumée qui dérive${NBSP}· Feu de Long${NBSP}Lake${NBSP}· 159 km SSO`,
     drifting: "FUMÉE QUI DÉRIVE", headline: "Elle vient probablement du feu de Long Lake", banner: `Reprise${NBSP}· Bridgetown${NBSP}·`,
   },
 };
@@ -77,9 +80,15 @@ async function scenario1(page: Page, lang: "en" | "fr") {
   await page.getByLabel(l.town).fill("Monc");
   await page.getByRole("option", { name: /^Moncton,/ }).click();
   await expect(page).toHaveURL(/\/verdict$/, { timeout: 10_000 });
-  await expect(page.getByText(l.drifting)).toBeVisible();
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText(l.headline);
+  // As the screen opens, the glance card: the answer in one line, as the screen's title.
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(l.line);
   await listen(page, lang);
+  // Behind "Why?", the band's words: its label and its headline.
+  await openWhy(page);
+  const label = page.locator("section[aria-labelledby=answer-h] > p:first-child");
+  await expect(label).toBeVisible();
+  await expect(label).toHaveText(l.drifting);
+  await expect(page.locator("h2#answer-h")).toHaveText(l.headline);
 }
 
 async function scenario2(page: Page, lang: "en" | "fr") {
@@ -131,14 +140,18 @@ test.describe("the demo scenarios on a small phone, 375 × 667", () => {
   }
 });
 
-// Verdicts with the fire under 25 km away: a notice under the band links to this screen, for that town.
+// Verdicts with the fire under 25 km away: a notice under the glance card links to this screen, for that town.
 for (const [town, lang] of [["Bridgetown", "en"], ["West Dalhousie", "en"], ["Bridgetown", "fr"]] as const) {
   test(`verdict, ${town} (${lang.toUpperCase()}): the fire-is-close notice, and its link opens the centres for ${town}`, async ({ page }) => {
     await replayCheck(page, town, lang);
-    const notice = page.locator("main > section").first(); // first in the card list, under the band
+    const notice = page.locator("main > section").first(); // first under the card, in front of the badges and "Why?"
     await expect(notice).toContainText(lang === "en"
       ? "The fire is close to you. Follow official instructions, and call 911 if you see flames or a smoke column."
       : "Le feu est près de vous. Suivez les consignes des autorités et appelez le 911 si vous voyez des flammes ou une colonne de fumée.");
+    // Shown as the screen opens, with nothing tapped.
+    await expect(notice).toBeVisible();
+    await expect(page.locator("main .why-toggle")).toHaveAttribute("aria-expanded", "false");
+    await openWhy(page); // the map and its legend are behind "Why?"
     await expect(page.getByText(lang === "en" ? `You (${town})` : `Vous (${town})`)).toBeVisible(); // named as picked, not "Lawrencetown"
     await expect(page.getByText(/\b0 km|moins de 0/)).toHaveCount(0);
     await notice.getByRole("link", { name: L[lang].entry }).click();
@@ -168,6 +181,7 @@ test.describe("replay, Use my location near Bridgetown", () => {
     await page.getByRole("link", { name: "Use my location" }).click();
     await expect(page).toHaveURL(/\/verdict$/, { timeout: 10_000 });
     await expect(page.getByText(L.en.banner)).toBeVisible();
+    await openWhy(page); // the map and its legend are behind "Why?"
     await expect(page.getByText("You (Bridgetown)")).toBeVisible();
     await expect(page.getByText(/Lawrencetown/)).toHaveCount(0);
   });
@@ -195,6 +209,7 @@ test("replay, Halifax, French: “à 128 km d’Halifax”", async ({ page }) =>
 
 test("verdict, Moncton: no fire-is-close notice (the fire is 159 km away)", async ({ page }) => {
   await replayCheck(page, "Moncton");
+  await openWhy(page); // all the screen says is shown: getByRole skips what is hidden
   await expect(page.getByText("The fire is close to you.", { exact: false })).toHaveCount(0);
   await expect(page.locator("main").getByRole("link", { name: L.en.entry })).toHaveCount(0);
 });

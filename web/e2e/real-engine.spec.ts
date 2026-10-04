@@ -2,8 +2,19 @@
 // The browser calls the engine from the site's origin, so these also prove CORS.
 import { expect, test, type Page } from "@playwright/test";
 import { toLocation } from "./look";
+import { openWhy } from "./verdict";
 
 const VERDICT_LABEL = /^(DRIFTING SMOKE|UNCLEAR|UNEXPLAINED SMOKE)$/;
+
+/** The glance card of one of the three verdicts, its ECCC alert badge in one of its three states (never none of them),
+ *  and behind "Why?" the verdict's label. */
+async function expectVerdict(page: Page) {
+  await expect(page.locator("section.glance")).toHaveAttribute("data-state", /^(drifting|unclear|unexplained)$/);
+  await expect(page.locator("h1#verdict-h")).toBeVisible();
+  await expect(page.locator('main .badge[data-badge="alert"]')).toHaveAttribute("data-tone", /^(active|none|notChecked)$/);
+  await openWhy(page);
+  await expect(page.getByText(VERDICT_LABEL)).toBeVisible();
+}
 
 /** Statuses of the engine's GET /verdict answers, as the browser received them. */
 function engineAnswers(page: Page) {
@@ -29,7 +40,7 @@ test("Live check for Fredericton gets its verdict from the real engine", async (
   await page.getByRole("option", { name: /^Fredericton, NB/ }).click();
 
   await expect(page).toHaveURL(/\/verdict$/, { timeout: 120_000 });
-  await expect(page.getByText(VERDICT_LABEL)).toBeVisible();
+  await expectVerdict(page);
   await expect(page.getByRole("link", { name: "Exit" })).toHaveCount(0); // live: no replay banner
   expect(statuses).toEqual([200]);
 });
@@ -44,7 +55,7 @@ test.describe("Live: Use my location", () => {
     await page.getByRole("link", { name: "Use my location" }).click();
 
     await expect(page).toHaveURL(/\/verdict$/, { timeout: 120_000 });
-    await expect(page.getByText(VERDICT_LABEL)).toBeVisible();
+    await expectVerdict(page);
     expect(statuses).toEqual([200]);
   });
 });

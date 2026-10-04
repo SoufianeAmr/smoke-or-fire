@@ -28,6 +28,41 @@ export const SmokeColumnIcon = ({ size, style }: IconProps) =>
 export const PhoneIcon = ({ size, style }: IconProps) =>
   svg(size, <path d="M5.5 3.5h3l1.8 4.6-2.2 1.4a11 11 0 0 0 6.4 6.4l1.4-2.2 4.6 1.8v3a2 2 0 0 1-2.2 2A16.5 16.5 0 0 1 3.5 5.7a2 2 0 0 1 2-2.2z" />, style);
 
+// The three wind lines of the drifting-smoke state, for the wind trace's badge.
+export const WindIcon = ({ size, style }: IconProps) =>
+  svg(
+    size,
+    <>
+      <path d="M3 8h10a3 3 0 1 0-3-3" />
+      <path d="M3 12h15a3 3 0 1 1-3 3" />
+      <path d="M3 16h7" />
+    </>,
+    style,
+  );
+
+// Path data from Lucide “bell” (ISC licence).
+export const BellIcon = ({ size, style }: IconProps) =>
+  svg(
+    size,
+    <>
+      <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
+      <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
+    </>,
+    style,
+  );
+
+// A link that opens another site.
+export const ExternalIcon = ({ size, style }: IconProps) =>
+  svg(
+    size,
+    <>
+      <path d="M14 4h6v6" />
+      <path d="M20 4l-9 9" />
+      <path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5" />
+    </>,
+    style,
+  );
+
 // Path data from Lucide “satellite” (ISC licence).
 export const SatelliteIcon = ({ size, style }: IconProps) =>
   svg(

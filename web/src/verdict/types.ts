@@ -7,6 +7,24 @@ export type AqhiCategory = "low" | "moderate" | "high" | "very_high";
 /** NASA FIRMS: ultra real-time, real-time, near real-time, standard processing. */
 export type LatencyClass = "URT" | "RT" | "NRT" | "SP";
 
+/** ECCC's air-quality alert for the spot. "not_checked": the engine could not tell; never a guess. */
+export type AlertState = "active" | "none" | "not_checked";
+
+/** One alert, in ECCC's own words. `expires` is this bulletin's expiry, renewed while the alert lasts. */
+export interface AirQualityAlert {
+  code: string | null;
+  nameEn: string | null;
+  nameFr: string | null;
+  colourEn: string | null;
+  colourFr: string | null;
+  zoneEn: string | null;
+  zoneFr: string | null;
+  issued: string;
+  expires: string;
+  /** The recorded message (replay); null live. */
+  url: string | null;
+}
+
 export interface PathPoint {
   hoursAgo: number;
   time: string;
@@ -93,6 +111,10 @@ export interface VerdictJson {
   wind: {
     level: Height;
     model: string;
+    /** The newest model run in the live winds; null when the engine has none, and in replay. Absent from an older engine. */
+    run?: string | null;
+    /** When the replay's winds were downloaded; null live. */
+    recordedAt?: string | null;
     steady: boolean;
     spreadDeg: number;
     biggestShift: { time: string; hoursAgo: number; fromDeg: number; toDeg: number } | null;
@@ -115,6 +137,10 @@ export interface VerdictJson {
     observedAt: string;
     station: { id: string; nameEn: string; nameFr: string; km: number };
   } | null;
+  /** Absent from an older engine: read as not checked. Replay reads ECCC's recorded messages (the NAAD System archive copy). */
+  alerts?: {
+    airQuality: { state: AlertState; source: "eccc_geomet" | "naad_archive"; checkedAt: string | null; alert: AirQualityAlert | null };
+  };
   sources: {
     cwfis: { ok: boolean; checkedAt: string | null; newestDetection: string | null };
     firms: { ok: boolean; checkedAt: string | null; newestDetection: string | null; satellitesUsed: string[]; countsByLatencyClass: Record<LatencyClass, number> };

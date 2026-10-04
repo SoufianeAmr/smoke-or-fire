@@ -30,6 +30,7 @@ const everythingSaid = () => LANGS.flatMap((lang) => [
   ...voice.nearbyFireVoice(lang), ...voice.locationVoice(lang),
   ...voice.loadingVoice(lang), ...voice.emergencyVoice(lang), ...voice.howVoice(lang), ...voice.locationOffVoice(lang), ...voice.noDataVoice(lang),
   ...VERDICTS.flatMap((d) => verdictView(d, lang).voice),
+  ...VERDICTS.flatMap((d) => verdictView(d, lang).card.voice),
   ...voice.leaveVoice(lang, { kind: "where" }),
   ...voice.leaveVoice(lang, NEAR),
   ...voice.leaveVoice(lang, { kind: "far", fire: "Long Lake", km: 159, town: "Moncton", ofTown: "de Moncton", links: true, call211: true }),

@@ -175,6 +175,8 @@
  "wind": {
   "level": "100m",
   "model": "gfs025",
+  "run": null,
+  "recordedAt": "2026-09-26T18:51:00Z",
   "steady": true,
   "spreadDeg": 7.7,
   "biggestShift": {
@@ -2367,6 +2369,25 @@
    "nameEn": "Kentville",
    "nameFr": "Kentville",
    "km": 70
+  }
+ },
+ "alerts": {
+  "airQuality": {
+   "state": "active",
+   "source": "naad_archive",
+   "checkedAt": null,
+   "alert": {
+    "code": "AQW",
+    "nameEn": "air quality warning",
+    "nameFr": "avertissement de qualité de l'air",
+    "colourEn": null,
+    "colourFr": null,
+    "zoneEn": "Annapolis County",
+    "zoneFr": "comté d'Annapolis",
+    "issued": "2025-08-25T07:47:05Z",
+    "expires": "2025-08-25T23:47:05Z",
+    "url": "https://alertsarchive.pelmorex.com/archive/2025-08-25/2025-08-25T07_48_18_75Iurn%263oid%2632.49.0.1.124.1218531372.2025_001.xml"
+   }
   }
  },
  "sources": {

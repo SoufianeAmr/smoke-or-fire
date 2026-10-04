@@ -1,10 +1,12 @@
 // Call 911 within reach on every screen: one button that can be tapped, never none and never two, however far the page
-// is scrolled and whatever is open over it. And "Call 911 now" (Emergency): one line that fits any answer, the big white
+// is scrolled and whatever is open over it. On the verdict too: under the taller bar of a verdict that nothing explains,
+// with "Why?" open and with a source badge open. And "Call 911 now" (Emergency): one line that fits any answer, the big white
 // button, and, on a tap, where the phone is, to read to the dispatcher. The phone's position is shown only while it is
 // fresh (10 minutes, by its own time); a replay town is never shown as where the person is. EN and FR.
 import { expect, test, type Locator, type Page } from "@playwright/test";
 import { readFileSync } from "node:fs";
 import { answer } from "./look";
+import { openBadge, openWhy } from "./verdict";
 
 type Lang = "en" | "fr";
 type Box = { x: number; y: number; width: number; height: number };
@@ -76,6 +78,16 @@ async function tapThrough(page: Page, lang: Lang, answers: string[]) {
     await expect(page.locator(`main a[data-answer="${key}"]`)).toBeVisible(); // the question is up
     await answer(page, key);
   }
+}
+/** A replay town's verdict, reached through the town search, once its card is up and its fonts are in. */
+async function verdictFor(page: Page, lang: Lang, town: string) {
+  await start(page, lang);
+  await page.goto("/location");
+  await page.locator("input[type=search]").fill(town);
+  await page.getByRole("option", { name: new RegExp(`^${town},`) }).first().click();
+  await expect(page).toHaveURL(/\/verdict$/, { timeout: 10_000 });
+  await expect(page.locator("#verdict-h")).toBeVisible();
+  await page.evaluate(() => document.fonts.ready);
 }
 
 /** What the app keeps for the session. */
@@ -150,7 +162,8 @@ async function tabTo(page: Page, target: Locator, presses = 10) {
   await expect(target).toBeFocused();
 }
 
-type Call = { text: string; href: string; background: string; inMain: boolean; inBar: boolean; inSheet: boolean };
+/** `inBar`: the slim bar's button. `inTallBar`: the button of the taller bar, on a verdict that nothing explains. */
+type Call = { text: string; href: string; background: string; inMain: boolean; inBar: boolean; inTallBar: boolean; inSheet: boolean };
 /**
  * Every Call 911 link that can be tapped right now: whole on the screen, 56 px or taller, with nothing over its centre,
  * and not in a part of the page that is switched off (inert). With the address the app is on, read at the same moment.
@@ -172,6 +185,7 @@ const reachable = (page: Page): Promise<{ path: string; calls: Call[] }> =>
         background: getComputedStyle(link).backgroundColor,
         inMain: link.closest("main") !== null,
         inBar: link.classList.contains("sticky-call"),
+        inTallBar: link.classList.contains("sticky-call-first"),
         inSheet: link.closest("dialog.sheet") !== null,
       })),
     };
@@ -467,6 +481,16 @@ const PHONES = [
 ];
 // Every screen that opens by its address. Tracing and the verdict need a place: they are reached through the town search.
 const SCREENS = ["/", "/q1", "/q2", "/q3", "/nearby-fire", "/emergency", "/location", "/leave", "/how-it-works", "/location-off", "/no-data"];
+// The verdict has two bars. Moncton (drifting smoke) and Miramichi (unclear, with its own card behind "Why?") keep the
+// slim bar of every screen. Halifax (smoke that nothing explains) has the taller one, where Call 911 is the main
+// action: "Look outside…" above a button as wide as the bar.
+const VERDICTS = [
+  { town: "Moncton", state: "drifting", bar: "inBar" },
+  { town: "Miramichi", state: "unclear", bar: "inBar" },
+  { town: "Halifax", state: "unexplained", bar: "inTallBar" },
+] as const;
+// The source badges under the card: a tap on one opens its panel, one at a time.
+const BADGES = ["fire", "trace", "alert"] as const;
 
 for (const viewport of PHONES) {
   for (const lang of LANGS) {
@@ -502,6 +526,62 @@ for (const viewport of PHONES) {
         await check("/verdict");
         expect(problems).toEqual([]);
       });
+
+      test("the verdict that nothing explains (Halifax): “Look outside…” above one red Call 911 as wide as the bar, 72 px or taller; the one button to tap, also scrolled to the bottom", async ({ page }) => {
+        await verdictFor(page, lang, "Halifax");
+        await expect(page.locator("section.glance")).toHaveAttribute("data-state", "unexplained");
+        // One Call 911 on the page, in the one bar: the taller bar, not the slim one.
+        await expect(page.locator('a[href="tel:911"]')).toHaveCount(1);
+        expect(await fixedBars(page)).toBe(1);
+        await expect(page.locator("a.sticky-call, p.sticky-title")).toHaveCount(0);
+        const bar = page.locator("div.sticky-first");
+        const [look, button] = [bar.locator("p.sticky-look"), bar.locator("a.sticky-call-first")];
+        await expect(look).toHaveText(s(lang, "sticky.look"));
+        await expect(button).toHaveAttribute("href", "tel:911");
+        await expect(bar.locator("a, button")).toHaveCount(1); // nothing else to tap in the bar
+        const [line, box, around] = [(await look.boundingBox())!, (await button.boundingBox())!, (await bar.boundingBox())!];
+        expect(box.height).toBeGreaterThanOrEqual(72);
+        expect(box.width, "the bar's width, less its 16 px margins").toBeGreaterThanOrEqual(around.width - 32.5);
+        expect(line.y + line.height, "the line is above the button").toBeLessThanOrEqual(box.y + 0.5);
+        for (const state of ["as it opens", "scrolled to the bottom"]) {
+          if (state !== "as it opens") await scrollToBottom(page);
+          const call = await hit(page);
+          expect([call.inTallBar, call.text, call.background], state).toEqual([true, plain(s(lang, "sticky.call")), RED]);
+        }
+      });
+
+      for (const verdict of VERDICTS) {
+        test(`${verdict.town}'s verdict with “Why?” open: 811 is there to call, and Call 911 is still the bar's alone; also with 811 on the screen and scrolled to the bottom`, async ({ page }) => {
+          await verdictFor(page, lang, verdict.town);
+          await expect(page.locator("section.glance")).toHaveAttribute("data-state", verdict.state);
+          const line811 = page.locator('main a[href="tel:811"]');
+          await expect(line811).toBeHidden(); // behind “Why?” as the screen opens
+          await openWhy(page);
+          await expect(line811).toBeVisible();
+          await expect(page.locator('a[href="tel:911"]')).toHaveCount(1); // 811 is another number: no second Call 911 came with it
+          expect((await hit(page))[verdict.bar], "as “Why?” opens").toBe(true);
+          await line811.scrollIntoViewIfNeeded();
+          await expect(line811).toBeInViewport();
+          expect((await hit(page))[verdict.bar], "with 811 on the screen").toBe(true);
+          await scrollToBottom(page);
+          expect((await hit(page))[verdict.bar], "scrolled to the bottom").toBe(true);
+        });
+
+        test(`${verdict.town}'s verdict with a source badge open, each of the three in turn: Call 911 is still the bar's alone, also scrolled to the bottom`, async ({ page }) => {
+          await verdictFor(page, lang, verdict.town);
+          await expect(page.locator("section.glance")).toHaveAttribute("data-state", verdict.state);
+          for (const id of BADGES) {
+            const panel = await openBadge(page, id);
+            await expect(page.locator("main .badge-panel:visible")).toHaveCount(1); // the one before it has closed
+            // The panel's links go to the sources: no second Call 911 came with it.
+            await expect(panel.locator('a[href^="tel:"]')).toHaveCount(0);
+            await expect(page.locator('a[href="tel:911"]')).toHaveCount(1);
+            expect((await hit(page))[verdict.bar], `${id}, as it opens`).toBe(true);
+            await scrollToBottom(page);
+            expect((await hit(page))[verdict.bar], `${id}, scrolled to the bottom`).toBe(true);
+          }
+        });
+      }
 
       test("the first question with “About these questions” open: still the bar's Call 911, also scrolled to the bottom", async ({ page }) => {
         await start(page, lang);

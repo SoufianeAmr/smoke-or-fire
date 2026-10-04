@@ -199,6 +199,8 @@
  "wind": {
   "level": "100m",
   "model": "gfs025",
+  "run": null,
+  "recordedAt": "2026-09-26T18:51:00Z",
   "steady": true,
   "spreadDeg": 8.2,
   "biggestShift": {
@@ -2471,6 +2473,25 @@
    "nameEn": "Saint John",
    "nameFr": "Saint John",
    "km": 66
+  }
+ },
+ "alerts": {
+  "airQuality": {
+   "state": "active",
+   "source": "naad_archive",
+   "checkedAt": null,
+   "alert": {
+    "code": "SAS",
+    "nameEn": "special air quality statement",
+    "nameFr": "bulletin spécial sur la qualité de l'air",
+    "colourEn": null,
+    "colourFr": null,
+    "zoneEn": "Sussex - Kennebecasis Valley and Kings County",
+    "zoneFr": "Sussex - vallée de Kennebecasis et comté de Kings",
+    "issued": "2025-08-25T07:50:39Z",
+    "expires": "2025-08-25T23:50:39Z",
+    "url": "https://alertsarchive.pelmorex.com/archive/2025-08-25/2025-08-25T07_51_32_18Iurn%263oid%2632.49.0.1.124.3033216116.2025_001.xml"
+   }
   }
  },
  "sources": {

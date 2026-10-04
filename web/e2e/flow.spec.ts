@@ -1,6 +1,7 @@
 // The first milestone: the full replay flow for Moncton, in the browser.
 import { expect, test, type Locator, type Page } from "@playwright/test";
 import { answer } from "./look";
+import { openWhy } from "./verdict";
 
 const NBSP = String.fromCharCode(0xa0);
 // Health Canada, "Wildfire smoke with extreme heat".
@@ -28,12 +29,37 @@ test("Moncton replay: Check → Q1 flames → Q2 sky → Q3 nearby → Location 
   await expect(page).toHaveURL(/\/verdict$/, { timeout: 10_000 });
 
   await expect(page.getByText(`Replay${NBSP}· Moncton${NBSP}· Aug 25, 2025${NBSP}·`)).toBeVisible();
-  await expect(page.getByText("DRIFTING SMOKE")).toBeVisible();
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Likely from the Long Lake fire");
-  await expect(page.getByText("Low confidence")).toBeVisible();
+
+  // As the verdict opens: the glance card, its line as the screen's title, the three source badges, and "Why?" closed.
+  await expect(page.locator("section.glance")).toHaveAttribute("data-state", "drifting");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(`Drifting smoke${NBSP}· Long Lake fire${NBSP}· 159 km SSW`);
+  const badges = page.locator("main .badge");
+  await expect(badges).toHaveText(["Satellite fire detection", "Wind trace", "ECCC air quality alert: active"]);
+  expect(await badges.evaluateAll((els) => els.map((el) => el.getAttribute("data-badge")))).toEqual(["fire", "trace", "alert"]);
+  for (const badge of await badges.all()) await expect(badge).toBeVisible();
+  const why = page.getByRole("button", { name: "Why?" });
+  await expect(why).toHaveAttribute("aria-expanded", "false");
+  // What screen 7a says is on the page, behind "Why?": none of it shows yet.
+  const label = page.locator("section[aria-labelledby=answer-h] > p:first-child");
+  const headline = page.locator("#answer-h");
+  const confidence = page.getByText("Low confidence");
+  const forward = page.getByText("Smoke from the fire, traced forward");
+  await expect(page.locator("#why-all")).toBeHidden();
+  for (const old of [label, headline, confidence, forward]) {
+    await expect(old).toHaveCount(1);
+    await expect(old).toBeHidden();
+  }
+
+  // A tap on "Why?": the band's words, as they were.
+  await openWhy(page);
+  await expect(why).toHaveAttribute("aria-expanded", "true");
+  await expect(label).toBeVisible();
+  await expect(label).toHaveText("DRIFTING SMOKE");
+  await expect(headline).toHaveText("Likely from the Long Lake fire");
+  await expect(confidence).toBeVisible();
 
   // The fire's smoke, traced forward: 24 paths that draw outward from the fire once.
-  await expect(page.getByText("Smoke from the fire, traced forward")).toBeVisible();
+  await expect(forward).toBeVisible();
   await expect(page.locator("polyline.fan")).toHaveCount(24);
   const fan = await page.locator("polyline.fan").first().evaluate((el) => [getComputedStyle(el).animationName, getComputedStyle(el).animationIterationCount]);
   expect(fan).toEqual(["fan", "1"]);
@@ -49,6 +75,8 @@ test.describe("reduced motion", () => {
     await page.locator("input[type=search]").fill("Monc");
     await page.getByRole("option", { name: /Moncton, NB/ }).click();
     await expect(page).toHaveURL(/\/verdict$/, { timeout: 10_000 });
+    await openWhy(page); // the map is behind "Why?"
+    await expect(page.getByText("Smoke from the fire, traced forward")).toBeVisible();
 
     const fan = await page.locator("polyline.fan").first().evaluate((el) => [getComputedStyle(el).animationName, getComputedStyle(el).strokeDashoffset]);
     expect(fan).toEqual(["none", "0px"]);
@@ -134,14 +162,18 @@ test("Halifax replay (unexplained): the area-wide caveat follows the official AQ
   await page.locator("input[type=search]").fill("Halifax");
   await page.getByRole("option", { name: /^Halifax/ }).first().click();
   await expect(page).toHaveURL(/\/verdict$/, { timeout: 10_000 });
+  await openWhy(page); // both cards are behind "Why?"
 
   const caveat = "This is an area-wide reading. Smoke from a nearby source can be much stronger where you are.";
   const official = page.locator("section[aria-labelledby=todo-h] p", { hasText: "Official advice for an AQHI of" });
+  await expect(official).toBeVisible();
   await expect(official.locator("xpath=following-sibling::*[1]")).toHaveText(caveat);
   await expect(page.locator("section[aria-labelledby=aqhi-h]")).toContainText(caveat);
+  await expect(page.locator("section[aria-labelledby=aqhi-h]").getByText(caveat)).toBeVisible();
 });
 
 test.describe("What to do: Health Canada’s break from the smoke", () => {
+  /** The town's replay verdict with "Why?" open: the What to do card, which is behind it. */
   async function replayVerdict(page: Page, town: string, lang: "en" | "fr" = "en") {
     await page.goto("/?mode=replay");
     await page.waitForFunction(() => sessionStorage.getItem("smoke-or-fire")?.includes('"mode":"replay"'));
@@ -150,6 +182,7 @@ test.describe("What to do: Health Canada’s break from the smoke", () => {
     await page.locator("input[type=search]").fill(town);
     await page.getByRole("option", { name: new RegExp(`^${town}`) }).first().click();
     await expect(page).toHaveURL(/\/verdict$/, { timeout: 10_000 });
+    await openWhy(page);
     return page.locator("section[aria-labelledby=todo-h]");
   }
   /** Where each text starts in the card, in reading order. */

@@ -4,7 +4,9 @@ import { expect, test, type Page, type Route } from "@playwright/test";
 import { readFileSync } from "node:fs";
 import { TEST_ENGINE_URL } from "./engine";
 import { toLocation } from "./look";
+import { openWhy } from "./verdict";
 
+const NBSP = String.fromCharCode(0xa0);
 const LIVE_ANSWER = { ...JSON.parse(readFileSync(new URL("../../data/demo/moncton.json", import.meta.url), "utf8")), mode: "live" };
 const CORS = { "access-control-allow-origin": "*" };
 
@@ -24,7 +26,11 @@ const echo = (route: Route) => {
   const location = { ...LIVE_ANSWER.location, lat: Number(query.get("lat")), lon: Number(query.get("lon")) };
   return route.fulfill({ json: { ...LIVE_ANSWER, location }, headers: CORS });
 };
-const libraryHref = (page: Page) => page.getByRole("link", { name: "Find a library near me" }).getAttribute("href");
+/** The library search of the What to do card, which is behind "Why?". */
+const libraryHref = async (page: Page) => {
+  await openWhy(page);
+  return page.getByRole("link", { name: "Find a library near me" }).getAttribute("href");
+};
 
 /** Open the app in live mode and wait until the mode is saved, so later page.goto() calls stay live. */
 async function openLive(page: Page) {
@@ -45,7 +51,14 @@ test("Live: Check → the three questions → Location → Loading → Verdict f
 
   await expect(page.getByRole("heading", { name: "Tracing the air you’re breathing…" })).toBeVisible();
   await expect(page).toHaveURL(/\/verdict$/, { timeout: 15_000 });
-  await expect(page.getByText("DRIFTING SMOKE")).toBeVisible();
+  // The glance card as the verdict opens; the band's words are behind "Why?".
+  await expect(page.locator("section.glance")).toHaveAttribute("data-state", "drifting");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(`Drifting smoke${NBSP}· Long Lake fire${NBSP}· 159 km SSW`);
+  const label = page.getByText("DRIFTING SMOKE", { exact: true });
+  await expect(label).toHaveCount(1);
+  await expect(label).toBeHidden();
+  await openWhy(page);
+  await expect(label).toBeVisible();
   await expect(page.getByRole("link", { name: "Exit" })).toHaveCount(0); // no replay banner
   expect(asked.map((q) => [q.get("lat"), q.get("lon"), q.get("mode")])).toEqual([["46.22127", "-64.53977", "live"]]);
   // The three answers stay on the phone: the engine is asked about the spot and nothing else.

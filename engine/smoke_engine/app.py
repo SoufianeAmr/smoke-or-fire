@@ -8,6 +8,7 @@ from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
+from smoke_engine.alerts import AlertCheck, air_quality_alert
 from smoke_engine.aqhi import Reading, nearest_reading
 from smoke_engine.detections import LATENCY_CLASSES, Detection, cwfis_detections, firms_detections, fuse, within
 from smoke_engine.feeds import FeedUnavailable
@@ -85,11 +86,14 @@ def _path_json(path: Path, lat: float, lon: float) -> dict:
     }
 
 
-def _wind_json(path: Path, height: str) -> dict:
+def _wind_json(path: Path, height: str, facts: dict) -> dict:
+    """`facts`: the newest model run in the winds (live), or when they were recorded (replay)."""
     shift = path.biggest_shift()
     return {
         "level": height,
         "model": WIND_MODEL,
+        "run": _iso_or_none(facts["run"]),
+        "recordedAt": _iso_or_none(facts["recordedAt"]),
         "steady": path.steady,
         "spreadDeg": round(path.direction_spread_deg, 1),
         "biggestShift": {
@@ -226,6 +230,30 @@ def _aqhi_json(reading: Reading | None) -> dict | None:
     }
 
 
+def _alerts_json(check: AlertCheck, mode: str) -> dict:
+    """ECCC's air-quality alert for the spot, in ECCC's own words. Replay reads the recorded messages."""
+    alert = check.alert
+    return {
+        "airQuality": {
+            "state": check.state,
+            "source": "naad_archive" if mode == "replay" else "eccc_geomet",
+            "checkedAt": _iso_or_none(check.checked_at),
+            "alert": {
+                "code": alert.code,
+                "nameEn": alert.name_en,
+                "nameFr": alert.name_fr,
+                "colourEn": alert.colour_en,
+                "colourFr": alert.colour_fr,
+                "zoneEn": alert.zone_en,
+                "zoneFr": alert.zone_fr,
+                "issued": _iso(alert.issued),
+                "expires": _iso(alert.expires),
+                "url": alert.url,
+            } if alert else None,
+        }
+    }
+
+
 def _approach_json(approach: Approach | None, lat: float, lon: float, arrival: datetime) -> dict | None:
     if approach is None:
         return None
@@ -300,6 +328,7 @@ def create_app(feeds_by_mode: dict, now=_utc_now, lifespan=None) -> FastAPI:
             winds = parse_open_meteo(feeds.wind(GRID_POINTS, start, end), start, end)
         except FeedUnavailable:
             return _unavailable("wind_data_unavailable")
+        wind_facts = feeds.wind_facts()  # with the grid they describe: a refresh may swap both a moment later
         paths = {height: trace_back(winds[height], lat, lon, arrival, HOURS_BACK) for height in HEIGHTS}
 
         # Two fire sources: CWFIS (active fires and hotspots) and NASA FIRMS. Each may be down alone.
@@ -347,7 +376,7 @@ def create_app(feeds_by_mode: dict, now=_utc_now, lifespan=None) -> FastAPI:
             "noFiresInRange": not fires,
             "rules": RULES,
             "path": path_json[chosen],
-            "wind": _wind_json(paths[chosen], chosen),
+            "wind": _wind_json(paths[chosen], chosen, wind_facts),
             "closestApproach": _approach_json(approaches[chosen], lat, lon, arrival),
             "nearestFire": _fire_json(nearest, lat, lon, arrival),
             "heights": {
@@ -366,6 +395,8 @@ def create_app(feeds_by_mode: dict, now=_utc_now, lifespan=None) -> FastAPI:
             },
             "forward": _forward_json(fan),
             "aqhi": _aqhi_json(nearest_reading(feeds, lat, lon, arrival)),
+            # Informational only, like the forward trace and the AQHI: after the verdict, never part of it.
+            "alerts": _alerts_json(air_quality_alert(feeds, lat, lon, arrival), mode),
             "sources": _sources_json(checked, fused, firms, arrival, now()),
         }
 

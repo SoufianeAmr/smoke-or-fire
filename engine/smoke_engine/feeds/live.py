@@ -10,6 +10,7 @@ thread every 10 minutes, and saved to disk the same way. Detections older than
 30 minutes count as FIRMS being down. The MAP_KEY is masked in every log line,
 error and saved file.
 CWFIS fires and AQHI: fetched when asked, cached for 15 minutes.
+ECCC alerts: asked at every check, never cached, and given 5 seconds to answer.
 """
 
 import json
@@ -37,6 +38,7 @@ FIRMS_REFRESH_EVERY = timedelta(minutes=10)
 FIRMS_MAX_AGE = timedelta(minutes=30)
 FIRMS_DAY_RANGE = 2  # today and yesterday (UTC); the verdict keeps the 24 hours before the check
 FIRMS_FILE = WIND_FILE.with_name("live-firms.json")
+ALERTS_TIMEOUT = 5.0  # seconds: a slow alerts service must never hold up the verdict
 
 
 def _utc_now() -> datetime:
@@ -80,6 +82,7 @@ class LiveFeeds:
         self._lock = threading.Lock()
         self._wind: list | None = None
         self._wind_fetched_at: datetime | None = None
+        self._wind_run: datetime | None = None
         self._wind_error: str | None = None
         self._firms_file = Path(firms_file)
         self._firms_key = firms_key
@@ -123,8 +126,12 @@ class LiveFeeds:
         if age >= SAVED_WIND_MAX_AGE or len(saved.get("answer", [])) != len(GRID_POINTS):
             log.info("saved wind grid from %s not used (%.1f h old)", saved["fetchedAt"], age.total_seconds() / 3600)
             return
+        try:
+            run = datetime.fromisoformat(saved["modelRun"].replace("Z", "+00:00"))
+        except (KeyError, AttributeError, ValueError):
+            run = None
         with self._lock:
-            self._wind, self._wind_fetched_at = saved["answer"], fetched_at
+            self._wind, self._wind_fetched_at, self._wind_run = saved["answer"], fetched_at, run
         log.info("using saved wind grid from %s (%.1f h old)", saved["fetchedAt"], age.total_seconds() / 3600)
 
     def _refresh_loop(self) -> None:
@@ -151,21 +158,35 @@ class LiveFeeds:
         if len(answer) != len(GRID_POINTS):
             raise FeedUnavailable(f"Open-Meteo answered for {len(answer)} of {len(GRID_POINTS)} grid points")
         fetched_at = self._now()
+        run = self._model_run()
         with self._lock:
             self._wind = answer
             self._wind_fetched_at = fetched_at
+            self._wind_run = run
             self._wind_error = None
-        self._save_wind(answer, fetched_at)
+        self._save_wind(answer, fetched_at, run)
         log.info("wind grid refreshed in %.0f s", time.monotonic() - started)
 
-    def _save_wind(self, answer: list, fetched_at: datetime) -> None:
-        """Write the grid next to its fetch time; replace the old file only once fully written."""
+    def _model_run(self) -> datetime | None:
+        """The newest model run Open-Meteo holds, read just after the grid. The winds never wait on it: None if it fails."""
+        try:
+            response = self._client.get(sources.OPEN_METEO_MODEL_RUN, timeout=30)
+            response.raise_for_status()
+            return datetime.fromtimestamp(response.json()["last_run_initialisation_time"], timezone.utc)
+        except (httpx.HTTPError, ValueError, KeyError, TypeError, OverflowError, OSError) as error:
+            log.warning("no model run time from Open-Meteo: %s", type(error).__name__)
+            return None
+
+    def _save_wind(self, answer: list, fetched_at: datetime, run: datetime | None) -> None:
+        """Write the grid next to its fetch time and model run; replace the old file only once fully written."""
         self._wind_file.parent.mkdir(parents=True, exist_ok=True)
         partial = self._wind_file.with_suffix(".partial")
-        partial.write_text(
-            json.dumps({"fetchedAt": fetched_at.strftime("%Y-%m-%dT%H:%M:%SZ"), "answer": answer}, separators=(",", ":")),
-            encoding="utf-8",
-        )
+        saved = {
+            "fetchedAt": fetched_at.strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "modelRun": run.strftime("%Y-%m-%dT%H:%M:%SZ") if run else None,
+            "answer": answer,
+        }
+        partial.write_text(json.dumps(saved, separators=(",", ":")), encoding="utf-8")
         os.replace(partial, self._wind_file)
 
     # --- background FIRMS refresh --------------------------------------------------------------
@@ -253,6 +274,11 @@ class LiveFeeds:
                 raise FeedUnavailable("the live wind grid has not loaded yet")
             return self._wind
 
+    def wind_facts(self):
+        """The newest model run in the live winds; they are fetched, not recorded."""
+        with self._lock:
+            return {"run": self._wind_run, "recordedAt": None}
+
     def firms(self, start, end):
         with self._lock:
             if self._firms is None or self._now() - self._firms_fetched_at >= FIRMS_MAX_AGE:
@@ -286,6 +312,17 @@ class LiveFeeds:
         slot = _bucket(end)
         params = sources.readings_params(station_id, slot - timedelta(hours=2) - CACHE_FOR, slot + CACHE_FOR)
         return self._cached(("aqhi_readings", station_id, slot), sources.ECCC_READINGS, params)
+
+    def alerts(self, lat, lon, at):
+        """ECCC's alerts in effect at the point. It lists what is in effect now, so a check for another time gets no answer."""
+        if abs(self._now() - at) > CACHE_FOR:
+            raise FeedUnavailable(f"{sources.ECCC_ALERTS}: no alerts kept for {at:%Y-%m-%dT%H:%MZ}")
+        try:
+            response = self._client.get(sources.ECCC_ALERTS, params=sources.alerts_params(lat, lon), timeout=ALERTS_TIMEOUT)
+            response.raise_for_status()
+            return response.json()
+        except (httpx.HTTPError, ValueError) as error:
+            raise FeedUnavailable(f"{sources.ECCC_ALERTS}: {type(error).__name__}: {error}") from error
 
     def _cached(self, key, url: str, params: dict):
         now = time.monotonic()

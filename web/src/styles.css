@@ -81,6 +81,20 @@ html:has(body.emergency){scroll-padding-bottom:calc(140px + env(safe-area-inset-
 @media (prefers-reduced-motion: reduce){.drawmask{animation:none;stroke-dashoffset:0}.hours{animation:none;--h:24}.spin,.pulse{animation:none}}
 
 /* 07 Verdict */
+/* The glance card. A focused link or opened badge scrolls clear of the taller bar whose main action is Call 911. */
+html:has(.sticky-first){scroll-padding-bottom:calc(176px + env(safe-area-inset-bottom))}
+/* On the coloured card the focus ring is navy inside white, so it shows on orange, amber and red. */
+.glance a:focus-visible,.glance button:focus-visible{outline:3px solid #FFFFFF;outline-offset:3px;box-shadow:0 0 0 3px #1B2A4A}
+/* A filled badge shows its ring against its own navy. */
+.badge[data-tone="active"]:focus-visible{outline-offset:4px}
+/* Short phones (375 × 667) and narrow ones: a smaller shape and line, so the badges start higher. */
+@media (max-height: 740px){
+  .glance-shape{width:72px;height:72px}
+  .glance-line{margin-top:10px !important;font-size:30px !important}
+}
+@media (max-width: 359px){
+  .glance-line{font-size:28px !important}
+}
 .flow{animation:flow 1.1s linear infinite}
 @keyframes flow{to{stroke-dashoffset:-16}}
 /* The fire's smoke traced forward: each path draws outward from the fire once (--len is its length). */

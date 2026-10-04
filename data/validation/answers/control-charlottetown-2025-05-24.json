@@ -239,6 +239,8 @@
  "wind": {
   "level": "100m",
   "model": "gfs025",
+  "run": null,
+  "recordedAt": "2026-09-27T03:08:13Z",
   "steady": false,
   "spreadDeg": 58.6,
   "biggestShift": {
@@ -924,6 +926,14 @@
    "nameEn": "Charlottetown",
    "nameFr": "Charlottetown",
    "km": 0
+  }
+ },
+ "alerts": {
+  "airQuality": {
+   "state": "not_checked",
+   "source": "naad_archive",
+   "checkedAt": null,
+   "alert": null
   }
  },
  "sources": {

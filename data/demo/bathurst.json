@@ -183,6 +183,8 @@
  "wind": {
   "level": "925hPa",
   "model": "gfs025",
+  "run": null,
+  "recordedAt": "2026-09-26T18:51:00Z",
   "steady": true,
   "spreadDeg": 7.9,
   "biggestShift": {
@@ -2338,6 +2340,14 @@
    "nameEn": "Bathurst",
    "nameFr": "Bathurst",
    "km": 0
+  }
+ },
+ "alerts": {
+  "airQuality": {
+   "state": "none",
+   "source": "naad_archive",
+   "checkedAt": null,
+   "alert": null
   }
  },
  "sources": {

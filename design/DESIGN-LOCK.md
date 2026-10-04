@@ -74,6 +74,16 @@
 - **Location off:** inline message on the Location screen.
 - **Mode:** the judging QR code opens `?mode=replay`; the plain URL opens live.
 
+## Amendment: the verdict as one glance (Oct 3, 2026)
+
+Screens 7a–7d keep every word, card and number above, behind one button. What opens first is new:
+
+- **The card.** The band holds a large icon in its own white shape and one line of about 8 words, the screen's title: "Drifting smoke · Long Lake fire · 159 km SSW". Each verdict the engine returns has its own icon, shape and colour: drifting = wind lines in a circle on orange; unclear = question mark in a diamond on amber; unexplained (7b and 7d) = exclamation mark in a triangle on red. An arrow beside the distance points from the person toward the fire and is named for screen readers ("toward the south-southwest").
+- **Badges** under the card, 56 px or more, one tap to show a source, its time and a link: satellite fire detection, wind trace, ECCC air-quality alert. A badge's state is told by shape and word: active = filled navy pill, none in effect = outlined, not checked = dashed outline.
+- **"Why?"** opens everything screens 7a–7d say, unchanged, in the same order. The old headline becomes a second-level heading. Listen reads the card's line and the badges' names; with "Why?" open, the script it always read.
+- **The fire-is-close notice** stays in front of "Why?".
+- **Unexplained smoke: Call 911 is the main action.** The 911 bar stays and becomes it: "Look outside. See flames or a smoke column?" above a Call 911 button as wide as the bar. Still one Call 911 button per view.
+
 ## Hard rules (unchanged)
 - Never "safe". Never "don't call 911" or any paraphrase.
 - 911 on every screen; one Call 911 button per view.

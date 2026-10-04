@@ -239,6 +239,8 @@
  "wind": {
   "level": "100m",
   "model": "gfs025",
+  "run": null,
+  "recordedAt": "2026-09-27T03:15:25Z",
   "steady": false,
   "spreadDeg": 82.7,
   "biggestShift": {
@@ -2768,6 +2770,14 @@
    "nameEn": "Fredericton",
    "nameFr": "Fredericton",
    "km": 0
+  }
+ },
+ "alerts": {
+  "airQuality": {
+   "state": "not_checked",
+   "source": "naad_archive",
+   "checkedAt": null,
+   "alert": null
   }
  },
  "sources": {

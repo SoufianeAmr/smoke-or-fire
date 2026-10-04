@@ -125,6 +125,47 @@ def aqhi_reading(station_id: str, time: str, aqhi: float) -> dict:
     }
 
 
+def weather_alert(
+    code: str | None = "AQW",
+    name_en: str = "air quality warning",
+    name_fr: str = "avertissement de qualité de l'air",
+    status: str | None = "continued",
+    issued: str = "2025-08-25T07:50:39.000Z",
+    expires: str = "2025-08-25T23:50:39.000Z",
+    colour: tuple[str, str] | None = ("yellow", "jaune"),
+) -> dict:
+    """One ECCC `weather-alerts` feature for Moncton's forecast zone, as a point query returns it (no geometry)."""
+    properties = {
+        "alert_code": code,
+        "alert_name_en": name_en,
+        "alert_name_fr": name_fr,
+        "status_en": status,
+        "publication_datetime": issued,
+        "expiration_datetime": expires,
+        "feature_name_en": "Moncton and Southeast New Brunswick",
+        "feature_name_fr": "Moncton et sud-est du Nouveau-Brunswick",
+        "province": "NB",
+    }
+    if colour:
+        properties["risk_colour_en"], properties["risk_colour_fr"] = colour
+    return {"type": "Feature", "id": f"{code}-fea1", "geometry": None, "properties": {k: v for k, v in properties.items() if v is not None}}
+
+
+FROST_ADVISORY = weather_alert(code="FTA", name_en="frost advisory", name_fr="avis de gel")
+ALERTS_ANSWERED_AT = "2025-08-25T12:00:02.000000Z"
+
+
+def alerts_answer(features: list[dict]) -> dict:
+    """ECCC's answer to a point query on `weather-alerts`: the alerts whose zone holds the point."""
+    return {
+        "type": "FeatureCollection",
+        "features": features,
+        "numberMatched": len(features),
+        "numberReturned": len(features),
+        "timeStamp": ALERTS_ANSWERED_AT,
+    }
+
+
 MONCTON_STATION = aqhi_station("DADHJ", "Moncton", "Moncton", 46.115833, -64.803056)
 SUMMERSIDE_STATION = aqhi_station("BADSZ", "Summerside", "Summerside", 46.4, -63.79)
 
@@ -144,7 +185,8 @@ class FakeFeeds:
     """`down` names feeds that fail, the way a live feed fails when its service is down."""
 
     def __init__(
-        self, *, wind, active_fires=(), hotspots=(), firms=(), aqhi_stations=(), aqhi_readings=(), down=(), checked_at=None
+        self, *, wind, active_fires=(), hotspots=(), firms=(), aqhi_stations=(), aqhi_readings=(), alerts=(), down=(),
+        checked_at=None, wind_facts=None,
     ):
         self._wind = wind
         self._active_fires = list(active_fires)
@@ -153,6 +195,10 @@ class FakeFeeds:
         self._checked_at = dict(checked_at or {})
         self._aqhi_stations = list(aqhi_stations)
         self._aqhi_readings = list(aqhi_readings)
+        # A list of `weather_alert` features, or a whole answer (a dict) to send back as it is.
+        self._alerts = alerts if isinstance(alerts, dict) else alerts_answer(list(alerts))
+        self.alerts_asked = []
+        self._wind_facts = dict(wind_facts or {})
         self._down = set(down)
 
     def _check(self, name):
@@ -162,6 +208,10 @@ class FakeFeeds:
     def wind(self, points, start, end):
         self._check("wind")
         return self._wind(points, start, end)
+
+    def wind_facts(self):
+        """The newest model run in the winds (live) and when they were recorded (replay); None: not known."""
+        return {"run": None, "recordedAt": None, **self._wind_facts}
 
     def active_fires(self, at):
         self._check("active_fires")
@@ -190,3 +240,8 @@ class FakeFeeds:
             "type": "FeatureCollection",
             "features": [r for r in self._aqhi_readings if r["properties"]["location_id"] == station_id],
         }
+
+    def alerts(self, lat, lon, at):
+        self.alerts_asked.append((lat, lon))
+        self._check("alerts")
+        return self._alerts

@@ -35,7 +35,9 @@ Every answer comes with an honest **High / Medium / Low confidence**, official a
 
 **Pause and look, before the trace.** The app first asks what Moncton-area fire dispatch asked callers on Aug 25, 2025, as pictures: *Do you see flames? Which looks like your sky? Is anything burning nearby?* Any "yes" or "not sure" goes straight to **Call 911 now**. A neighbour's fire pit or bonfire gets its own short screen: it may explain the smell, 911 is one tap away if it is out of control or burning is banned, and a link goes on to the trace anyway. Only "no flames", then "grey haze" or "I only smell it", then "nothing burning" goes straight on to the trace. The answers are never stored or sent.
 
-**Scenario 1: smoke from far away (Moncton, Aug 25, 2025).** *Drifting smoke, likely from the Long Lake fire, 159 km away, low confidence.* The map shows the air traced backward and the fire's smoke traced forward meeting near Moncton. Then: official AQHI advice, Health Canada's advice to take a break in places with filtered air (one tap finds the nearest library), and the 811 nurse line.
+**The answer as one glance.** The verdict opens on one card: a large icon and one line, *Drifting smoke · Long Lake fire · 159 km SSW*, with an arrow pointing from you toward the fire. Each verdict has its own icon, shape and colour (orange circle, amber diamond, red triangle), never colour alone. Under the line, three badges say where each fact comes from; one tap on a badge shows its source, its time and a link: the **satellite fire detection** (NASA FIRMS, NRCan CWFIS), the **wind trace** (GFS winds through Open-Meteo, with the model run), and **ECCC's air-quality alert** for your forecast zone. That last badge has three states, told by shape and word: *active* (filled), *none in effect* (outlined), *not checked* (dashed) when ECCC could not be asked. It is never a guess. When nothing explains the smoke, **Call 911 is the screen's main action**. Everything else (map, confidence, advice, air quality, the reasons) is one tap away behind **Why?**, word for word as before.
+
+**Scenario 1: smoke from far away (Moncton, Aug 25, 2025).** *Drifting smoke · Long Lake fire · 159 km SSW*, with ECCC's special air quality statement for Moncton and southeast New Brunswick shown as active. Behind **Why?**: low confidence and why, the map with the air traced backward and the fire's smoke traced forward meeting near Moncton, official AQHI advice, Health Canada's advice to take a break in places with filtered air (one tap finds the nearest library), and the 811 nurse line.
 
 **Scenario 2: fire near you (Bridgetown, N.S.).** Flames, a rising smoke column, something burning nearby, or simply not sure → **Call 911 now**, with what to tell the dispatcher and, on a tap, the phone's location to read out. *Told to leave?* → the reception centre **Annapolis County actually opened** during the Long Lake evacuation, register first, directions in the phone's Maps app, the officials' grab list, and a one-tap text to family with the user's location. It's shown only to people near that fire.
 
@@ -54,6 +56,7 @@ flowchart LR
   E --> CW["NRCan CWFIS<br/>active fires + hotspots"]
   E --> FI["NASA FIRMS<br/>VIIRS + MODIS"]
   E --> AQ["ECCC AQHI"]
+  E --> AL["ECCC weather alerts<br/>air-quality alert at the point"]
   S[("Snowflake<br/>data room")] -.->|offline validation| V["VALIDATION.md<br/>TECH-FACTS.md"]
 ```
 
@@ -66,7 +69,7 @@ flowchart LR
 ### API
 | Endpoint | Description |
 |---|---|
-| `GET /verdict?lat=&lon=&time=&mode=live\|replay` | Verdict, confidence, traced paths (3 heights), closest approach, forward check, featured fire, AQHI, source status |
+| `GET /verdict?lat=&lon=&time=&mode=live\|replay` | Verdict, confidence, traced paths (3 heights), closest approach, forward check, featured fire, AQHI, ECCC air-quality alert (active, none, or not checked), wind model run, source status |
 | `GET /health` | Whether live wind and FIRMS data are loaded |
 | `GET /` | Service description |
 
@@ -96,7 +99,7 @@ flowchart LR
 
 ## Validation
 
-The **unchanged** engine was tested on real 2025 events where smoke was publicly reported, plus two quiet control days. **The rules were committed before any run.** Full table and sources: [VALIDATION.md](VALIDATION.md).
+The **unchanged** engine was tested on real 2025 events where smoke was publicly reported, plus two quiet control days. **The rules were committed before any run.** Full table and sources: [VALIDATION.md](VALIDATION.md). The air-quality alert and the wind's model run were added to the answer later; they are informational and never change a verdict or its confidence (a test holds that), so every saved answer keeps its verdict.
 
 - Long Lake smoke correctly traced for **Moncton (Aug 25)** and **Charlottetown (Aug 14)**.
 - Two events matched the rules but for the **wrong source**: a Saint John refinery that satellites see as heat. This is documented, with the fix planned.
@@ -118,7 +121,7 @@ The whole **2025 Maritimes fire season (4,563 NASA FIRMS detections)** plus the 
 ```
 smoke-or-fire/
 ├── engine/            Python verdict engine (FastAPI)
-│   ├── smoke_engine/  trajectory, fires, verdict, AQHI, places, live/replay feeds
+│   ├── smoke_engine/  trajectory, fires, verdict, AQHI, alerts, places, live/replay feeds
 │   ├── scripts/       replay fetch, demo build, place data, TECH-FACTS generator
 │   └── tests/
 ├── web/               React + TypeScript app (Vite)
@@ -170,6 +173,7 @@ See `web/package.json` for all scripts. Current test counts are in [TECH-FACTS.m
 - Satellites see **industrial heat** (e.g. refineries) as hotspots. Filtering by NASA's labels is the next fix.
 - A new fire can take **hours** to appear in satellite data, and a fire hidden by cloud or smoke for over 24 h drops out.
 - The AQHI is an **area-wide** reading; smoke from a nearby source can be much stronger.
+- ECCC's alerts answer carries no data time: if ECCC's own list were stale but well formed, the badge would read "none in effect". The badge shows when ECCC was asked, and reads "not checked" whenever the answer cannot be read for certain.
 - Traces can leave the wind grid before 24 h; the app says how many hours it traced.
 - Evacuation centres are shown only for events officials announced; the app plans no routes (it hands the address to the phone's maps app).
 
@@ -187,6 +191,9 @@ See `web/package.json` for all scripts. Current test counts are in [TECH-FACTS.m
 | Active fires and satellite hotspots | Natural Resources Canada, CWFIS | Open Government Licence – Canada |
 | Satellite fire detections (VIIRS, MODIS) | NASA FIRMS | We acknowledge the use of data from NASA's FIRMS, part of NASA's ESDIS |
 | Air Quality Health Index | Environment and Climate Change Canada | Open Government Licence – Canada |
+| Air-quality alert in effect at a point (live) | Environment and Climate Change Canada, MSC GeoMet OGC API, collection `weather-alerts`: `https://api.weather.gc.ca/collections/weather-alerts/items?f=json&bbox={lon},{lat},{lon},{lat}&skipGeometry=true&limit=50` (no key) | ECCC Data Services End-use Licence. Data Source: Environment and Climate Change Canada |
+| Air-quality alerts of Aug 23–26, 2025 (replay) | ECCC's own CAP-CP messages (sender `cap-pac@canada.ca`). ECCC keeps no past alerts, so they are **converted from the copies kept by the NAAD System archive** (`https://alertsarchive.pelmorex.com`) by `engine/scripts/fetch_alerts_replay.py`; each record links its archived message | Data Source: Environment and Climate Change Canada; archive copy: NAAD System (Pelmorex) |
+| Wind model run (live) | Open-Meteo model metadata, `https://api.open-meteo.com/data/ncep_gfs025/static/meta.json` | CC BY 4.0 |
 | Wildfire smoke advice | Health Canada, "Wildfire smoke with extreme heat" | — |
 | The three questions before the trace | The questions Moncton-area fire dispatch asked callers on Aug 25, 2025: [yourgreatermoncton.ca](https://yourgreatermoncton.ca/128945-2/), Tara Clow, Aug 25, 2025 | — |
 | Hourly wind (GFS 0.25°) | Open-Meteo.com | CC BY 4.0 |
