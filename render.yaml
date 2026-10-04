@@ -6,8 +6,9 @@
 #
 # The engine reads ../data, and Render hides files outside a service's root directory,
 # so the service root is the repo root and the commands run inside engine/.
-# The disk is wiped on every deploy: after one, live wind takes a few minutes to load
-# (/verdict?mode=live answers 503 until then). buildFilter skips deploys for web-only changes:
+# The disk is wiped on every deploy and whenever the free service spins down: after one, live wind takes about
+# two minutes to load (/verdict?mode=live answers 503 "warming" with Retry-After until then, and the web app keeps
+# trying). buildFilter skips deploys for web-only changes:
 # Render applies it only to a service managed by this Blueprint. A service created on its own
 # needs the same paths under Settings → Build & Deploy → Build Filters.
 services:

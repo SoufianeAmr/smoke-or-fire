@@ -62,14 +62,14 @@ flowchart LR
 
 | Part | Role | Hosting |
 |---|---|---|
-| **engine/** | Traces the air, fuses fire data, returns the verdict as JSON | **Render** (free web service, `render.yaml` blueprint). Wind and FIRMS refresh in background threads and are cached to disk, so a restart answers within seconds. A scheduled ping to `/health` keeps it awake. |
+| **engine/** | Traces the air, fuses fire data, returns the verdict as JSON | **Render** (free web service, `render.yaml` blueprint). Wind and FIRMS refresh in background threads and are cached to disk, so a redeploy answers within seconds. A scheduled ping to `/health` keeps it awake between visits. The free service still sleeps when idle and Render wipes its disk, so after a wake-up the first wind grid takes about two minutes: until then the engine answers that it is **warming up** (503 with `status: warming` and `Retry-After`), the app's first screen wakes it with one quiet `/health` request as it opens in live mode, and the Loading screen keeps trying for up to three minutes, saying so, before it ever says "no data". |
 | **web/** | All screens, EN/FR strings, maps drawn with d3-geo | **Vercel** (static build). The replay is bundled, so it never depends on the engine. |
 | **analytics/** | Season-scale validation in SQL + Streamlit | **Snowflake** (offline; the app never calls it at runtime) |
 
 ### API
 | Endpoint | Description |
 |---|---|
-| `GET /verdict?lat=&lon=&time=&mode=live\|replay` | Verdict, confidence, traced paths (3 heights), closest approach, forward check, featured fire, AQHI, ECCC air-quality alert (active, none, or not checked), wind model run, source status |
+| `GET /verdict?lat=&lon=&time=&mode=live\|replay` | Verdict, confidence, traced paths (3 heights), closest approach, forward check, featured fire, AQHI, ECCC air-quality alert (active, none, or not checked), wind model run, source status. 503 `{"error": …}` when wind or fire data is unavailable; while the first wind grid loads after a start, the same with `"status": "warming"` and a `Retry-After` header |
 | `GET /health` | Whether live wind and FIRMS data are loaded |
 | `GET /` | Service description |
 

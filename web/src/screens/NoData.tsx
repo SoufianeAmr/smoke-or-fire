@@ -1,6 +1,7 @@
 // 09b · We can't check the air right now (design/screens/09b-error-no-data.html)
-import { useNavigate } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 import { useApp, useT } from "../app/state";
+import type { LiveFailure } from "../data/live";
 import { noDataVoice } from "../listen/speech";
 import { ReplayBanner } from "../components/ReplayBanner";
 import { Screen } from "../components/Screen";
@@ -11,6 +12,8 @@ export function NoData() {
   const { lang } = useApp();
   const t = useT();
   const navigate = useNavigate();
+  // Why there is no verdict (from Loading): the engine's own no-data answer, or no answer at all in time.
+  const reason = (useLocation().state as { reason?: LiveFailure } | null)?.reason;
   return (
     <Screen>
       <ReplayBanner />
@@ -28,7 +31,7 @@ export function NoData() {
             <p style={{ margin: "0", fontSize: "22px", fontWeight: "700", letterSpacing: "0.06em", color: "#1B2A4A" }}>{t("noData.label")}</p>
           </div>
           <h1 style={{ margin: "0", fontSize: "34px", fontWeight: "800", lineHeight: "1.12", letterSpacing: "-0.02em", textWrap: "balance" }}>{t("noData.title")}</h1>
-          <p style={{ margin: "0", fontSize: "18px", lineHeight: "1.45" }}>{t("noData.sub")}</p>
+          <p style={{ margin: "0", fontSize: "18px", lineHeight: "1.45" }}>{t(reason === "notAnswering" ? "noData.sub.notAnswering" : "noData.sub")}</p>
         </div>
         <div className="nodata-callout" style={{ padding: "18px 20px", borderRadius: "18px", background: "#FFFFFF", border: "2px solid #1A1D21", display: "flex", flexDirection: "column", gap: "6px" }}>
           <p style={{ margin: "0", fontSize: "22px", fontWeight: "700", lineHeight: "1.3" }}>{t("noData.notNoFire")}</p>

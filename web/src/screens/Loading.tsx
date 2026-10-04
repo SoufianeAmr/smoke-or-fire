@@ -1,8 +1,8 @@
 // 06 · Tracing the air (design/screens/06-loading.html)
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Navigate, useNavigate } from "react-router";
 import { useApp, useT } from "../app/state";
-import { loadLiveVerdict } from "../data/live";
+import { LiveError, loadLiveVerdict } from "../data/live";
 import { loadReplayVerdict } from "../data/replay";
 import { ReplayBanner } from "../components/ReplayBanner";
 import { Screen } from "../components/Screen";
@@ -30,22 +30,28 @@ export function Loading() {
   // The chip counts the hours in CSS (counter(h)); the words around the number come from the strings file.
   const [hourBefore, hourAfter] = t("loading.hour").split("{n}");
   const navigate = useNavigate();
+  // Live: the engine has not answered yet (asleep on its free host), and the screen says it is waking up.
+  const [waking, setWaking] = useState(false);
 
   useEffect(() => {
     if (!place) return;
     let cancelled = false;
+    const leaving = new AbortController();
     const started = Date.now();
     setResult(null);
-    const load = mode === "replay" ? loadReplayVerdict(place) : loadLiveVerdict(place);
+    setWaking(false);
+    const load = mode === "replay" ? loadReplayVerdict(place) : loadLiveVerdict(place, () => !cancelled && setWaking(true), { signal: leaving.signal });
     load
       .then((json) => {
         if (cancelled) return;
         setResult(json);
         setTimeout(() => !cancelled && navigate("/verdict"), Math.max(0, MIN_SHOW_MS - (Date.now() - started)));
       })
-      .catch(() => !cancelled && navigate("/no-data"));
+      // Screen 9b, which says why: the engine's own no-data answer, or no answer at all in time.
+      .catch((error: unknown) => !cancelled && navigate("/no-data", { state: { reason: error instanceof LiveError ? error.kind : "noData" } }));
     return () => {
       cancelled = true;
+      leaving.abort();
     };
   }, [mode, place, navigate, setResult]);
 
@@ -58,11 +64,17 @@ export function Loading() {
   return (
     <Screen>
       <ReplayBanner />
-      <TopBar back="/location" listen={loadingVoice(lang)} />
+      <TopBar back="/location" listen={loadingVoice(lang, waking)} />
       <main aria-live="polite" style={{ flexGrow: "1", display: "flex", flexDirection: "column", gap: "16px", padding: `4px 16px ${CLEAR_OF_BAR}` }}>
         <div style={{ display: "flex", flexDirection: "column", gap: "8px", padding: "0 4px" }}>
           <h1 style={{ margin: "0", fontSize: "34px", fontWeight: "800", lineHeight: "1.12", letterSpacing: "-0.02em", textWrap: "balance" }}>{t("loading.title")}</h1>
           <p style={{ margin: "0", fontSize: "18px", lineHeight: "1.45", color: "#4F5561", textWrap: "pretty" }}>{t("loading.sub")}</p>
+          {/* Said plainly while the engine wakes up, and read by a screen reader as it appears. */}
+          {waking && (
+            <p role="status" className="loading-waking" style={{ margin: "4px 0 0", fontSize: "18px", fontWeight: "700", lineHeight: "1.45", color: "#1B2A4A", textWrap: "pretty" }}>
+              {t("loading.waking")}
+            </p>
+          )}
         </div>
         <div style={{ position: "relative", background: "#FFFFFF", borderRadius: "18px", overflow: "hidden", boxShadow: "0 1px 2px rgba(26, 29, 33, 0.06), 0 8px 24px rgba(26, 29, 33, 0.07)" }}>
           <svg viewBox="0 0 358 210" width="100%" role="img" aria-label={t("loading.mapAria", { town: place.name })} style={{ display: "block" }}>

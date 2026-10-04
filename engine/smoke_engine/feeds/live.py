@@ -254,6 +254,14 @@ class LiveFeeds:
         )
         os.replace(partial, self._firms_file)
 
+    def warming(self) -> bool:
+        """True while the first wind grid since the start is still loading: no grid yet, and no refresh has failed.
+
+        Render wipes a free service's disk when it spins down, so after a wake-up the grid takes about two minutes
+        to load. A live verdict asked in that time says the engine is warming up, and the app keeps trying."""
+        with self._lock:
+            return self._wind is None and self._wind_error is None
+
     def status(self) -> dict:
         with self._lock:
             hours = self._wind[0]["hourly"]["time"] if self._wind else []

@@ -1,8 +1,9 @@
 // 01 · Check (design/screens/01-check.html)
-import type { CSSProperties } from "react";
+import { useEffect, type CSSProperties } from "react";
 import { Link } from "react-router";
 import { useApp, useT } from "../app/state";
 import { Screen } from "../components/Screen";
+import { wakeEngine } from "../data/live";
 import { CLEAR_OF_BAR, Sticky911 } from "../components/Sticky911";
 import { LangToggle } from "../components/TopBar";
 import { ChevronRightIcon } from "../components/icons";
@@ -28,6 +29,11 @@ export function Check() {
   const t = useT();
   const isReplay = mode === "replay";
   const install = useInstall();
+  // Live: one quiet request wakes the engine as the app opens, so it is usually up by the end of the three questions.
+  // Replay never calls the engine, not even for this.
+  useEffect(() => {
+    if (!isReplay) wakeEngine();
+  }, [isReplay]);
 
   return (
     <Screen>

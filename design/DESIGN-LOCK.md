@@ -85,6 +85,10 @@ Screens 7a–7d keep every word, card and number above, behind one button. What 
 - **The fire-is-close notice** stays in front of "Why?".
 - **Unexplained smoke: Call 911 is the main action.** The 911 bar stays and becomes it: "Look outside. See flames or a smoke column?" above a Call 911 button as wide as the bar. Still one Call 911 button per view.
 
+## Amendment: Loading while the engine wakes up (Oct 4, 2026)
+
+The engine's free host puts it to sleep when idle and wipes its disk, so the first live check after a quiet spell can take up to about three minutes. Screen 06 keeps its title, map and list; when the engine has not answered within 10 seconds, or answers that it is not ready, one line under the subtitle says so plainly: "Waking up the smoke engine… this can take a minute." / « Réveil du moteur de fumée… cela peut prendre une minute. » Listen adds the same. The app keeps asking, with backoff, for up to three minutes, a whole cold start; the 911 bar stays. Screen 9b is kept for the engine’s own no-data answer; after three minutes without any answer it opens with "The smoke engine didn’t answer in time. It may still be waking up: try again in a minute." The first screen sends one quiet request to the engine's health endpoint as the app opens in live mode, so the engine is usually awake by the end of the three questions. Replay never calls the engine.
+
 ## Hard rules (unchanged)
 - Never "safe". Never "don't call 911" or any paraphrase.
 - 911 on every screen; one Call 911 button per view.

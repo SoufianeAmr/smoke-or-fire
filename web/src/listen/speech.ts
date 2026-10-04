@@ -68,7 +68,8 @@ export const q3Voice = (lang: Lang) =>
   });
 export const nearbyFireVoice = (lang: Lang) => script(lang, "voice.nearby", { check: translate(lang, "nearby.check") });
 export const locationVoice = (lang: Lang) => script(lang, "voice.location");
-export const loadingVoice = (lang: Lang) => script(lang, "voice.loading");
+/** `waking`: the engine has not answered yet, and the screen says it is waking up. */
+export const loadingVoice = (lang: Lang, waking = false) => [...script(lang, "voice.loading"), ...(waking ? script(lang, "voice.loading.waking") : [])];
 export const emergencyVoice = (lang: Lang) => script(lang, "voice.emergency", { leave: translate(lang, "leave.entry") });
 export const howVoice = (lang: Lang) => script(lang, "voice.how");
 export const locationOffVoice = (lang: Lang) => script(lang, "voice.locationOff");

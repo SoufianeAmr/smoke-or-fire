@@ -57,8 +57,21 @@ def _iso(t: datetime) -> str:
     return t.strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
-def _unavailable(error: str) -> JSONResponse:
+RETRY_AFTER_S = 15  # while the engine is warming up: when to ask again
+
+
+def _unavailable(error: str, warming: bool = False) -> JSONResponse:
+    """503 with the engine's own error. `warming`: the first wind grid since the start is still loading, so the
+    answer says so and names when to ask again; the app then keeps trying instead of showing "no data"."""
+    if warming:
+        return JSONResponse(status_code=503, content={"error": error, "status": "warming"}, headers={"Retry-After": str(RETRY_AFTER_S)})
     return JSONResponse(status_code=503, content={"error": error})
+
+
+def _warming(feeds) -> bool:
+    """Whether the feed says its first wind grid is still loading (live feeds only)."""
+    check = getattr(feeds, "warming", None)
+    return bool(check()) if callable(check) else False
 
 
 def _path_json(path: Path, lat: float, lon: float) -> dict:
@@ -327,7 +340,7 @@ def create_app(feeds_by_mode: dict, now=_utc_now, lifespan=None) -> FastAPI:
         try:
             winds = parse_open_meteo(feeds.wind(GRID_POINTS, start, end), start, end)
         except FeedUnavailable:
-            return _unavailable("wind_data_unavailable")
+            return _unavailable("wind_data_unavailable", warming=_warming(feeds))
         wind_facts = feeds.wind_facts()  # with the grid they describe: a refresh may swap both a moment later
         paths = {height: trace_back(winds[height], lat, lon, arrival, HOURS_BACK) for height in HEIGHTS}
 

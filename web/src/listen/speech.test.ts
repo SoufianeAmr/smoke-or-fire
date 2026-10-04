@@ -206,6 +206,12 @@ describe("screens", () => {
     expect(voice.loadingVoice("fr")).toEqual(["Merci.", "Donnez-moi quelques secondes.", "Je suis le vent à rebours, heure par heure, pour voir d’où vient votre air."]);
   });
 
+  test("Loading while the engine wakes up: the same, then that it is waking and can take a minute", () => {
+    expect(voice.loadingVoice("en", true)).toEqual([...voice.loadingVoice("en"), "The smoke engine is waking up.", "This can take a minute."]);
+    expect(voice.loadingVoice("fr", true)).toEqual([...voice.loadingVoice("fr"), "Le moteur de fumée se réveille.", "Cela peut prendre une minute."]);
+    expect(voice.loadingVoice("en", false)).toEqual(voice.loadingVoice("en"));
+  });
+
   test("Emergency: call nine-one-one now, whatever led here, the big white button, what to tell them, the location on screen, then told to leave, named as on screen", () => {
     expect(voice.emergencyVoice("en")).toEqual([
       "Okay.",

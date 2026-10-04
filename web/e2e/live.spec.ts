@@ -100,19 +100,122 @@ test("Live: a break from the smoke, with the map searches around the town picked
   expect(await libraryHref(page)).toBe("https://www.google.com/maps/search/library/@46.221,-64.54,13z");
 });
 
-const FAILURES: [string, (route: Route) => Promise<void>][] = [
-  ["the engine answers 503", (route) => route.fulfill({ status: 503, json: { error: "wind_data_unavailable" }, headers: CORS })],
-  ["the engine cannot be reached", (route) => route.abort()],
-];
-for (const [what, fail] of FAILURES) {
-  test(`Live: when ${what}, the check ends on screen 9b`, async ({ page }) => {
-    await engine(page, fail);
-    await openLive(page);
-    await page.goto("/location");
-    await page.getByLabel("Town or city").fill("Monc");
-    await page.getByRole("option", { name: /Moncton, NB/ }).click();
-
-    await expect(page).toHaveURL(/\/no-data$/, { timeout: 15_000 });
-    await expect(page.getByRole("heading", { level: 1 })).toHaveText("We can’t check the air right now");
-  });
+/** Check Moncton in live mode: the loading screen, then whatever the engine's answers lead to. */
+async function checkMoncton(page: Page) {
+  await openLive(page);
+  await page.goto("/location");
+  await page.getByLabel("Town or city").fill("Monc");
+  await page.getByRole("option", { name: /Moncton, NB/ }).click();
+  await expect(page).toHaveURL(/\/loading$/);
 }
+
+const WAKING = { en: "Waking up the smoke engine… this can take a minute.", fr: "Réveil du moteur de fumée… cela peut prendre une minute." };
+
+test("Live: the engine's own no-data answer (a 503 with its error) ends the check on screen 9b at once, asked once", async ({ page }) => {
+  const asked = await engine(page, (route) => route.fulfill({ status: 503, json: { error: "wind_data_unavailable" }, headers: CORS }));
+  await checkMoncton(page);
+
+  await expect(page).toHaveURL(/\/no-data$/, { timeout: 15_000 });
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("We can’t check the air right now");
+  await expect(page.getByText("Fire or wind data isn’t loading, so we can’t tell you where this smoke is from.")).toBeVisible();
+  expect(asked).toHaveLength(1);
+});
+
+// A free Render service sleeps when idle. It takes about a minute to come back, and its disk is wiped, so the engine's
+// first wind grid takes about two more minutes: until then the engine is "not answering yet". Loading keeps asking,
+// with backoff, for up to three minutes, and says so, with the 911 bar as always.
+test.describe("Live: while the engine wakes up", () => {
+  test("Render's gateway answers twice, then the engine: Loading says the engine is waking, keeps asking, and the verdict comes", async ({ page }) => {
+    let answers = 0;
+    const asked = await engine(page, (route) => (++answers <= 2 ? route.fulfill({ status: 502, contentType: "text/html", body: "<html><body>Bad Gateway</body></html>" }) : answer(route)));
+    await checkMoncton(page);
+
+    const status = page.getByRole("status");
+    await expect(status).toHaveText(WAKING.en);
+    await expect(page.locator('a[href="tel:911"]')).toBeVisible();
+    await expect(page).toHaveURL(/\/verdict$/, { timeout: 20_000 });
+    await expect(page.locator("section.glance")).toHaveAttribute("data-state", "drifting");
+    expect(asked).toHaveLength(3);
+  });
+
+  test("the engine says it is warming up (a 503 with status warming), then answers: the verdict", async ({ page }) => {
+    let answers = 0;
+    const asked = await engine(page, (route) =>
+      ++answers === 1 ? route.fulfill({ status: 503, json: { error: "wind_data_unavailable", status: "warming" }, headers: { ...CORS, "retry-after": "2" } }) : answer(route),
+    );
+    await checkMoncton(page);
+
+    await expect(page.getByRole("status")).toHaveText(WAKING.en);
+    await expect(page).toHaveURL(/\/verdict$/, { timeout: 20_000 });
+    expect(asked).toHaveLength(2);
+  });
+
+  test("no answer at all: Loading keeps asking with backoff and stays, saying so in French too", async ({ page }) => {
+    const asked = await engine(page, (route) => route.abort());
+    await openLive(page);
+    await page.getByRole("button", { name: "Français" }).click();
+    await page.goto("/location");
+    await page.getByLabel("Ville ou village").fill("Monc");
+    await page.getByRole("option", { name: /Moncton, N\.-B\./ }).click();
+    await expect(page).toHaveURL(/\/loading$/);
+
+    await expect(page.getByRole("status")).toHaveText(WAKING.fr);
+    // Attempts at 0, 1, 3 and 7 s: four within 12 s, and still on Loading, with the 911 bar.
+    await expect.poll(() => asked.length, { timeout: 12_000 }).toBeGreaterThanOrEqual(4);
+    await expect(page).toHaveURL(/\/loading$/);
+    await expect(page.locator('a[href="tel:911"]')).toBeVisible();
+  });
+
+  test("still no answer after three minutes: screen 9b, saying the engine did not answer in time", async ({ page }) => {
+    test.setTimeout(240_000);
+    await engine(page, (route) => route.abort());
+    await checkMoncton(page);
+
+    // Still Loading well past the old 90 s, then screen 9b once the three minutes are up.
+    await page.waitForTimeout(100_000);
+    await expect(page).toHaveURL(/\/loading$/);
+    await expect(page).toHaveURL(/\/no-data$/, { timeout: 110_000 });
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText("We can’t check the air right now");
+    await expect(page.getByText("The smoke engine didn’t answer in time. It may still be waking up: try again in a minute.")).toBeVisible();
+  });
+});
+
+/** Answers GET /health and counts the pings. */
+async function healthPings(page: Page) {
+  const pings: string[] = [];
+  await page.route(`${TEST_ENGINE_URL}/health`, (route) => {
+    pings.push(route.request().method());
+    return route.fulfill({ json: { status: "ok" }, headers: CORS });
+  });
+  return pings;
+}
+
+test.describe("Waking the engine early", () => {
+  test("Check in live mode sends one quiet GET /health as the app opens, and no more on the next screens", async ({ page }) => {
+    const pings = await healthPings(page);
+    await openLive(page);
+    await expect.poll(() => pings.length).toBe(1);
+    await page.getByRole("link", { name: "I smell smoke" }).click();
+    await expect(page.getByRole("heading", { name: "Do you see flames?" })).toBeVisible();
+    await page.goBack(); // back to Check inside the app (a reload would be a new app open, and one more ping)
+    await expect(page.getByRole("link", { name: "I smell smoke" })).toBeVisible();
+    expect(pings).toEqual(["GET"]);
+  });
+
+  test("replay never calls the engine, not even to wake it", async ({ page }) => {
+    const pings = await healthPings(page);
+    await page.goto("/?mode=replay");
+    await page.waitForFunction(() => sessionStorage.getItem("smoke-or-fire")?.includes('"mode":"replay"'));
+    await page.getByRole("link", { name: "I smell smoke" }).click();
+    await expect(page.getByRole("heading", { name: "Do you see flames?" })).toBeVisible();
+    expect(pings).toEqual([]);
+  });
+
+  test("switching to live on Check wakes it", async ({ page }) => {
+    const pings = await healthPings(page);
+    await page.goto("/?mode=replay");
+    await page.waitForFunction(() => sessionStorage.getItem("smoke-or-fire")?.includes('"mode":"replay"'));
+    await page.getByRole("button", { name: "Live" }).click();
+    await expect.poll(() => pings.length).toBe(1);
+  });
+});
