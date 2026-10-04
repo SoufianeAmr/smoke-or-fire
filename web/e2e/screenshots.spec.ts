@@ -71,8 +71,11 @@ async function liveVerdict(page: Page, body: object, town: string) {
   await verdict(page, town);
 }
 
-/** `whole`: the picture shows the whole page, however tall, with the 911 bar at its foot. */
-type Shot = { name: string; file: string; whole?: boolean; open: (page: Page, lang: Lang) => Promise<void> };
+/** `whole`: the picture shows the whole page, however tall, with the 911 bar at its foot (the layout of a tall phone:
+ *  never with `phone`). `phone`: a smaller screen than the 390 × 844 of the other pictures, taken at that size. */
+type Shot = { name: string; file: string; whole?: boolean; phone?: { width: number; height: number }; open: (page: Page, lang: Lang) => Promise<void> };
+const SMALL = { width: 375, height: 667 };
+const SMALLEST = { width: 320, height: 568 };
 
 const SHOTS: Shot[] = [
   {
@@ -227,6 +230,61 @@ const SHOTS: Shot[] = [
       await openWhy(page);
     },
   },
+  // Small phones: the three badges share one row, so they and "Why?" show above the 911 bar as the screen opens.
+  {
+    name: "20 Verdict on a small phone (375 × 667), drifting smoke (Moncton)",
+    file: "20-verdict-small-drifting",
+    phone: SMALL,
+    open: (page) => verdict(page, "Moncton"),
+  },
+  {
+    name: "21 Verdict on a small phone (375 × 667), unexplained (Halifax)",
+    file: "21-verdict-small-unexplained",
+    phone: SMALL,
+    open: (page) => verdict(page, "Halifax"),
+  },
+  {
+    name: "22 Verdict on a small phone (375 × 667), a badge open: its name, source, time and link",
+    file: "22-verdict-small-badge-open",
+    phone: SMALL,
+    open: async (page) => {
+      await verdict(page, "Halifax");
+      await openBadge(page, "fire");
+    },
+  },
+  {
+    name: "23 Verdict on the smallest phone (320 × 568), drifting smoke (Moncton)",
+    file: "23-verdict-smallest-drifting",
+    phone: SMALLEST,
+    open: (page) => verdict(page, "Moncton"),
+  },
+  {
+    name: "24 Verdict on the smallest phone (320 × 568), unexplained (Halifax)",
+    file: "24-verdict-smallest-unexplained",
+    phone: SMALLEST,
+    open: (page) => verdict(page, "Halifax"),
+  },
+  {
+    name: "25 Verdict on a small phone (375 × 667), the fire is close (Bridgetown): the notice comes first",
+    file: "25-verdict-small-fire-close",
+    phone: SMALL,
+    open: (page) => verdict(page, "Bridgetown"),
+  },
+  {
+    name: "26 Verdict on a small phone (375 × 667), the fire is close, scrolled: the badges and Why? after the notice",
+    file: "26-verdict-small-fire-close-scrolled",
+    phone: SMALL,
+    open: async (page) => {
+      await verdict(page, "Bridgetown");
+      await page.locator("main .why-toggle").scrollIntoViewIfNeeded();
+    },
+  },
+  {
+    name: "27 Verdict on a small phone (375 × 667), ECCC alert not checked (live)",
+    file: "27-verdict-small-alert-not-checked",
+    phone: SMALL,
+    open: (page) => liveVerdict(page, liveAnswer("moncton", NOT_CHECKED), "Moncton"),
+  },
 ];
 
 /** Wait as pixels.spec.ts does (the network quiet, the fonts in), switch animations off, and save the picture. */
@@ -236,7 +294,7 @@ async function save(page: Page, file: string, whole = false) {
   await page.addStyleTag({ content: "*,*::before,*::after{animation:none!important;transition:none!important}" });
   if (whole) {
     // A phone as tall as the page: everything shows, and the 911 bar stays at the foot.
-    await page.setViewportSize({ width: 390, height: await page.evaluate(() => document.documentElement.scrollHeight) });
+    await page.setViewportSize({ width: page.viewportSize()!.width, height: await page.evaluate(() => document.documentElement.scrollHeight) });
     await page.evaluate(() => window.scrollTo(0, 0));
   }
   mkdirSync(OUT, { recursive: true });
@@ -248,6 +306,7 @@ for (const lang of ["en", "fr"] as const) {
     // One test per picture: a screen that can't be reached doesn't hide the others.
     for (const shot of SHOTS) {
       test(shot.name, async ({ page }) => {
+        if (shot.phone) await page.setViewportSize(shot.phone);
         await start(page, lang);
         await shot.open(page, lang);
         await save(page, `${shot.file}-${lang}.png`, shot.whole);

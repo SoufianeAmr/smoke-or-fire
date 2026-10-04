@@ -156,6 +156,7 @@ describe("the badges", () => {
       id: "fire",
       tone: "active",
       icon: "satellite",
+      short: "Fire",
       label: "Satellite fire detection",
       lines: ["Terra saw it burning 10 hours ago.", "Detected: 2025-08-24, 22:43 (Atlantic time).", "Sources: NASA FIRMS and Natural Resources Canada (CWFIS)."],
       links: [
@@ -249,6 +250,7 @@ describe("the badges", () => {
         id: "trace",
         tone: "active",
         icon: "wind",
+        short: "Wind",
         label: "Wind trace",
         lines: ["Hourly winds from the GFS weather model (NOAA), through Open-Meteo.", "Recorded winds for the replay, downloaded 2026-09-26.", "Traced back 20 hours from Moncton."],
         links: [{ label: "Open-Meteo", host: "open-meteo.com", url: "https://open-meteo.com/en/docs/gfs-api" }],
@@ -271,6 +273,7 @@ describe("the badges", () => {
       id: "alert",
       tone: "active",
       icon: "bell",
+      short: "Alert",
       label: "ECCC air quality alert: active",
       lines: [
         "Special air quality statement",
@@ -334,6 +337,7 @@ describe("the badges", () => {
         id: "alert",
         tone: "notChecked",
         icon: "bell",
+        short: "Not checked",
         label: "ECCC air quality alert: not checked",
         lines: ["The alerts could not be checked just now. That does not mean there is none.", "Data source: Environment and Climate Change Canada."],
         links: [{ label: "ECCC alerts for this place", host: "weather.gc.ca", url: "https://weather.gc.ca/en/location/index.html?coords=46.10,-64.80" }],
@@ -361,6 +365,28 @@ describe("the badges", () => {
     });
   });
 
+  test("each badge has one short word for a small phone, and it says the state: Fire or None, Wind, Alert or None or Not checked", () => {
+    const shorts = (lang: "en" | "fr") =>
+      // found (Moncton), nothing near the path (Halifax), no fire in range, the alert not checked, an older engine
+      [json(moncton), json(halifax), noFires, live(moncton, NOT_CHECKED), live(moncton, undefined)].map((d) => verdictView(d, lang).badges.map((b) => b.short));
+    expect([shorts("en"), shorts("fr")]).toEqual([
+      [["Fire", "Wind", "Alert"], ["None", "Wind", "None"], ["None", "Wind", "None"], ["Fire", "Wind", "Not checked"], ["Fire", "Wind", "Not checked"]],
+      [["Feu", "Vent", "Alerte"], ["Aucune", "Vent", "Aucune"], ["Aucune", "Vent", "Aucune"], ["Feu", "Vent", "Non vérifiée"], ["Feu", "Vent", "Non vérifiée"]],
+    ]);
+  });
+
+  test("the word follows the badge’s state on every verdict: the badge’s own word only when something was found", () => {
+    const all = LANGS.flatMap((lang) => [...TOWNS, noFires, live(moncton, ACTIVE), live(moncton, NONE), live(moncton, NOT_CHECKED)].flatMap((d) => verdictView(d, lang).badges.map((b) => [lang, b] as const)));
+    const expected = (lang: "en" | "fr", b: { id: string; tone: string }) =>
+      b.tone === "none" ? { en: "None", fr: "Aucune" }[lang] : b.tone === "notChecked" ? { en: "Not checked", fr: "Non vérifiée" }[lang] : { fire: { en: "Fire", fr: "Feu" }, trace: { en: "Wind", fr: "Vent" }, alert: { en: "Alert", fr: "Alerte" } }[b.id as "fire"][lang];
+    expect(all.filter(([lang, b]) => b.short !== expected(lang, b)).map(([lang, b]) => [lang, b.id, b.tone, b.short])).toEqual([]);
+  });
+
+  test("the short word is in the badge’s full name, which is what a screen reader says", () => {
+    const all = LANGS.flatMap((lang) => [...TOWNS, noFires, live(moncton, ACTIVE), live(moncton, NOT_CHECKED)].flatMap((d) => verdictView(d, lang).badges));
+    expect(all.filter((b) => !b.label.toLowerCase().includes(b.short.toLowerCase())).map((b) => [b.short, b.label])).toEqual([]);
+  });
+
   test("every badge shows a source and at least one link, in every state", () => {
     const all = LANGS.flatMap((lang) => [...TOWNS, noFires, live(moncton, ACTIVE), live(moncton, NONE), live(moncton, NOT_CHECKED), live(moncton, undefined)].flatMap((d) => verdictView(d, lang).badges));
     expect(all.filter((b) => b.lines.length < 2 || b.links.length < 1 || b.links.some((l) => !l.url.startsWith("https://") || /[{}]/.test(l.url)) || b.lines.some((l) => /[{}]/.test(l)))).toEqual([]);
@@ -375,7 +401,7 @@ describe("what Listen says of the card", () => {
       "Tap one to see where it comes from: Satellite fire detection.",
       "Wind trace.",
       "ECCC air quality alert: active.",
-      "For the details and what to do, tap: Why?.",
+      "For the details and what to do, tap the Why button.",
       "And if you ever see flames or a smoke column, tap the red button at the bottom to call nine-one-one.",
     ]);
   });
@@ -387,7 +413,7 @@ describe("what Listen says of the card", () => {
       `Touchez-en une pour voir d’où elle vient${NBSP}: Détection satellite du feu.`,
       "Trajet du vent.",
       `Alerte de qualité de l’air d’ECCC${NBSP}: en vigueur.`,
-      `Pour les détails et quoi faire, touchez${NBSP}: Pourquoi${NBSP}?.`,
+      "Pour les détails et quoi faire, touchez le bouton Pourquoi.",
       "Et si vous voyez des flammes ou une colonne de fumée, touchez le bouton rouge en bas pour appeler le neuf-un-un.",
     ]);
   });
@@ -443,9 +469,15 @@ describe("what Listen says of the card", () => {
       for (const data of [...TOWNS, noFires, live(moncton, NOT_CHECKED)]) {
         const view = verdictView(data, lang);
         const said = view.card.voice;
-        expect([view.badges.filter((b) => !said.some((s) => s.endsWith(`${b.label}.`))), said.some((s) => s.includes(view.card.why)), /nine-one-one|neuf-un-un/.test(said.at(-1)!)], `${lang} ${data.location.name}`).toEqual([[], true, true]);
+        expect([view.badges.filter((b) => !said.some((s) => s.endsWith(`${b.label}.`))), said.some((s) => s.includes(view.card.why.replace(/\s*[?!.]+$/, ""))), /nine-one-one|neuf-un-un/.test(said.at(-1)!)], `${lang} ${data.location.name}`).toEqual([[], true, true]);
       }
     }
+  });
+
+  test("the button is named without its question mark, so no sentence ends with two punctuation marks", () => {
+    const said = LANGS.flatMap((lang) => [...TOWNS, noFires, live(moncton, NOT_CHECKED)].flatMap((d) => verdictView(d, lang).card.voice));
+    expect(said.filter((s) => /[.?!…]\s*[.?!]$/.test(s))).toEqual([]);
+    expect([verdictView(json(moncton), "en").card.why, verdictView(json(moncton), "fr").card.why]).toEqual(["Why?", `Pourquoi${NBSP}?`]); // on the screen, as before
   });
 
   test("what is behind Why? keeps its own script, word for word", () => {

@@ -73,6 +73,8 @@ const card = (page: Page) => page.locator("section.glance");
 const line = (page: Page) => page.locator("h1#verdict-h");
 const badges = (page: Page) => page.locator("main .badge");
 const badge = (page: Page, id: string) => page.locator(`main .badge[data-badge="${id}"]`);
+/** The badge's full name, as written on it. */
+const badgeName = (page: Page, id: string) => badge(page, id).locator(".badge-label");
 const call = (page: Page) => page.locator('a[href="tel:911"]');
 const look = (page: Page) =>
   card(page).evaluate((el) => {
@@ -149,7 +151,7 @@ test.describe("the card: one line under a large icon", () => {
     await replay(page, "en", "Bathurst");
 
     expect(plain(await line(page).innerText())).toBe("Drifting smoke · Fire near Heath Steele · 52 km SW");
-    await expect(badge(page, "fire")).toHaveText("Official active fire list");
+    await expect(badgeName(page, "fire")).toHaveText("Official active fire list");
     const panel = await openBadge(page, "fire");
     expect(await panel.locator("p").allTextContents()).toEqual(["It’s on Canada’s official active fire list.", "Source: Natural Resources Canada (CWFIS)."]);
   });
@@ -255,7 +257,7 @@ test.describe("the badges: one tap shows the source, its time and a link", () =>
     test(`${lang.toUpperCase()} ECCC’s alert in the replay: ECCC’s own name and zone, when it was issued, and the archived message`, async ({ page }) => {
       await replay(page, lang, "Moncton");
 
-      await expect(badge(page, "alert")).toHaveText(s(lang, "badge.alert.active"));
+      await expect(badgeName(page, "alert")).toHaveText(s(lang, "badge.alert.active"));
       const { lines, links } = await panelOf(page, "alert");
       expect(lines).toEqual(
         lang === "en"
@@ -339,7 +341,7 @@ test.describe("badge states differ by shape and word, never by colour alone", ()
       await replay(page, lang, "Moncton");
 
       expect(await drawn(page, "alert")).toEqual(FILLED);
-      await expect(badge(page, "alert")).toHaveText(s(lang, "badge.alert.active"));
+      await expect(badgeName(page, "alert")).toHaveText(s(lang, "badge.alert.active"));
       expect(s(lang, "badge.alert.active")).toMatch(lang === "en" ? /: active$/ : /: en vigueur$/);
     });
 
@@ -347,18 +349,18 @@ test.describe("badge states differ by shape and word, never by colour alone", ()
       await replay(page, lang, "Halifax");
 
       expect(await drawn(page, "alert")).toEqual(OUTLINE);
-      await expect(badge(page, "alert")).toHaveText(s(lang, "badge.alert.none"));
+      await expect(badgeName(page, "alert")).toHaveText(s(lang, "badge.alert.none"));
       expect(s(lang, "badge.alert.none")).toMatch(lang === "en" ? /: none in effect$/ : /: aucune en vigueur$/);
       // Nothing explains the smoke: the fire detections are "none" too, outlined the same way.
       expect(await drawn(page, "fire")).toEqual(OUTLINE);
-      await expect(badge(page, "fire")).toHaveText(s(lang, "badge.fire.nonePath"));
+      await expect(badgeName(page, "fire")).toHaveText(s(lang, "badge.fire.nonePath"));
     });
 
     test(`${lang.toUpperCase()} not checked: a dashed outline, and the words (live, ECCC could not be asked)`, async ({ page }) => {
       await live(page, lang, liveAnswer("moncton", ECCC.notChecked));
 
       expect(await drawn(page, "alert")).toEqual(DASHED);
-      await expect(badge(page, "alert")).toHaveText(s(lang, "badge.alert.notChecked"));
+      await expect(badgeName(page, "alert")).toHaveText(s(lang, "badge.alert.notChecked"));
       expect(s(lang, "badge.alert.notChecked")).toMatch(lang === "en" ? /: not checked$/ : /: non vérifiée$/);
       const panel = await openBadge(page, "alert");
       // Never a guess: it says the alerts were not checked, and where to look.
@@ -371,7 +373,7 @@ test.describe("badge states differ by shape and word, never by colour alone", ()
     await live(page, "en", liveAnswer("moncton", undefined));
 
     expect(await drawn(page, "alert")).toEqual(DASHED);
-    await expect(badge(page, "alert")).toHaveText("ECCC air quality alert: not checked");
+    await expect(badgeName(page, "alert")).toHaveText("ECCC air quality alert: not checked");
   });
 
   test("none in effect, live: ECCC’s answer and when it was given", async ({ page }) => {
@@ -514,5 +516,235 @@ test.describe("Call 911", () => {
       await expect(call(page)).toHaveCount(1);
       expect(await call(page).evaluate((el) => getComputedStyle(el).backgroundColor)).toBe(RED);
     }
+  });
+});
+
+test.describe("on a small phone: the three badges and “Why?” show above the 911 bar without scrolling", () => {
+  type Box = { top: number; bottom: number; left: number; right: number; width: number; height: number };
+  type Measures = { scrolled: number; width: number; bar: number; badges: Box[]; why: Box; line: Box };
+  /** Where things are as the screen stands: the 911 bar's top edge, the three badges, "Why?", and the card's line. */
+  const measure = (page: Page): Promise<Measures> =>
+    page.evaluate(() => {
+      const box = (el: Element) => { const r = el.getBoundingClientRect(); return { top: r.top, bottom: r.bottom, left: r.left, right: r.right, width: r.width, height: r.height }; };
+      return {
+        scrolled: window.scrollY,
+        width: window.innerWidth,
+        bar: document.querySelector('a[href="tel:911"]')!.parentElement!.getBoundingClientRect().top,
+        badges: [...document.querySelectorAll("main .badge")].map(box),
+        why: box(document.querySelector("main .why-toggle")!),
+        line: box(document.querySelector("#verdict-h")!),
+      };
+    });
+  /** The three badges, 56 px or more each way, side by side in one row, and "Why?" under them: all whole above the bar. */
+  function expectAllAboveTheBar(m: Measures) {
+    expect([m.scrolled, m.badges.length]).toEqual([0, 3]); // as the screen opens
+    for (const b of m.badges) {
+      expect(Math.min(b.width, b.height)).toBeGreaterThanOrEqual(56);
+      expect([b.left >= 0, b.right <= m.width, b.top >= m.line.bottom]).toEqual([true, true, true]); // on the screen, under the card
+      expect(b.bottom).toBeLessThanOrEqual(m.bar + 0.5);
+    }
+    // One row, left to right, none over another.
+    expect(new Set(m.badges.map((b) => Math.round(b.top))).size).toBe(1);
+    expect(m.badges[0].right <= m.badges[1].left && m.badges[1].right <= m.badges[2].left).toBe(true);
+    expect(m.why.height).toBeGreaterThanOrEqual(56);
+    expect([m.why.left >= 0, m.why.right <= m.width, m.why.top >= m.badges[0].bottom]).toEqual([true, true, true]);
+    expect(m.why.bottom).toBeLessThanOrEqual(m.bar + 0.5);
+  }
+  /** What a badge shows: its word (text on the page, drawn or not), how it is drawn, and whether its full name is drawn. */
+  const shown = (page: Page, id: string) =>
+    badge(page, id).evaluate((el) => {
+      const [word, label, st] = [el.querySelector(".badge-short")!, el.querySelector(".badge-label")!, getComputedStyle(el)];
+      // The drawn words, line by line, against the pill: 8 px or more inside it on each side, clear of its outline.
+      const range = document.createRange();
+      range.selectNodeContents(word);
+      const [pill, lines] = [el.getBoundingClientRect(), [...range.getClientRects()]];
+      return {
+        word: word.textContent,
+        wordSeen: word.getBoundingClientRect().height > 0,
+        wordInside: lines.length > 0 && lines.every((r) => r.left >= pill.left + 8 && r.right <= pill.right - 8 && r.top >= pill.top && r.bottom <= pill.bottom),
+        // On a small phone the full name stays on the page for screen readers, drawn 1 px wide: not seen.
+        nameSeen: label.getBoundingClientRect().width > 1,
+        drawn: `${st.backgroundColor === "rgb(27, 42, 74)" ? "filled" : "white"} ${st.borderTopStyle}`,
+        type: parseFloat(getComputedStyle(word).fontSize),
+      };
+    });
+  const word = (lang: Lang, key: string) => s(lang, `badge.short.${key}`);
+
+  // The two sizes asked for. Each verdict the engine returns, and the towns that leave the least room: an unnamed fire
+  // (a longer line), and replay towns whose name wraps the replay banner onto two lines.
+  const PHONES = [{ width: 375, height: 667 }, { width: 320, height: 568 }];
+  const TOWNS = ["Moncton", "Miramichi", "Halifax", "Bathurst", "Edmundston", "Charlottetown"];
+  // Sizes in between, for the tightest towns: a 390 px phone in a browser with its bars (664 px, the last height
+  // before everything is tightened), a 360 × 640 phone, and a 375 px phone in a browser with its bars (550 px).
+  const BETWEEN = [{ width: 390, height: 664 }, { width: 360, height: 640 }, { width: 375, height: 550 }];
+  const TIGHTEST = ["Edmundston", "Halifax", "Bathurst", "Charlottetown"];
+
+  for (const viewport of [...PHONES, ...BETWEEN]) {
+    test.describe(`${viewport.width} × ${viewport.height}`, () => {
+      test.use({ viewport });
+
+      for (const lang of LANGS) {
+        for (const town of PHONES.includes(viewport) ? TOWNS : TIGHTEST) {
+          test(`${lang.toUpperCase()} ${town} replay: one row of three badges and “Why?”, whole above the bar as the screen opens`, async ({ page }) => {
+            await replay(page, lang, town);
+            await page.evaluate(() => document.fonts.ready);
+
+            expectAllAboveTheBar(await measure(page));
+          });
+        }
+
+        test(`${lang.toUpperCase()} no fire in range (live), where Call 911 is the main action: the same`, async ({ page }) => {
+          await live(page, lang, noFires(), "Halifax");
+          await page.evaluate(() => document.fonts.ready);
+
+          expectAllAboveTheBar(await measure(page));
+          // The bar is still the main action: one red Call 911 as wide as the bar, 56 px tall or more.
+          await expect(call(page)).toHaveCount(1);
+          const [button, bar] = [await call(page).boundingBox(), await page.locator(".sticky-first").boundingBox()];
+          expect([button!.height >= 56, button!.width >= bar!.width * 0.8]).toEqual([true, true]);
+          await expect(page.locator(".sticky-first p")).toBeVisible(); // "Look outside…" is still said
+        });
+      }
+    });
+  }
+
+  for (const viewport of PHONES) {
+    test.describe(`${viewport.width} × ${viewport.height}: what each badge shows`, () => {
+      test.use({ viewport });
+
+      for (const lang of LANGS) {
+        test(`${lang.toUpperCase()} an icon and one word that says the state; the outline says it too; the full name is what a screen reader says`, async ({ page }) => {
+          // Halifax: no detection near the path (outlined, "None"), the trace made (filled, "Wind"), no alert in effect
+          // (outlined, "None"): the state by the outline and by the word, never by the fill alone.
+          await replay(page, lang, "Halifax");
+          expect([await shown(page, "fire"), await shown(page, "trace"), await shown(page, "alert")]).toEqual([
+            { word: word(lang, "none"), wordSeen: true, wordInside: true, nameSeen: false, drawn: "white solid", type: 16 },
+            { word: word(lang, "trace"), wordSeen: true, wordInside: true, nameSeen: false, drawn: "filled solid", type: 16 },
+            { word: word(lang, "none"), wordSeen: true, wordInside: true, nameSeen: false, drawn: "white solid", type: 16 },
+          ]);
+          for (const id of ["fire", "trace", "alert"]) await expect(badge(page, id).locator("svg").first()).toBeVisible();
+          await expect(badge(page, "fire")).toHaveAccessibleName(plain(s(lang, "badge.fire.nonePath")));
+          await expect(badge(page, "trace")).toHaveAccessibleName(s(lang, "badge.trace"));
+          await expect(badge(page, "alert")).toHaveAccessibleName(plain(s(lang, "badge.alert.none")));
+
+          // Moncton: a satellite saw the fire, and ECCC's alert is active: filled, with the badge's own word.
+          await replay(page, lang, "Moncton");
+          expect([await shown(page, "fire"), await shown(page, "alert")]).toEqual([
+            { word: word(lang, "fire"), wordSeen: true, wordInside: true, nameSeen: false, drawn: "filled solid", type: 16 },
+            { word: word(lang, "alert"), wordSeen: true, wordInside: true, nameSeen: false, drawn: "filled solid", type: 16 },
+          ]);
+        });
+
+        test(`${lang.toUpperCase()} not checked: a dashed outline and the words, and the row and “Why?” still clear the bar`, async ({ page }) => {
+          await live(page, lang, liveAnswer("moncton", ECCC.notChecked));
+          await page.evaluate(() => document.fonts.ready);
+
+          // Two words: they sit inside the dashed outline (on two lines where one would touch it).
+          expect(await shown(page, "alert")).toEqual({ word: word(lang, "notChecked"), wordSeen: true, wordInside: true, nameSeen: false, drawn: "white dashed", type: 16 });
+          expectAllAboveTheBar(await measure(page));
+        });
+
+        test(`${lang.toUpperCase()} a tap on a badge shows its full name, then its source, its time and its link, where they can be read`, async ({ page }) => {
+          await replay(page, lang, "Moncton");
+
+          for (const [id, key] of [["fire", "badge.fire.satellite"], ["trace", "badge.trace"], ["alert", "badge.alert.active"]] as const) {
+            const panel = await openBadge(page, id);
+            await expect(badge(page, id)).toHaveAttribute("aria-expanded", "true");
+            await expect(panel.locator(".badge-name")).toBeVisible();
+            await expect(panel.locator(".badge-name")).toHaveText(s(lang, key));
+            expect((await panel.locator("p").count()) >= 2).toBe(true);
+            await expect(panel.locator("a").first()).toBeVisible();
+            expect((await panel.locator("a").first().boundingBox())!.height).toBeGreaterThanOrEqual(56);
+            expect(await page.locator(".badge-panel:not([hidden])").count()).toBe(1); // one at a time
+            // Under the row, the column's whole width. A panel that fits above the bar is whole above it. One taller
+            // than the room there (the smallest phone) starts just under its badge, which stays on the screen.
+            await expect
+              .poll(async () => {
+                const [m, p] = [await measure(page), (await panel.boundingBox())!];
+                const tapped = m.badges[["fire", "trace", "alert"].indexOf(id)];
+                const fits = p.height <= m.bar - 76;
+                // Too tall to fit: the page has scrolled the row to the top of the screen, the panel right under it.
+                return [p.x >= 0 && p.x + p.width <= m.width && p.width > m.width - 40, tapped.top >= 0, p.y >= tapped.bottom && p.y <= tapped.bottom + 24, fits ? p.y + p.height <= m.bar + 0.5 : m.scrolled > 0 && p.y <= 100];
+              })
+              .toEqual([true, true, true, true]);
+            // Its end comes into reach.
+            await panel.locator("a").last().scrollIntoViewIfNeeded();
+            const [link, bar] = [(await panel.locator("a").last().boundingBox())!, (await measure(page)).bar];
+            expect(link.y + link.height).toBeLessThanOrEqual(bar + 0.5);
+            await page.evaluate(() => window.scrollTo(0, 0));
+          }
+          await badge(page, "alert").click();
+          await expect(page.locator("#badge-alert")).toBeHidden();
+        });
+      }
+
+      // The one case where they do not all fit: the notice is what to do, so it comes first, and it is tall.
+      for (const lang of LANGS) {
+        test(`${lang.toUpperCase()} a fire close by (Bridgetown): the notice comes first, then the row of badges, then “Why?”, which needs a scroll`, async ({ page }) => {
+          await replay(page, lang, "Bridgetown");
+          await page.evaluate(() => document.fonts.ready);
+
+          const notice = (await page.locator("main > section").first().boundingBox())!;
+          const opened = await measure(page);
+          expect([opened.scrolled, notice.y >= opened.line.bottom]).toEqual([0, true]);
+          // Still one row of three, after the notice.
+          expect([new Set(opened.badges.map((b) => Math.round(b.top))).size, opened.badges.every((b) => b.top >= notice.y + notice.height)]).toEqual([1, true]);
+          if (viewport.height >= 667) {
+            // 375 × 667, as the screen opens: the notice whole, and the three badges whole under it, above the bar.
+            expect(notice.y + notice.height).toBeLessThanOrEqual(opened.bar + 0.5);
+            expect(opened.badges.every((b) => b.bottom <= opened.bar + 0.5 && Math.min(b.width, b.height) >= 56)).toBe(true);
+          } else {
+            // The smallest phone: the notice's first lines; the rest is a scroll away.
+            expect(notice.y + 80).toBeLessThanOrEqual(opened.bar);
+          }
+          const link = page.locator("main > section").first().locator("a");
+          await link.scrollIntoViewIfNeeded();
+          expect((await link.boundingBox())!.y + (await link.boundingBox())!.height).toBeLessThanOrEqual((await measure(page)).bar + 0.5);
+          await page.locator("main .why-toggle").scrollIntoViewIfNeeded();
+          const scrolledTo = await measure(page);
+          expect([scrolledTo.badges.every((b) => b.bottom <= scrolledTo.bar + 0.5), scrolledTo.why.bottom <= scrolledTo.bar + 0.5]).toEqual([true, true]);
+        });
+      }
+    });
+  }
+
+  test.describe("the layout is chosen as the screen opens, and kept while it is read", () => {
+    const tops = (page: Page) => badges(page).evaluateAll((all) => [...new Set(all.map((b) => Math.round(b.getBoundingClientRect().top)))].length);
+
+    test("a browser’s bars slide away mid-scroll and the screen grows taller: the row of badges stays a row", async ({ page }) => {
+      await page.setViewportSize({ width: 390, height: 740 }); // a 390 px phone in a browser, its bars showing
+      await replay(page, "en", "Moncton");
+      expect(await tops(page)).toBe(1);
+      const before = await line(page).evaluate((el) => getComputedStyle(el).fontSize);
+
+      await openWhy(page);
+      await page.setViewportSize({ width: 390, height: 840 }); // the bars gone
+      await expect.poll(() => page.evaluate(() => window.innerHeight)).toBe(840);
+      await page.evaluate(() => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done))));
+
+      expect([await tops(page), await line(page).evaluate((el) => getComputedStyle(el).fontSize)]).toEqual([1, before]);
+      await expect(badge(page, "alert").locator(".badge-short")).toBeVisible();
+    });
+
+    test("the phone is turned (a new width): the layout is chosen again", async ({ page }) => {
+      await replay(page, "en", "Moncton"); // 390 × 844: one badge under the other
+      expect(await tops(page)).toBe(3);
+
+      await page.setViewportSize({ width: 844, height: 390 });
+      await expect.poll(() => tops(page)).toBe(1);
+    });
+  });
+
+  test("on a tall phone (390 × 844) each badge carries its full name, one under the other", async ({ page }) => {
+    await replay(page, "en", "Moncton");
+
+    const m = await measure(page);
+    expect(new Set(m.badges.map((b) => Math.round(b.left))).size).toBe(1); // one column
+    expect(m.badges[0].bottom <= m.badges[1].top && m.badges[1].bottom <= m.badges[2].top).toBe(true);
+    for (const id of ["fire", "trace", "alert"]) expect(await shown(page, id)).toMatchObject({ wordSeen: false, nameSeen: true });
+    expect(m.why.bottom).toBeLessThanOrEqual(m.bar);
+    // The panel a tap opens does not repeat the name the badge already shows.
+    const panel = await openBadge(page, "alert");
+    await expect(panel.locator(".badge-name")).toBeHidden();
   });
 });

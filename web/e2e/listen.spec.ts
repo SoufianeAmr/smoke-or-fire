@@ -204,8 +204,10 @@ function directionSaid(lang: Lang, short: string) {
 
 /** The card's line as shown, part by part, without the dots between them: "Drifting smoke", "Long Lake fire", "159 km SSW". */
 const cardParts = async (page: Page) => (await page.locator("#verdict-h .glance-part").allTextContents()).map((part) => part.replace(/\s*·$/, "").trim());
-/** The three badges' labels, top to bottom, exactly as on the screen. */
-const badgeLabels = async (page: Page) => (await page.locator("main .badge").allTextContents()).map((label) => label.trim());
+/** A button's name as the voice says it in a sentence: without the question mark it ends with ("Why?" → "Why"). */
+const nameSaid = (label: string) => label.replace(/\s*[?!.]+$/, "");
+/** The three badges' full names, in order (on a small phone each shows on a tap; it is always the button's name). */
+const badgeLabels = async (page: Page) => (await page.locator("main .badge .badge-label").allTextContents()).map((label) => label.trim());
 
 /**
  * What the verdict shows as it opens ("Why?" closed), as the voice says it: the card's line in spoken words, the
@@ -233,7 +235,7 @@ async function cardScript(page: Page, lang: Lang) {
     ...line,
     ...(await noticeScript(page, lang)),
     ...script(lang, "voice.card.badges", { fire, trace, alert }),
-    ...script(lang, "voice.card.why", { why: await text(page, "main .why-toggle") }),
+    ...script(lang, "voice.card.why", { why: nameSaid(await text(page, "main .why-toggle")) }),
     // Nothing explains the smoke: Call 911 is the screen's main action, and the voice sends to "the big red button".
     ...script(lang, state === s["card.unexplained"] ? "voice.card.call" : "voice.verdict.call"),
   ];
@@ -266,7 +268,7 @@ async function cardButtons(page: Page, lang: Lang) {
 async function cardLabels(page: Page, lang: Lang) {
   const s = STRINGS[lang];
   const notice = await noticeLink(page, lang).count();
-  return [...(notice ? [s["leave.entry"]] : []), ...(await badgeLabels(page)), s["card.why"], s["sticky.call"]];
+  return [...(notice ? [s["leave.entry"]] : []), ...(await badgeLabels(page)), nameSaid(s["card.why"]), s["sticky.call"]];
 }
 
 /** What a verdict screen shows with "Why?" open, as the voice says it: everything screens 7a–7d say. */

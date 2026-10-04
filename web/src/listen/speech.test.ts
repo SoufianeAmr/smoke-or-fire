@@ -52,6 +52,10 @@ describe("the scripts", () => {
     expect(["nine-one-one", "eight-one-one", "two-one-one", "neuf-un-un", "huit-un-un", "deux-un-un"].filter((word) => !all.includes(word))).toEqual([]);
   });
 
+  test("no sentence ends with two punctuation marks (a button’s name is said without its own “?”)", () => {
+    expect(everythingSaid().filter((s) => /[.?!…]\s*[.?!]$/.test(s))).toEqual([]);
+  });
+
   test("never the word safe, never anything against calling 911, and no {placeholder} left unfilled", () => {
     const everything = everythingSaid();
     expect(everything.filter((s) => /safe|sécuri/i.test(s))).toEqual([]);

@@ -74,14 +74,16 @@ export function GlanceLine({ card }: { card: VerdictView["card"] }) {
   );
 }
 
-// A badge's state is told by its outline and by a word in its label, never by colour alone: filled (active),
-// outlined (none in effect), dashed (not checked).
+// A badge's state is told by its outline and by a word, never by colour alone: filled (active), outlined (none in
+// effect), dashed (not checked). The word is in its name; on a small phone, where the name shows on a tap, it is the
+// short word under the icon ("None", "Not checked").
 const TONE: Record<BadgeTone, CSSProperties> = {
   active: { background: NAVY, color: "#FFFFFF", border: `2px solid ${NAVY}` },
   none: { background: "#FFFFFF", color: NAVY, border: `2px solid ${NAVY}` },
   notChecked: { background: "#FFFFFF", color: NAVY, border: `2px dashed ${NAVY}` },
 };
-const PILL: CSSProperties = { width: "100%", minHeight: "56px", display: "flex", alignItems: "center", gap: "10px", padding: "8px 14px 8px 16px", borderRadius: "28px", fontFamily: "inherit", fontSize: "18px", fontWeight: "700", lineHeight: "1.25", textAlign: "left", cursor: "pointer" };
+// Size, layout and type are in styles.css (.badge): one under the other with their names, or one row on a small phone.
+const PILL: CSSProperties = { borderRadius: "28px", fontFamily: "inherit", fontWeight: "700", lineHeight: "1.25", cursor: "pointer" };
 const ICONS: Record<Badge["icon"], (size: number) => ReactNode> = {
   satellite: (size) => <SatelliteIcon size={size} />,
   flame: (size) => <FlameIcon size={size} />,
@@ -90,26 +92,35 @@ const ICONS: Record<Badge["icon"], (size: number) => ReactNode> = {
 };
 const SOURCE_LINK: CSSProperties = { minHeight: "56px", display: "flex", alignItems: "center", gap: "12px", padding: "8px 16px", borderRadius: "18px", border: `2px solid ${NAVY}`, color: NAVY, textDecoration: "none" };
 
-/** The badges, one under the other. A tap on one shows its source, its time and its link; one is open at a time. */
+/**
+ * The badges. A tap on one shows its source, its time and its link; one is open at a time. On a tall phone they are one
+ * under the other, each with its name. On a small one (styles.css) they share one row, an icon above one word, so all
+ * three and "Why?" show above the 911 bar; the full name is still the button's name for a screen reader, and heads the
+ * panel a tap opens.
+ */
 export function Badges({ badges, title }: { badges: Badge[]; title: string }) {
   const [open, setOpen] = useState<Badge["id"] | null>(null);
   const panel = useRef<HTMLDivElement>(null);
-  // Opened, the panel scrolls clear of the 911 bar.
+  // Opened, the panel scrolls clear of the 911 bar. One taller than the room above the bar starts under its badge,
+  // which stays in view (the panel's scroll margin, styles.css), and the page scrolls on to its end.
   useEffect(() => {
     if (open) panel.current?.scrollIntoView({ block: "nearest" });
   }, [open]);
   return (
-    <div className="badges" role="group" aria-label={title} style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+    <div className="badges" role="group" aria-label={title}>
       {badges.map((badge) => (
-        <div key={badge.id} style={{ display: "flex", flexDirection: "column" }}>
-          <button type="button" className="badge press" data-badge={badge.id} data-tone={badge.tone} aria-expanded={open === badge.id} aria-controls={`badge-${badge.id}`} onClick={() => setOpen(open === badge.id ? null : badge.id)} style={{ ...PILL, ...TONE[badge.tone] }}>
+        <div key={badge.id} className="badge-slot">
+          {/* The name is given as the label too: the short word a small phone shows instead is not part of it. */}
+          <button type="button" className="badge press" data-badge={badge.id} data-tone={badge.tone} aria-label={badge.label} aria-expanded={open === badge.id} aria-controls={`badge-${badge.id}`} onClick={() => setOpen(open === badge.id ? null : badge.id)} style={{ ...PILL, ...TONE[badge.tone] }}>
             {ICONS[badge.icon](24)}
-            <span style={{ flexGrow: "1", textWrap: "balance" }}>{badge.label}</span>
-            {open === badge.id ? <ChevronUpIcon size={22} /> : <ChevronDownIcon size={22} />}
+            <span className="badge-label">{badge.label}</span>
+            <span className="badge-short">{badge.short}</span>
+            <span className="badge-chevron">{open === badge.id ? <ChevronUpIcon size={22} /> : <ChevronDownIcon size={22} />}</span>
           </button>
           {/* No display here: it would show the panel while it is hidden. */}
-          <div id={`badge-${badge.id}`} className="badge-panel" ref={open === badge.id ? panel : undefined} hidden={open !== badge.id} style={{ scrollMargin: "8px" }}>
+          <div id={`badge-${badge.id}`} className="badge-panel" ref={open === badge.id ? panel : undefined} hidden={open !== badge.id}>
             <div style={{ display: "flex", flexDirection: "column", gap: "8px", margin: "8px 0 4px", padding: "16px", borderRadius: "18px", background: "#FFFFFF", boxShadow: "0 1px 2px rgba(26, 29, 33, 0.06), 0 8px 24px rgba(26, 29, 33, 0.07)" }}>
+              <div className="badge-name">{badge.label}</div>
               {badge.lines.map((line, i) => (
                 <p key={i} style={{ margin: "0", fontSize: i === badge.lines.length - 1 ? "16px" : "18px", fontWeight: i === 0 ? "700" : "400", lineHeight: "1.45", color: i === badge.lines.length - 1 ? "#4F5561" : "#1A1D21", textWrap: "pretty" }}>{line}</p>
               ))}

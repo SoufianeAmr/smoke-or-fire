@@ -34,7 +34,7 @@ test("Moncton replay: Check → Q1 flames → Q2 sky → Q3 nearby → Location 
   await expect(page.locator("section.glance")).toHaveAttribute("data-state", "drifting");
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(`Drifting smoke${NBSP}· Long Lake fire${NBSP}· 159 km SSW`);
   const badges = page.locator("main .badge");
-  await expect(badges).toHaveText(["Satellite fire detection", "Wind trace", "ECCC air quality alert: active"]);
+  await expect(badges.locator(".badge-label")).toHaveText(["Satellite fire detection", "Wind trace", "ECCC air quality alert: active"]);
   expect(await badges.evaluateAll((els) => els.map((el) => el.getAttribute("data-badge")))).toEqual(["fire", "trace", "alert"]);
   for (const badge of await badges.all()) await expect(badge).toBeVisible();
   const why = page.getByRole("button", { name: "Why?" });

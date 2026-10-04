@@ -23,6 +23,10 @@ export interface Badge {
   icon: "satellite" | "flame" | "wind" | "bell";
   /** On the badge, and what Listen says of it. */
   label: string;
+  /** A word or two of the label, shown under the icon where the three badges share one row (a small phone). It says the
+   *  state as the outline does: the badge's own word when something was found ("Fire", "Wind", "Alert"), else "None" or
+   *  "Not checked". */
+  short: string;
   lines: string[];
   links: { label: string; host: string; url: string }[];
 }
@@ -468,6 +472,7 @@ export function verdictView(json: VerdictJson, lang: Lang, townName?: string): V
         id: "fire",
         tone: "none",
         icon: "satellite",
+        short: t("badge.short.none"),
         label: variant === "7d" ? t("badge.fire.noneRange", { km: json.rules.fireRadiusKm }) : t("badge.fire.nonePath"),
         lines: [second.body, ...(dataChecked() ?? newest ? [dataChecked() ?? newest!] : []), sourceLine(firms, cwfis)],
         links: links(firms, cwfis),
@@ -484,6 +489,7 @@ export function verdictView(json: VerdictJson, lang: Lang, townName?: string): V
       id: "fire",
       tone: "active",
       icon: satellite ? "satellite" : "flame",
+      short: t("badge.short.fire"),
       label: satellite ? t("badge.fire.satellite") : t("badge.fire.list"),
       lines: [seen(fire!) || t("badge.fire.hotspots", { n: json.rules.hotspotHours }), ...(fire!.lastSeen ? [t("badge.fire.detected", { when: at(fire!.lastSeen.time) })] : []), sourceLine(firms, cwfis)],
       links: links(firms, cwfis),
@@ -495,6 +501,7 @@ export function verdictView(json: VerdictJson, lang: Lang, townName?: string): V
     id: "trace",
     tone: "active",
     icon: "wind",
+    short: t("badge.short.trace"),
     label: t("badge.trace"),
     lines: [
       t("badge.trace.source"),
@@ -521,6 +528,7 @@ export function verdictView(json: VerdictJson, lang: Lang, townName?: string): V
         id: "alert",
         tone: "active",
         icon: "bell",
+        short: t("badge.short.alert"),
         label: t("badge.alert.active"),
         lines: [
           colour ? t("badge.alert.name.colour", { name, colour }) : name,
@@ -538,12 +546,13 @@ export function verdictView(json: VerdictJson, lang: Lang, townName?: string): V
         id: "alert",
         tone: "none",
         icon: "bell",
+        short: t("badge.short.none"),
         label: t("badge.alert.none"),
         lines: [replay ? t("badge.alert.none.replay", { when: at(json.time) }) : t("badge.alert.none.body"), ...checked, source],
         links: [page],
       };
     }
-    return { id: "alert", tone: "notChecked", icon: "bell", label: t("badge.alert.notChecked"), lines: [t("badge.alert.notChecked.body"), source], links: [page] };
+    return { id: "alert", tone: "notChecked", icon: "bell", short: t("badge.short.notChecked"), label: t("badge.alert.notChecked"), lines: [t("badge.alert.notChecked.body"), source], links: [page] };
   };
   const badges = [fireBadge(), traceBadge(), alertBadge()];
 
@@ -564,7 +573,8 @@ export function verdictView(json: VerdictJson, lang: Lang, townName?: string): V
     ...spokenLine,
     ...(notice ? say("voice.verdict.notice", { link: notice.link }) : []),
     ...say("voice.card.badges", { fire: badges[0].label, trace: badges[1].label, alert: badges[2].label }),
-    ...say("voice.card.why", { why: t("card.why") }),
+    // The button's name inside a sentence, without its own question mark: "tap the Why button."
+    ...say("voice.card.why", { why: t("card.why").replace(/\s*[?!.]+$/, "") }),
     ...say(callFirst ? "voice.card.call" : "voice.verdict.call"),
   ];
 

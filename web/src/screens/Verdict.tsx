@@ -12,6 +12,7 @@ import { ListenButton } from "../listen/ListenButton";
 import { AnswerInFull, Badges, GlanceLine, GlanceShape, Why } from "../verdict/card";
 import { AirQualityCard, ConfidenceCard, TwoPossibilitiesCard, VERDICT_ICONS, WhatToDoCard, WhyCard } from "../verdict/cards";
 import { GLANCE } from "../verdict/glance";
+import { room, useOpenedHeight } from "../verdict/room";
 import { VerdictMap } from "../verdict/VerdictMap";
 import { verdictView } from "../verdict/view";
 
@@ -19,6 +20,7 @@ export function Verdict() {
   const { result, lang, reset, place, mode } = useApp();
   const t = useT();
   const [why, setWhy] = useState(false);
+  const height = useOpenedHeight();
   if (!result) return <Navigate to="/" replace />;
 
   // A town picked from the search is named as picked, and so is every replay town (its verdict is for the town's
@@ -29,10 +31,11 @@ export function Verdict() {
   const link: CSSProperties = { minHeight: "56px", display: "flex", alignItems: "center", gap: "4px", padding: "0 10px 0 6px", color: look.ink, fontSize: "18px", fontWeight: "700", textDecoration: "none" };
 
   return (
-    <Screen>
+    // How much room there is: the badges in one row and a tighter card on a small phone (verdict/room.ts, styles.css).
+    <Screen className={room(height, view.notice !== null)}>
       <ReplayBanner />
       <section aria-labelledby="verdict-h" className="glance" data-state={view.card.state} style={{ background: look.background, color: look.ink, padding: "4px 20px 24px", display: "flex", flexDirection: "column" }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", margin: "0 -8px 0 -16px", height: "64px" }}>
+        <div className="glance-top" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", margin: "0 -8px 0 -16px", height: "64px" }}>
           <Link to="/" onClick={reset} style={link}>
             <BackIcon size={26} />
             {t("nav.newCheck")}
@@ -46,7 +49,7 @@ export function Verdict() {
         </div>
         <GlanceLine card={view.card} />
       </section>
-      <main style={{ display: "flex", flexDirection: "column", gap: "16px", padding: `16px 16px ${view.card.callFirst ? CLEAR_OF_CALL : CLEAR_OF_BAR}` }}>
+      <main className="verdict-main" style={{ display: "flex", flexDirection: "column", gap: "16px", padding: `16px 16px ${view.card.callFirst ? CLEAR_OF_CALL : CLEAR_OF_BAR}` }}>
         {view.notice && (
           // The fire is under 25 km away: follow officials, and what to do if told to leave, for this place. It stays
           // in front of "Why?": it is what to do, not why.

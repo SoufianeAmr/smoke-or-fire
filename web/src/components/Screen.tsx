@@ -16,8 +16,8 @@ export const SCREEN: CSSProperties = {
   flexDirection: "column",
 };
 
-export function Screen({ children, style }: { children: ReactNode; style?: CSSProperties }) {
-  return <div style={{ ...SCREEN, ...style }}>{children}</div>;
+export function Screen({ children, style, className }: { children: ReactNode; style?: CSSProperties; className?: string }) {
+  return <div className={className} style={{ ...SCREEN, ...style }}>{children}</div>;
 }
 
 // The sticky 911 bar and tip cards sit at the bottom of the frame in the screen files
