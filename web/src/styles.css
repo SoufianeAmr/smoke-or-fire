@@ -141,6 +141,88 @@ html:has(.sticky-first){scroll-padding-bottom:calc(176px + env(safe-area-inset-b
 @keyframes fan{to{stroke-dashoffset:0}}
 @media (prefers-reduced-motion: reduce){.flow{animation:none}.fan{animation:none;stroke-dashoffset:0}}
 
+/* 07 Verdict: the map and the sheet. The screen is as tall as the phone and does not scroll: the map fills the room
+   between the top bar and the 911 bar, and the sheet stands over its foot and scrolls inside. */
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+#verdict-h:focus{outline:none}
+/* As tall as the phone (100vh where a browser does not know dvh). A pull down on the card must not reload the page:
+   the answer would be lost. */
+.verdict-screen{height:100vh;height:100dvh}
+html:has(.verdict-screen),html:has(.verdict-screen) body{overscroll-behavior-y:none}
+.stage-wrap{position:relative;flex:1 1 auto;min-height:0;--top:64px}
+.verdict-tight .stage-wrap{--top:56px}
+.stage-wrap > .glance-top{position:absolute;inset:0 0 auto;z-index:1;background:#FAF6F0}
+.map-stage{position:absolute;inset:var(--top) 0 0;overflow:hidden;background:#D8E3EE}
+.map-outline,.map-tiles{position:absolute;inset:0;display:block}
+.map-outline{pointer-events:none}
+/* The detailed map stays out of sight, and out of reach, until it has drawn its first picture: the outline map is
+   what shows until then. */
+.map-stage[data-basemap="outline"] .map-tiles{visibility:hidden}
+/* What MapLibre's own stylesheet does for its canvas. The rest of that sheet styles controls the app does not use. */
+.maplibregl-map{overflow:hidden;-webkit-tap-highlight-color:rgb(0 0 0/0);-webkit-touch-callout:none}
+.maplibregl-canvas{position:absolute;left:0;top:0}
+.maplibregl-canvas:focus-visible{outline:3px solid #1B2A4A;outline-offset:-3px}
+.maplibregl-canvas-container.maplibregl-interactive{cursor:grab;-webkit-user-select:none;user-select:none}
+.maplibregl-canvas-container.maplibregl-interactive:active{cursor:grabbing}
+.maplibregl-canvas-container.maplibregl-touch-zoom-rotate,.maplibregl-canvas-container.maplibregl-touch-zoom-rotate .maplibregl-canvas{touch-action:pan-x pan-y}
+.maplibregl-canvas-container.maplibregl-touch-drag-pan,.maplibregl-canvas-container.maplibregl-touch-drag-pan .maplibregl-canvas{touch-action:pinch-zoom}
+.maplibregl-canvas-container.maplibregl-touch-zoom-rotate.maplibregl-touch-drag-pan,.maplibregl-canvas-container.maplibregl-touch-zoom-rotate.maplibregl-touch-drag-pan .maplibregl-canvas{touch-action:none}
+.maplibregl-control-container{display:none}
+/* The overlay (map/Overlay.tsx), in the ember palette (map/palette.ts). The ribbon is the hero: the darkest, widest
+   mark, inside a white casing that keeps it apart from whatever it crosses. While a finger moves the map, the
+   overlay's wrapper is carried by a transform (a layer of its own for that long: MapStage.tsx) and nothing in it is
+   redrawn. */
+.map-carried{position:absolute;inset:0;transform-origin:0 0;pointer-events:none}
+.map-overlay{position:absolute;display:block}
+.map-zone-casing{fill:none;stroke:#FFFFFF;stroke-opacity:0.75;stroke-width:5.5;stroke-linejoin:round}
+.map-zone{fill:none;stroke:#1A1D21;stroke-width:2.5;stroke-dasharray:9 6;stroke-linejoin:round}
+.map-ember{fill:#E8590C;fill-opacity:0.82;stroke:#7A2E06;stroke-width:1.25}
+.map-ribbon-glow{fill:none;stroke:#1B2A4A;stroke-opacity:0.13;stroke-width:16;stroke-linecap:round;stroke-linejoin:round}
+.map-trail{fill:none;stroke:#1B2A4A;stroke-opacity:0.6;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+.map-ribbon-casing{fill:none;stroke:#FFFFFF;stroke-width:9.5;stroke-linecap:round;stroke-linejoin:round}
+.map-ribbon{fill:none;stroke:#1B2A4A;stroke-width:5.5;stroke-linecap:round;stroke-linejoin:round}
+.map-bead{fill:#FFFFFF;stroke:#1B2A4A;stroke-width:2}
+.map-bead-small{stroke-width:1.5;stroke-opacity:0.7}
+.map-fire circle{fill:#1A1D21;stroke:#FFFFFF;stroke-width:2.5}
+.map-fire path{fill:#FFFFFF}
+.map-you-halo{fill:#1B2A4A;fill-opacity:0.16}
+.map-you{fill:#1B2A4A;stroke:#FFFFFF;stroke-width:3}
+.map-lbl{font-family:Inter,sans-serif;font-size:18px;font-weight:700;fill:#1A1D21}
+.map-lbl-plate{fill:#FFFFFF;fill-opacity:0.94;stroke:#1A1D21;stroke-opacity:0.18;stroke-width:1}
+.map-place{font-family:Inter,sans-serif;font-size:18px;font-weight:600;fill:#454036}
+/* The map's buttons: white with a navy outline, as the app's other secondary buttons; 56 px or more each way. */
+.map-head{position:absolute;top:12px;left:12px;right:12px;display:flex;flex-direction:column;align-items:flex-start;gap:8px;pointer-events:none}
+.map-head > *,.map-bottom > *{pointer-events:auto}
+.map-note{margin:0;padding:10px 14px;border-radius:14px;border:2px solid #1B2A4A;background:#FFFFFF;color:#1A1D21;font-size:18px;font-weight:600;line-height:1.35;text-wrap:pretty;box-shadow:0 4px 12px rgba(26,29,33,0.14)}
+.map-bottom{position:absolute;left:12px;right:12px;display:flex;align-items:flex-end;justify-content:space-between;gap:8px;pointer-events:none}
+.map-button{min-width:56px;min-height:56px;display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:0 16px 0 14px;border-radius:18px;border:2px solid #1B2A4A;background:#FFFFFF;color:#1B2A4A;font-family:inherit;font-size:18px;font-weight:700;line-height:1.2;cursor:pointer;box-shadow:0 4px 12px rgba(26,29,33,0.16)}
+.map-button:disabled{border-color:#8A8F98;color:#8A8F98;box-shadow:none;cursor:default}
+.map-zoom{display:flex;gap:8px}
+.map-zoom .map-button{width:56px;padding:0}
+/* The map's credit, in the corner Recentre takes once the map has been moved: small on the map, with 56 px to tap. */
+.map-credit{min-height:56px;display:flex;align-items:flex-end;text-decoration:none}
+.map-credit span{padding:3px 9px;border-radius:9px;background:rgba(255,255,255,0.9);color:#1A1D21;font-size:18px;font-weight:600;line-height:1.3;text-decoration:underline;text-underline-offset:3px}
+/* The legend: over the map and the sheet, never over the top bar or the 911 bar. */
+.map-legend{position:absolute;inset:var(--top) 0 0;z-index:4;overflow-y:auto;overscroll-behavior:contain;display:flex;flex-direction:column;gap:14px;padding:0 16px 20px;background:#FAF6F0}
+.map-legend-head{position:sticky;top:0;z-index:1;display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 -16px;padding:12px 16px;background:#FAF6F0}
+.map-swatch{flex-shrink:0}
+/* The sheet. Its three heights go by what it holds: the card; the card, the badges and "Why?"; everything. Its handle
+   stays at its top while it scrolls. */
+.answer-sheet{position:absolute;left:0;right:0;bottom:0;z-index:2;max-height:100%;overflow-y:auto;overscroll-behavior:contain;background:#FAF6F0;border-radius:18px 18px 0 0;box-shadow:0 -6px 24px rgba(26,29,33,0.18);scroll-padding:64px 0 12px}
+.answer-sheet[data-whole]{min-height:calc(100% - var(--top))}
+/* With only the card showing, the sheet never stands over the top bar: a card taller than the room scrolls in it. */
+.answer-sheet[data-detent="peek"]{max-height:calc(100% - var(--top))}
+.answer-sheet[data-detent="full"]{height:100%}
+.sheet-handle{position:sticky;top:0;z-index:3;width:100%;min-height:56px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:7px 16px 8px;border:0;border-radius:18px 18px 0 0;background:#FFFFFF;color:#1B2A4A;font-family:inherit;font-size:18px;font-weight:700;line-height:1.2;cursor:pointer;touch-action:none}
+.sheet-handle:focus-visible{outline-offset:-5px}
+.sheet-grip{width:44px;height:5px;border-radius:3px;background:#B9BFCB}
+.sheet-handle-label{display:flex;align-items:center;gap:6px}
+.sheet-more{display:flex;flex-direction:column;gap:16px}
+.sheet-more[hidden]{display:none}
+.verdict-tight .sheet-more{gap:10px}
+.verdict-tight .answer-sheet .glance{padding-top:8px !important;padding-bottom:10px !important}
+.verdict-tight .answer-sheet .verdict-main{padding-bottom:10px !important}
+
 /* 08 How it works */
 .how .arr{fill:#1B2A4A;stroke:#F3EEE6;stroke-width:1.5;stroke-linejoin:round}
 

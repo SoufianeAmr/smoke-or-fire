@@ -12,6 +12,7 @@ import { circleBox, textBox } from "../map/labels";
 import { Basemap, USER_XY, frameProjection, round } from "../map/basemap";
 import type { StringKey } from "../i18n";
 import { loadingVoice } from "../listen/speech";
+import { loadVerdictScreen } from "./verdictScreen";
 
 // The screen shows at least until the hour counter reaches 24 (80% of its 4.8 s animation).
 const MIN_SHOW_MS = 3900;
@@ -36,10 +37,21 @@ export function Loading() {
     let cancelled = false;
     const started = Date.now();
     setResult(null);
+    // The verdict screen's own file, and the map behind it, are fetched while this screen shows. The map is an extra:
+    // if it cannot be had, the verdict opens on the outline map.
+    const screen = loadVerdictScreen();
+    screen.then((verdict) => verdict.warmMap()).catch(() => {});
     const load = mode === "replay" ? loadReplayVerdict(place) : loadLiveVerdict(place);
-    load
-      .then((json) => {
+    Promise.all([load, screen])
+      .then(([json, verdict]) => {
         if (cancelled) return;
+        // The map itself, started ahead on the frame it will open on. Whatever goes wrong there, the answer is
+        // still given.
+        try {
+          verdict.startMap(json, lang);
+        } catch {
+          // the verdict opens on the outline map
+        }
         setResult(json);
         setTimeout(() => !cancelled && navigate("/verdict"), Math.max(0, MIN_SHOW_MS - (Date.now() - started)));
       })
@@ -47,6 +59,8 @@ export function Loading() {
     return () => {
       cancelled = true;
     };
+    // The map's names start in the language of this moment: the verdict screen sets them again as it opens.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode, place, navigate, setResult]);
 
   if (!place) return <Navigate to="/location" replace />;

@@ -1,6 +1,9 @@
-import { useLayoutEffect } from "react";
+import { Suspense, lazy, useLayoutEffect } from "react";
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-router";
-import { AppProvider } from "./app/state";
+import { AppProvider, useApp } from "./app/state";
+import { Boundary } from "./components/Boundary";
+import { Screen } from "./components/Screen";
+import { Sticky911 } from "./components/Sticky911";
 import { Trail } from "./app/trail";
 import { Check } from "./screens/Check";
 import { Emergency } from "./screens/Emergency";
@@ -14,7 +17,28 @@ import { NearbyFire } from "./screens/NearbyFire";
 import { Q1Flames } from "./screens/Q1Flames";
 import { Q2Sky } from "./screens/Q2Sky";
 import { Q3Nearby } from "./screens/Q3Nearby";
-import { Verdict } from "./screens/Verdict";
+import { loadVerdictScreen } from "./screens/verdictScreen";
+
+// The verdict screen (and the map on it) is its own file, fetched while the Loading screen shows: the first screens
+// do not carry it.
+const Verdict = lazy(() => loadVerdictScreen().then((screen) => ({ default: screen.Verdict })));
+
+/**
+ * The verdict's route. With no answer to show (a reload, a restored tab) it goes back to the start at once, without
+ * waiting for the verdict's file. While that file comes, Call 911 is on the screen. If the screen cannot be had, or
+ * breaks, the person gets the "we can't check right now" screen: what to do, and Try again.
+ */
+function VerdictRoute() {
+  const { result } = useApp();
+  if (!result) return <Navigate to="/" replace />;
+  return (
+    <Boundary fallback={<Navigate to="/no-data" replace />}>
+      <Suspense fallback={<Screen><Sticky911 /></Screen>}>
+        <Verdict />
+      </Suspense>
+    </Boundary>
+  );
+}
 
 /** Each screen opens at its top, as the screen files do. */
 function ScrollToTop() {
@@ -39,7 +63,7 @@ export function App() {
             <Route path="/nearby-fire" element={<NearbyFire />} />
             <Route path="/location" element={<Location />} />
             <Route path="/loading" element={<Loading />} />
-            <Route path="/verdict" element={<Verdict />} />
+            <Route path="/verdict" element={<VerdictRoute />} />
             <Route path="/emergency" element={<Emergency />} />
             <Route path="/leave" element={<Leave />} />
             <Route path="/how-it-works" element={<HowItWorks />} />

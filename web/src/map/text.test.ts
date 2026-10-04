@@ -56,7 +56,7 @@ describe("the legend: every layer says who it comes from, when, and gives a link
   test("the detections: how many, the newest time a satellite saw one, FIRMS and CWFIS, and that the data is recorded", () => {
     const detections = row(json(moncton), "detections");
     expect(detections.lines).toEqual([
-      "Orange dots: where a satellite saw fire in the last 24 hours. A bigger dot means more heat was measured.",
+      "Orange dots: fire detected by a satellite, seen or reported in the last 24 hours. A bigger dot means more heat was measured; with no measure, the dot is the smallest.",
       "498 detections within 500 km of Moncton.",
       "Newest one seen by a satellite: 2025-08-25, 03:29 (Atlantic time).",
       "Sources: NASA FIRMS and Natural Resources Canada (CWFIS).",
@@ -69,7 +69,7 @@ describe("the legend: every layer says who it comes from, when, and gives a link
     const fires = row(json(moncton), "fires");
     expect(fires.lines).toEqual([
       "Flame: a fire on Canada’s official active fire list that is out of control or being held.",
-      "11 within 500 km of Moncton.",
+      "11 flames within 500 km of Moncton.",
       "Source: Natural Resources Canada (CWFIS).",
       "Recorded data for the replay.",
     ]);
@@ -111,7 +111,11 @@ describe("the legend: every layer says who it comes from, when, and gives a link
   });
 
   test("never a guess: none in effect, not checked, an alert whose zone could not be drawn, and a fire source that is down", () => {
-    expect(row(json(halifax), "zone").lines[0]).toBe("No zone to draw: no ECCC air quality alert is in effect here.");
+    // The replay speaks of its own time; a live check, of now.
+    expect(row(json(halifax), "zone").lines[0]).toBe("No zone to draw: no ECCC air quality alert was in effect here at the replay time.");
+    expect(row(live(json(halifax)), "zone").lines[0]).toBe("No zone to draw: no ECCC air quality alert is in effect here.");
+    const recordedWithoutOutline = { ...json(moncton), map: { ...json(moncton).map!, alertZone: null, layers: { ...json(moncton).map!.layers, alertZone: { ...json(moncton).map!.layers.alertZone, outline: false } } } };
+    expect(row(recordedWithoutOutline, "zone").lines[0]).toBe("An ECCC air quality alert was in effect here at the replay time. Its zone could not be drawn.");
     const zone = (state: "active" | "not_checked", outline: boolean) =>
       row(live(json(moncton), (l) => ({ ...l, alertZone: { source: "eccc_geomet", state, issued: state === "active" ? "2026-10-03T12:31:43Z" : null, checkedAt: null, outline } })), "zone").lines;
     expect(zone("not_checked", false)).toEqual(["Not checked: ECCC’s alerts could not be read, so no zone is drawn.", "Data source: Environment and Climate Change Canada."]);
@@ -131,11 +135,18 @@ describe("the legend: every layer says who it comes from, when, and gives a link
   test("in French, as an equal", () => {
     expect(text(json(moncton), "fr").rows.map((r) => r.title)).toEqual(["Zone d’alerte d’ECCC", "Le trajet de l’air", "Détections de feux par satellite", "Feux de la liste officielle du Canada", "Vous", "Le fond de carte"]);
     expect(row(json(moncton), "detections", "fr").lines.slice(0, 3)).toEqual([
-      `Points orange${NBSP}: les endroits où un satellite a vu du feu dans les 24 dernières heures. Plus le point est gros, plus la chaleur mesurée est forte.`,
-      "498 détections à moins de 500 km de Moncton.",
+      `Points orange${NBSP}: feu détecté par un satellite, vu ou signalé dans les 24 dernières heures. Plus le point est gros, plus la chaleur mesurée est forte${NBSP}; sans mesure, le point est le plus petit.`,
+      "498 détections à moins de 500 km de l’endroit vérifié (Moncton).",
       `La plus récente vue par un satellite${NBSP}: 2025-08-25, 3 h 29 (heure de l’Atlantique).`,
     ]);
-    expect(row(json(moncton), "zone", "fr").lines.slice(0, 2)).toEqual([`Contour en tirets${NBSP}: la zone de prévision d’ECCC visée par l’alerte sur la qualité de l’air.`, "Émise le 2025-08-25, 4 h 50 (heure de l’Atlantique)."]);
+    expect(row(json(moncton), "zone", "fr").lines.slice(0, 2)).toEqual([`Contour en tirets${NBSP}: la zone de prévision d’ECCC visée par l’alerte de qualité de l’air.`, "Émise le 2025-08-25, 4 h 50 (heure de l’Atlantique)."]);
+  });
+
+  test("in French, no town's name follows « de » (« de Edmundston », « de Amherst » would be wrong)", () => {
+    for (const id of ["detections", "fires"]) {
+      for (const line of row(json(moncton), id, "fr").lines) expect(line).not.toMatch(/ km de Moncton/);
+    }
+    expect(row(json(moncton), "fires", "fr").lines[1]).toBe("11 flammes à moins de 500 km de l’endroit vérifié (Moncton).");
   });
 });
 
@@ -144,8 +155,8 @@ describe("what the map shows, in sentences", () => {
     const answer = json(moncton);
     expect(text(answer).summary).toEqual([
       `${verdictView(answer, "en").map.aria}.`,
-      "498 satellite fire detections from the last 24 hours are shown as orange dots.",
-      "11 fires on Canada’s official list are shown with a flame.",
+      "498 satellite fire detections, seen or reported in the last 24 hours, are shown as orange dots.",
+      "11 flames mark fires on Canada’s official list.",
       "A dashed outline shows ECCC’s forecast zone under the air quality alert.",
     ]);
     expect(text(answer).summary[0]).toMatch(/^Map: over about 6 hours, the air moved from the Long Lake fire in Nova Scotia north-northeast to Moncton\.$/);
@@ -158,9 +169,38 @@ describe("what the map shows, in sentences", () => {
   test("no detection at all says so, in words", () => {
     const answer = json(halifax);
     const empty: VerdictJson = { ...answer, map: { ...answer.map!, detections: [], fires: [], layers: { ...answer.map!.layers, detections: { ...answer.map!.layers.detections, count: 0, shown: 0, newest: null }, fires: { ...answer.map!.layers.fires, count: 0 } } } };
-    expect(text(empty).summary[1]).toBe("No satellite saw fire within 500 km in the last 24 hours.");
+    expect(text(empty).summary[1]).toBe("No satellite fire detection is reported within 500 km in the last 24 hours.");
     expect(row(empty, "detections").lines[1]).toBe("None within 500 km of Halifax.");
     expect(row(empty, "fires").lines[1]).toBe("None within 500 km of Halifax.");
+  });
+
+  test("nothing is said to be absent when its source was not checked: the summary, and so Listen, names what did not answer", () => {
+    const answer = json(halifax);
+    const none = (layers: (l: EngineMap["layers"]) => EngineMap["layers"]) => {
+      const l = answer.map!.layers;
+      const empty = { ...l, detections: { ...l.detections, count: 0, shown: 0, newest: null }, fires: { ...l.fires, count: 0 } };
+      return text(live({ ...answer, map: { ...answer.map!, detections: [], fires: [], layers: empty } }, layers));
+    };
+    const off = { ok: false, checkedAt: null };
+
+    // FIRMS did not answer and CWFIS has nothing: no "no satellite saw fire".
+    const firmsDown = none((l) => ({ ...l, detections: { ...l.detections, firms: off } }));
+    expect(firmsDown.summary.slice(1)).toEqual(["No satellite fire detection is reported within 500 km in the last 24 hours.", "NASA FIRMS: not checked."]);
+    expect(firmsDown.said.join(" ")).toContain("NASA FIRMS: not checked.");
+
+    // Neither answered: nothing is said about fire at all, only that it could not be checked.
+    const bothDown = none((l) => ({ ...l, detections: { ...l.detections, firms: off, cwfis: off }, fires: { ...l.fires, ok: false, checkedAt: null } }));
+    expect(bothDown.summary.slice(1)).toEqual(["The satellite fire detections could not be checked: none are on the map.", "NASA FIRMS: not checked.", "Natural Resources Canada (CWFIS): not checked."]);
+    expect(bothDown.summary.join(" ")).not.toMatch(/No satellite/);
+
+    // Canada's list did not answer: no flame is not "no fire on the list".
+    const listDown = none((l) => ({ ...l, fires: { ...l.fires, ok: false, checkedAt: null } }));
+    expect(listDown.summary).toContain("Natural Resources Canada (CWFIS): not checked.");
+
+    // ECCC's alerts could not be read, or the zone could not be drawn: no outline is not "no alert".
+    const zone = (state: "active" | "not_checked") => none((l) => ({ ...l, alertZone: { source: "eccc_geomet", state, issued: state === "active" ? "2026-10-03T12:31:43Z" : null, checkedAt: null, outline: false } })).summary.at(-1);
+    expect(zone("not_checked")).toBe("Not checked: ECCC’s alerts could not be read, so no zone is drawn.");
+    expect(zone("active")).toBe("An ECCC air quality alert is active here. Its zone could not be drawn.");
   });
 
   test("every sentence ends as a sentence, and none tells anyone not to call 911", () => {
@@ -173,10 +213,17 @@ describe("what the map shows, in sentences", () => {
     }
   });
 
-  test("Listen in the legend: the summary, then each layer by name with what its mark is", () => {
-    const said = text(json(moncton));
-    expect(said.voice.slice(0, said.summary.length)).toEqual(said.summary);
-    expect(said.voice.slice(said.summary.length)).toEqual(said.rows.map((r) => `${r.title}. ${r.lines[0]}`));
+  test("Listen: one sentence at a time, distances said in full; in the legend, the summary, then each layer by name with what its mark is", () => {
+    const moncton_ = text(json(moncton));
+    expect(moncton_.said).toEqual(moncton_.summary); // each of Moncton's is one sentence, with no distance in it
+    expect(moncton_.voice.slice(0, moncton_.said.length)).toEqual(moncton_.said);
+    expect(moncton_.voice.slice(moncton_.said.length, moncton_.said.length + 3)).toEqual(["ECCC alert zone.", "Dashed outline: ECCC’s forecast zone under the air quality alert.", "The air’s path."]);
+    // Halifax's first item is two sentences, with "50 km" in the second.
+    const halifax_ = text(json(halifax));
+    expect(halifax_.summary[0]).toMatch(/^Map: the air reached Halifax\. No active fire lies within 50 km of its path; .+ is off the path\.$/);
+    expect(halifax_.said.slice(0, 2)).toEqual(["Map: the air reached Halifax.", halifax_.summary[0].replace("Map: the air reached Halifax. ", "").replace("50 km", "50 kilometres")]);
+    expect(text(json(halifax), "fr").said[1]).toContain("50 kilomètres");
+    expect([...moncton_.voice, ...halifax_.voice].filter((sentence) => /\d\s*km\b/.test(sentence))).toEqual([]);
   });
 });
 
@@ -208,6 +255,7 @@ describe("no map details from the engine (an older engine)", () => {
     const { map: _, ...older } = json(bathurst);
     expect(mapText(older, verdictView(older, "en"), readMap(older), "en", "outline").rows.find((r) => r.id === "fires")!.lines).toEqual([
       "Flame: a fire on Canada’s official active fire list that is out of control or being held.",
+      "Only the fire the answer names is on the map: no details were received for any other.",
     ]);
   });
 });

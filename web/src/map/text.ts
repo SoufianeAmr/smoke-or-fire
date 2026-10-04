@@ -2,6 +2,7 @@
 // the labels drawn on it, and the legend's rows, where each layer names who it comes from, when, and a link.
 // ECCC's layer comes first. Pure: no React, no DOM.
 import { translate, type Lang, type StringKey, type Vars } from "../i18n";
+import { aloud } from "../listen/speech";
 import type { VerdictJson } from "../verdict/types";
 import { atlanticTime, type VerdictView } from "../verdict/view";
 import type { MapModel } from "./model";
@@ -24,9 +25,11 @@ export interface LegendRow {
 export interface MapText {
   /** What the map shows, one sentence per item. */
   summary: string[];
+  /** The summary as Listen says it: one sentence per utterance, distances in full. */
+  said: string[];
   labels: { you: string; fire: string | null; end: (hoursAgo: number) => string };
   rows: LegendRow[];
-  /** What Listen says in the legend: the summary, then each row's name and what its mark is. */
+  /** What Listen says in the legend: the summary, then each row's name and what its mark is, a sentence at a time. */
   voice: string[];
 }
 
@@ -39,8 +42,10 @@ export function mapText(json: VerdictJson, view: VerdictView, model: MapModel, l
   const link = (key: "badge.fire.link.firms" | "badge.fire.link.cwfis" | "layer.base.link.protomaps" | "layer.base.link.naturalEarth"): Link => ({ label: t(key), host: t(`${key}.host` as StringKey), url: t(`${key}.url` as StringKey) });
   const badge = (id: "trace" | "alert") => view.badges.find((b) => b.id === id)!;
   const layers = model.layers;
+  const replay = json.mode === "replay";
   /** When a live source was fetched; for the replay, that the data is recorded; else nothing to say. */
-  const checked = (when: string | null) => (when ? [t("layer.checked", { when: at(when) })] : json.mode === "replay" ? [t("layer.recorded")] : []);
+  const checked = (when: string | null) => (when ? [t("layer.checked", { when: at(when) })] : replay ? [t("layer.recorded")] : []);
+  const noOutline = t(replay ? "layer.zone.noOutline.replay" : "layer.zone.noOutline");
 
   // --- The rows, ECCC first -------------------------------------------------------------------------------------
   const zone = (): LegendRow => {
@@ -49,8 +54,8 @@ export function mapText(json: VerdictJson, view: VerdictView, model: MapModel, l
     const z = layers.alertZone;
     const source = t(z.source === "naad_archive" ? "badge.alert.source.replay" : "badge.alert.source");
     const asked = z.checkedAt ? [t("badge.alert.checked", { when: at(z.checkedAt) })] : [];
-    if (z.state === "active") return { ...row, lines: [t(z.outline ? "layer.zone.active" : "layer.zone.noOutline"), ...(z.issued ? [t("badge.alert.issued", { when: at(z.issued) })] : []), ...asked, source] };
-    if (z.state === "none") return { ...row, lines: [t("layer.zone.none"), ...asked, source] };
+    if (z.state === "active") return { ...row, lines: [z.outline ? t("layer.zone.active") : noOutline, ...(z.issued ? [t("badge.alert.issued", { when: at(z.issued) })] : []), ...asked, source] };
+    if (z.state === "none") return { ...row, lines: [t(replay ? "layer.zone.none.replay" : "layer.zone.none"), ...asked, source] };
     return { ...row, lines: [t("layer.zone.notChecked"), source] };
   };
 
@@ -89,10 +94,12 @@ export function mapText(json: VerdictJson, view: VerdictView, model: MapModel, l
   const fires = (): LegendRow => {
     const row = { id: "fires" as const, title: t("layer.fires") };
     // With no map details, the one flame there can be is the fire the answer names, when it is on Canada's list.
-    if (!layers) return { ...row, lines: [model.fires.length > 0 ? t("layer.fires.body") : t("layer.reduced")], links: [] };
+    if (!layers) return { ...row, lines: model.fires.length > 0 ? [t("layer.fires.body"), t("layer.fires.reduced")] : [t("layer.reduced")], links: [] };
     const f = layers.fires;
     const within = { km: layers.detections.radiusKm, town };
-    const count = f.count === 0 ? t("layer.fires.none", within) : f.count === 1 ? t("layer.fires.count.one", within) : t("layer.fires.count", { n: f.count, ...within });
+    // The flames the map draws: fires close together on the list share one.
+    const flames = model.fires.length;
+    const count = flames === 0 ? t("layer.fires.none", within) : flames === 1 ? t("layer.fires.count.one", within) : t("layer.fires.count", { n: flames, ...within });
     return {
       ...row,
       lines: f.ok ? [t("layer.fires.body"), count, t("badge.fire.source.cwfis"), ...checked(f.checkedAt)] : [t("layer.fires.body"), t("badge.fire.down.cwfis")],
@@ -113,22 +120,35 @@ export function mapText(json: VerdictJson, view: VerdictView, model: MapModel, l
   const rows = [zone(), path(), detections(), fires(), you, base];
 
   // --- What the map shows, in sentences ---------------------------------------------------------------------------
+  // Nothing is said to be absent when its source was not checked: the summary names each source that did not answer.
   const shown = model.detections.length;
   const hours = layers?.detections.hours ?? json.rules.hotspotHours;
+  const seen = (d: NonNullable<typeof layers>["detections"]) =>
+    !d.firms.ok && !d.cwfis.ok
+      ? t("map.summary.detections.notChecked")
+      : shown === 0
+        ? t("map.summary.detections.none", { km: d.radiusKm, hours })
+        : shown === 1
+          ? t("map.summary.detections.one", { hours })
+          : t("map.summary.detections", { n: shown, hours });
+  const down = layers
+    ? [...(layers.detections.firms.ok ? [] : [t("badge.fire.down.firms")]), ...(layers.detections.cwfis.ok && layers.fires.ok ? [] : [t("badge.fire.down.cwfis")])]
+    : [];
+  const zoneSaid = !layers ? [] : model.alertZone ? [t("map.summary.zone")] : layers.alertZone.state === "active" ? [noOutline] : layers.alertZone.state === "none" ? [] : [t("layer.zone.notChecked")];
   const summary = [
     sentence(view.map.aria),
-    ...(layers
-      ? [shown === 0 ? t("map.summary.detections.none", { km: layers.detections.radiusKm, hours }) : shown === 1 ? t("map.summary.detections.one", { hours }) : t("map.summary.detections", { n: shown, hours })]
-      : [t("map.note.reduced")]),
+    ...(layers ? [seen(layers.detections), ...down] : [t("map.note.reduced")]),
     ...(model.fires.length === 1 ? [t("map.summary.fires.one")] : model.fires.length > 1 ? [t("map.summary.fires", { n: model.fires.length })] : []),
-    ...(model.alertZone ? [t("map.summary.zone")] : []),
+    ...zoneSaid,
   ];
 
+  const said = summary.flatMap((item) => aloud(lang, item));
   return {
     summary,
+    said,
     labels: { you: t("layer.you"), fire: view.map.fireLabel, end: (hoursAgo) => view.map.edgeLabel(hoursAgo, null) },
     rows,
-    voice: [...summary, ...rows.map((row) => `${sentence(row.title)} ${row.lines[0]}`)],
+    voice: [...said, ...rows.flatMap((row) => aloud(lang, `${sentence(row.title)} ${row.lines[0]}`))],
   };
 }
 

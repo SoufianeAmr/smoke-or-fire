@@ -2,12 +2,12 @@
 import { expect, test } from "vitest";
 import { room } from "./room";
 
-test("a tall phone (800 px or more): the badges one under the other, nothing made smaller", () => {
-  expect([room(844, false), room(800, false), room(932, true)]).toEqual(["", "", ""]);
+test("a tall screen (980 px or more, a tablet or a computer): the badges one under the other, nothing made smaller", () => {
+  expect([room(980, false), room(1024, false), room(1180, true)]).toEqual(["", "", ""]);
 });
 
-test("under 800 px: the three badges share one row", () => {
-  expect([room(799, false), room(741, false)]).toEqual(["verdict-row", "verdict-row"]);
+test("under 980 px (every phone): the three badges share one row, so the map still shows above them", () => {
+  expect([room(979, false), room(932, true), room(844, false), room(800, false), room(741, false)]).toEqual(Array(5).fill("verdict-row"));
 });
 
 test("740 px or less: a smaller shape and line too", () => {

@@ -11,7 +11,7 @@
     "preview": "vite preview",
     "deploy": "npm run tiles && npm run build && npx --yes vercel@60 deploy dist --prod --project smoke-or-fire --scope soufianes-projects-2f519552",
     "test": "vitest run",
-    "e2e": "playwright test --project=flow --project=small-screens",
+    "e2e": "playwright test --project=flow --project=small-screens --project=map",
     "strings:todo": "node scripts/strings-todo.mjs",
     "strings:format": "node scripts/format-strings.mjs",
     "data:build": "node scripts/build-data.mjs",
@@ -19,6 +19,7 @@
     "icons": "node scripts/build-icons.mjs",
     "e2e:pixels": "playwright test --project=pixels",
     "e2e:shots": "playwright test --project=screenshots",
+    "e2e:perf": "playwright test --project=perf",
     "e2e:real": "playwright test -c playwright.real.config.ts"
   },
   "dependencies": {

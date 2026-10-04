@@ -2,6 +2,7 @@
 import { useState, type CSSProperties } from "react";
 import { Link } from "react-router";
 import { ChevronDownIcon, ChevronRightIcon, ChevronUpIcon, MapPinIcon, PhoneIcon } from "../components/icons";
+import { VERDICT_ICONS } from "./marks";
 import type { Confidence } from "./types";
 import type { AreaWide, SmokeBreak, VerdictView } from "./view";
 
@@ -37,21 +38,7 @@ export function ConfidenceCard({ view }: { view: VerdictView }) {
   );
 }
 
-const WIND_ICON = (
-  <>
-    <path d="M3 8h10a3 3 0 1 0-3-3" />
-    <path d="M3 12h15a3 3 0 1 1-3 3" />
-    <path d="M3 16h7" />
-  </>
-);
-const WARNING_ICON = (
-  <>
-    <path d="M12 3.5L2.5 20h19L12 3.5z" />
-    <path d="M12 10v4.5" />
-    <path d="M12 17.3h.01" />
-  </>
-);
-export const VERDICT_ICONS = { wind: WIND_ICON, warning: WARNING_ICON };
+const { wind: WIND_ICON, warning: WARNING_ICON } = VERDICT_ICONS;
 
 export function TwoPossibilitiesCard({ view }: { view: VerdictView }) {
   const two = view.twoPossibilities!;

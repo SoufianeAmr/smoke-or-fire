@@ -1,4 +1,4 @@
-// Place map labels (16px bold) so they stay inside the frame and do not cover markers or each other.
+// Place map labels (16px bold, or the size given) so they stay inside the frame and do not cover markers or each other.
 // The screen files place labels by hand for one sample; real data needs this to keep them readable.
 
 export interface Box {
@@ -10,10 +10,10 @@ export interface Box {
 
 const CHAR_PX = 9.6; // average advance of 16px bold Inter
 
-export const textWidth = (text: string) => text.length * CHAR_PX;
+export const textWidth = (text: string, size = 16) => (text.length * CHAR_PX * size) / 16;
 
 /** The box an SVG <text> at (x, y) covers (y is the baseline). */
-export const textBox = (text: string, x: number, y: number): Box => ({ x0: x, y0: y - 14, x1: x + textWidth(text), y1: y + 4 });
+export const textBox = (text: string, x: number, y: number, size = 16): Box => ({ x0: x, y0: y - (14 * size) / 16, x1: x + textWidth(text, size), y1: y + (4 * size) / 16 });
 
 export const circleBox = (x: number, y: number, r: number): Box => ({ x0: x - r, y0: y - r, x1: x + r, y1: y + r });
 

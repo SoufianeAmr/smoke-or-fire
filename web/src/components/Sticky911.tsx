@@ -26,7 +26,7 @@ export function Sticky911({ callFirst = false }: { callFirst?: boolean }) {
   const t = useT();
   if (callFirst) {
     return (
-      <div className="sticky-first" style={BAR_FIRST}>
+      <div className="sticky-first" data-bar911 style={BAR_FIRST}>
         <p className="sticky-look" style={{ margin: "0", fontSize: "18px", fontWeight: "700", lineHeight: "1.25", textAlign: "center", textWrap: "balance" }}>{t("sticky.look")}</p>
         <a href="tel:911" className="press sticky-call-first" style={CALL_FIRST}>
           <PhoneIcon size={32} />
@@ -36,7 +36,7 @@ export function Sticky911({ callFirst = false }: { callFirst?: boolean }) {
     );
   }
   return (
-    <div style={BAR}>
+    <div data-bar911 style={BAR}>
       <p className="sticky-title" style={{ flexGrow: "1", minWidth: "0", margin: "0", fontSize: "18px", fontWeight: "700", lineHeight: "1.25", textWrap: "balance" }}>{t("sticky.title")}</p>
       <a href="tel:911" className="press sticky-call" style={CALL}>
         <PhoneIcon size={26} />

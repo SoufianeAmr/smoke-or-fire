@@ -3,13 +3,14 @@ import { useEffect, useState } from "react";
 
 /**
  * The layout's class names (styles.css, "07 Verdict") for a screen `height` px tall:
- * - under 800 px (most phones, in a browser with its bars): the three badges share one row;
+ * - under 980 px (every phone): the three badges share one row. The sheet that holds them stands over the map: a
+ *   column of three would leave none of it showing;
  * - 740 px or less: a smaller shape and line on the card;
  * - 660 px or less: everything tighter. Also up to 740 px when `crowded`: the fire-is-close notice is on the screen,
  *   and takes the room of two rows of badges.
  */
 export function room(height: number, crowded: boolean): string {
-  return [height < 800 && "verdict-row", height <= 740 && "verdict-short", (height <= 660 || (crowded && height <= 740)) && "verdict-tight"].filter(Boolean).join(" ");
+  return [height < 980 && "verdict-row", height <= 740 && "verdict-short", (height <= 660 || (crowded && height <= 740)) && "verdict-tight"].filter(Boolean).join(" ");
 }
 
 /**

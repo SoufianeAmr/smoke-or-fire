@@ -70,8 +70,9 @@ const LABELS: Record<LabelSet, { en: string; fr: string; at: LatLon }[]> = {
   ],
 };
 
-/** Water, land, coastline, province borders and province labels (left out where they would cover `avoid`). */
-export function Basemap({ projection, width, height, lang, labels, avoid = [] }: { projection: GeoProjection; width: number; height: number; lang: Lang; labels: LabelSet; avoid?: Box[] }) {
+/** Water, land, coastline, province borders and province labels (left out where they would cover `avoid`). `labelClass`:
+ *  the labels' look, when not the screen files' (the verdict's map draws them at 18 px, 7:1 against the land). */
+export function Basemap({ projection, width, height, lang, labels, avoid = [], labelClass = "lbl-m" }: { projection: GeoProjection; width: number; height: number; lang: Lang; labels: LabelSet; avoid?: Box[]; labelClass?: string }) {
   const path = geoPath(projection);
   return (
     <>
@@ -84,7 +85,7 @@ export function Basemap({ projection, width, height, lang, labels, avoid = [] }:
         if (x < 0 || x > width - 30 || y < 18 || y > height - 4) return null;
         if (!isFree(textBox(label[lang], x, y), avoid)) return null;
         return (
-          <text key={label.en} className="lbl-m" x={Math.round(x)} y={Math.round(y)}>
+          <text key={label.en} className={labelClass} x={Math.round(x)} y={Math.round(y)}>
             {label[lang]}
           </text>
         );
