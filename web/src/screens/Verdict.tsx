@@ -3,6 +3,8 @@
 import { useState, type CSSProperties } from "react";
 import { Link, Navigate } from "react-router";
 import { useApp, useT } from "../app/state";
+import { AirOutTile } from "../airout/parts";
+import { airOutView } from "../airout/view";
 import { ReplayBanner } from "../components/ReplayBanner";
 import { Screen } from "../components/Screen";
 import { CLEAR_OF_BAR, CLEAR_OF_CALL, Sticky911 } from "../components/Sticky911";
@@ -78,7 +80,12 @@ export function Verdict() {
           <WhatToDoCard view={view} />
           <AirQualityCard view={view} />
           <WhyCard view={view} startOpen />
+          {/* Nothing explains the smoke: Call 911 stays the largest thing to tap, and the forecast, which only knows
+              fires already detected, waits here with the other details. */}
+          {view.card.callFirst && <AirOutTile view={airOutView(result, lang)} />}
         </Why>
+        {/* The best time to air out, from ECCC's smoke forecast: the one answer here, its 48 hours on a screen of its own. */}
+        {!view.card.callFirst && <AirOutTile view={airOutView(result, lang)} />}
       </main>
       <Sticky911 callFirst={view.card.callFirst} />
     </Screen>

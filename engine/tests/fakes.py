@@ -166,6 +166,50 @@ def alerts_answer(features: list[dict]) -> dict:
     }
 
 
+SMOKE_LAYER = "RAQDPS.Sfc_PM2.5-WildfireSmokePlume"
+SMOKE_RUN = "2025-08-25T00:00:00Z"
+SMOKE_ANSWERED_AT = "2025-08-25T12:00:03Z"
+
+
+def smoke_class(ugm3: float) -> str:
+    """The class of ECCC's legend a value falls in, as GetFeatureInfo names it."""
+    if ugm3 < 1:
+        return "< 1 [ug/m3]"
+    if ugm3 >= 100:
+        return ">= 100 [ug/m3]"
+    low = 1 if ugm3 < 10 else int(ugm3 // 10) * 10
+    return f"{low} - {10 if low == 1 else low + 10} [ug/m3]"
+
+
+def smoke_hour(time: str, ugm3: float, run: str = SMOKE_RUN) -> dict:
+    """ECCC's GetFeatureInfo answer for one hour of its FireWork layer at Moncton's grid cell: the value in kg/m³,
+    the class of its legend, the hour and the model run."""
+    return {
+        "type": "FeatureCollection",
+        "layer": SMOKE_LAYER,
+        "features": [
+            {
+                "type": "Feature",
+                "id": f"{SMOKE_LAYER}(-64.748697,46.132973)",
+                "geometry": {"type": "Point", "coordinates": [-64.7487, 46.1330]},
+                "properties": {
+                    "value": ugm3 * 1e-9,
+                    "class": smoke_class(ugm3),
+                    "title_en": "Total concentrations associated with forest fire and vegetation plumes: surface PM2.5 [kg/m³]",
+                    "title_fr": "Concentrations totales associées aux panaches de feux de forêt et de végétation : surface PM2.5 [kg/m³]",
+                    "time": time,
+                    "dim_reference_time": run,
+                },
+            }
+        ],
+    }
+
+
+def smoke_answers(times: list[datetime], ugm3: list[float], run: str = SMOKE_RUN) -> list[dict]:
+    """One answer per value, for the hours asked, in order."""
+    return [smoke_hour(t.strftime("%Y-%m-%dT%H:%M:%SZ"), value, run) for t, value in zip(times, ugm3)]
+
+
 MONCTON_STATION = aqhi_station("DADHJ", "Moncton", "Moncton", 46.115833, -64.803056)
 SUMMERSIDE_STATION = aqhi_station("BADSZ", "Summerside", "Summerside", 46.4, -63.79)
 
@@ -186,7 +230,7 @@ class FakeFeeds:
 
     def __init__(
         self, *, wind, active_fires=(), hotspots=(), firms=(), aqhi_stations=(), aqhi_readings=(), alerts=(), down=(),
-        checked_at=None, wind_facts=None,
+        checked_at=None, wind_facts=None, smoke=None,
     ):
         self._wind = wind
         self._active_fires = list(active_fires)
@@ -198,6 +242,10 @@ class FakeFeeds:
         # A list of `weather_alert` features, or a whole answer (a dict) to send back as it is.
         self._alerts = alerts if isinstance(alerts, dict) else alerts_answer(list(alerts))
         self.alerts_asked = []
+        # The smoke forecast: µg/m³ for each hour from the hour of the check, or answers(lat, lon, times) to send
+        # back as they are. None: no forecast, as on a replay day recorded without one.
+        self._smoke = smoke
+        self.smoke_asked = []
         self._wind_facts = dict(wind_facts or {})
         self._down = set(down)
 
@@ -245,3 +293,11 @@ class FakeFeeds:
         self.alerts_asked.append((lat, lon))
         self._check("alerts")
         return self._alerts
+
+    def smoke_forecast(self, lat, lon, times):
+        self.smoke_asked.append((lat, lon, times[0]))
+        self._check("smoke")
+        if self._smoke is None:
+            raise FeedUnavailable("no smoke forecast")
+        answers = self._smoke(lat, lon, times) if callable(self._smoke) else smoke_answers(times, self._smoke)
+        return {"fetchedAt": SMOKE_ANSWERED_AT, "answers": answers}

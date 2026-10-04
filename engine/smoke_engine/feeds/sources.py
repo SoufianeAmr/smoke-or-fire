@@ -5,6 +5,7 @@ import time
 from datetime import datetime
 from pathlib import Path
 
+from smoke_engine.smoke_forecast import LAYER as FIREWORK_LAYER
 from smoke_engine.wind import GRID_LAT_MAX, GRID_LAT_MIN, GRID_LON_MAX, GRID_LON_MIN, HEIGHTS, WIND_MODEL
 
 USER_AGENT = "smoke-or-fire-engine/0.1 (+https://github.com/; wildfire smoke verdicts for the Maritimes)"
@@ -144,6 +145,48 @@ def alerts_params(lat: float, lon: float) -> dict:
     first, gets a 200 with no alerts: it would read as "none in effect".
     """
     return {"f": "json", "bbox": f"{lon},{lat},{lon},{lat}", "skipGeometry": "true", "limit": 50}
+
+
+# --- ECCC: the FireWork smoke forecast at a point (MSC GeoMet WMS) --------------------------------
+# FIREWORK_LAYER: fine particles (PM2.5) from wildfire smoke in the air near the ground, hour by hour, from ECCC's
+# air-quality model with wildfire emissions (FireWork): a run at 00 and 12 UTC, 72 hours ahead, on a 10 km grid.
+# No key. One hour and one point per request: a list or a range of times is refused. An error comes back as XML
+# with HTTP 200; a point outside the model's domain as an empty JSON object.
+ECCC_GEOMET = "https://geo.weather.gc.ca/geomet"
+# ECCC's legend for the layer, the classes its answers name: the image, in English or French (lang=fr).
+FIREWORK_LEGEND = (
+    f"{ECCC_GEOMET}?version=1.3.0&service=WMS&request=GetLegendGraphic&sld_version=1.1.0"
+    f"&layer={FIREWORK_LAYER}&format=image/png&STYLE=PM2.5_0to100ugm3_Dis"
+)
+FIREWORK_CELL_DEG = 0.1
+
+
+def firework_point(lat: float, lon: float) -> tuple[float, float]:
+    """The point ECCC is asked about: the spot rounded to 0.1°, about one cell of the model's 10 km grid. The
+    forecast is the same anywhere in a cell, so ECCC never needs the exact spot, and neighbours share one answer."""
+    return round(lat, 1), round(lon, 1)
+
+
+def firework_params(point: tuple[float, float], time: datetime, run: datetime | None = None) -> dict:
+    """One hour of the forecast at one point: the middle pixel of a 3 × 3 map, 0.1° wide, centred on the point
+    (WMS 1.3.0 puts latitude first in EPSG:4326). `run`: the model run to read; without it, the newest."""
+    lat, lon = point
+    params = {
+        "SERVICE": "WMS",
+        "VERSION": "1.3.0",
+        "REQUEST": "GetFeatureInfo",
+        "LAYERS": FIREWORK_LAYER,
+        "QUERY_LAYERS": FIREWORK_LAYER,
+        "CRS": "EPSG:4326",
+        "BBOX": f"{lat - 0.05:.2f},{lon - 0.05:.2f},{lat + 0.05:.2f},{lon + 0.05:.2f}",
+        "WIDTH": "3",
+        "HEIGHT": "3",
+        "I": "1",
+        "J": "1",
+        "INFO_FORMAT": "application/json",
+        "TIME": _z(time),
+    }
+    return {**params, "DIM_REFERENCE_TIME": _z(run)} if run else params
 
 
 # --- NASA FIRMS: satellite fire detections (VIIRS and MODIS) -------------------------------------

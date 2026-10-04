@@ -2350,6 +2350,33 @@
    "alert": null
   }
  },
+ "smokeForecast": {
+  "state": "not_available",
+  "source": "recorded",
+  "layer": "RAQDPS.Sfc_PM2.5-WildfireSmokePlume",
+  "run": null,
+  "checkedAt": null,
+  "window": null,
+  "hours": [],
+  "rules": {
+   "hours": 48,
+   "minWindowHours": 3,
+   "maxLevel": 1,
+   "breaks": [
+    1,
+    10,
+    20,
+    30,
+    40,
+    50,
+    60,
+    70,
+    80,
+    90,
+    100
+   ]
+  }
+ },
  "sources": {
   "cwfis": {
    "ok": true,

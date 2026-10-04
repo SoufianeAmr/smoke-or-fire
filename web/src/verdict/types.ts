@@ -25,6 +25,37 @@ export interface AirQualityAlert {
   url: string | null;
 }
 
+/** One hour of ECCC's FireWork forecast at the spot. `level` is the class of ECCC's legend: 0, under 1 µg/m³ (no smoke
+ *  drawn), then 1 for 1 to 10, 2 for 10 to 20, up to 11 for 100 or more. `day`: the sun is up there. */
+export interface SmokeHour {
+  time: string;
+  ugm3: number;
+  level: number;
+  day: boolean;
+}
+
+/**
+ * ECCC's FireWork smoke forecast for the hours from the check, and the best time in them to air out a home
+ * (engine/smoke_engine/smoke_forecast.py). "none": no useful window, keep windows closed. "not_available": the engine
+ * could not read the forecast, or the replay has none recorded; never a guess.
+ */
+export interface SmokeForecast {
+  state: "window" | "none" | "not_available";
+  source: "eccc_geomet" | "recorded";
+  layer: string;
+  /** The model run every hour comes from. */
+  run: string | null;
+  /** When ECCC answered; null for a recorded forecast. */
+  checkedAt: string | null;
+  /** Low smoke from `start` to `end`, both forecast hours. `fromNow`: it starts with the hour of the check. `toEnd`: it
+   *  lasts to the forecast's last hour, so its end is not known. `level`: the highest class in it (0 or 1). */
+  window: { start: string; end: string; level: number; fromNow: boolean; toEnd: boolean } | null;
+  hours: SmokeHour[];
+  /** The rule's numbers: a window is `minWindowHours` or more at class `maxLevel` or lower; `breaks` are the classes'
+   *  lower bounds in µg/m³. */
+  rules: { hours: number; minWindowHours: number; maxLevel: number; breaks: number[] };
+}
+
 export interface PathPoint {
   hoursAgo: number;
   time: string;
@@ -141,6 +172,8 @@ export interface VerdictJson {
   alerts?: {
     airQuality: { state: AlertState; source: "eccc_geomet" | "naad_archive"; checkedAt: string | null; alert: AirQualityAlert | null };
   };
+  /** Absent from an older engine: read as not available. */
+  smokeForecast?: SmokeForecast;
   sources: {
     cwfis: { ok: boolean; checkedAt: string | null; newestDetection: string | null };
     firms: { ok: boolean; checkedAt: string | null; newestDetection: string | null; satellitesUsed: string[]; countsByLatencyClass: Record<LatencyClass, number> };

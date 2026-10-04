@@ -5,7 +5,7 @@ from datetime import datetime
 from functools import cache
 from pathlib import Path
 
-from smoke_engine.feeds import FeedUnavailable
+from smoke_engine.feeds import FeedUnavailable, sources
 from smoke_engine.places import in_ring
 
 REPLAY_DIR = Path(__file__).resolve().parents[3] / "data" / "replay" / "moncton-2025-08-25"
@@ -87,3 +87,17 @@ class ReplayFeeds:
             if at < _time(feature["properties"]["expiration_datetime"])
         ]
         return {"type": "FeatureCollection", "features": listed, "numberMatched": len(listed), "numberReturned": len(listed)}
+
+    def smoke_forecast(self, lat, lon, times):
+        """ECCC's FireWork forecast as recorded with the replay (smoke-forecast.json, written by
+        scripts/fetch_smoke_forecast.py): the answers for the point's 0.1° cell at these hours. ECCC keeps a
+        forecast about two days, so a day recorded without one has none: it cannot be fetched afterward."""
+        recorded = self._load("smoke-forecast.json")
+        point = list(sources.firework_point(lat, lon))
+        for place in recorded["points"]:
+            if place["point"] == point:
+                by_time = {_time(a["features"][0]["properties"]["time"]): a for a in place["answers"]}
+                if not all(t in by_time for t in times):
+                    raise FeedUnavailable(f"no forecast recorded for the hours from {times[0]:%Y-%m-%dT%H:%MZ}")
+                return {"answers": [by_time[t] for t in times]}
+        raise FeedUnavailable(f"no forecast recorded near {lat}, {lon}")

@@ -20,6 +20,7 @@ from fastapi.testclient import TestClient
 
 from scripts import build_demo, build_places, validate
 from smoke_engine import aqhi, detections, fires, forward, places, trajectory, verdict, wind
+from smoke_engine import smoke_forecast as air_out
 from smoke_engine.app import HOURS_BACK, REPLAY_TIME, create_app
 from smoke_engine.feeds import live, sources
 from smoke_engine.feeds.replay import REPLAY_DIR, ReplayFeeds
@@ -117,6 +118,8 @@ def data_facts() -> dict:
         "water": sorted(f["properties"]["code"] for f in areas if f["properties"]["kind"] == "water"),
         "fire_names": len(load("data/places/fire-names.json")["fires"]),
         "demo_towns": len(load("data/demo/index.json")["towns"]),
+        "forecast_recorded": (REPLAY_DIR / "smoke-forecast.json").exists(),
+        "forecast_sample": load("data/samples/smoke-forecast-moncton.json"),
     }
 
 
@@ -351,6 +354,21 @@ def document(arch: dict, data: dict, place, body: dict, merged: dict, tests: dic
         "(`test_the_forward_trace_never_changes_the_verdict` in `engine/tests/test_verdict_api.py`). The answer carries "
         f"the {forward.RELEASE_HOURS} paths of the closest height.",
         "",
+        "### The best time to air out",
+        "",
+        f"- ECCC's FireWork smoke forecast for the {air_out.HOURS} hours from the hour of the check. Each hour has the "
+        f"class of ECCC's legend for the layer: level 0 under {air_out.BREAKS[0]} µg/m³ (no smoke drawn), then "
+        f"{len(air_out.BREAKS)} classes, from {air_out.BREAKS[0]} to {air_out.BREAKS[1]} µg/m³ up to {air_out.BREAKS[-1]} "
+        "or more (`smoke_engine/smoke_forecast.py`). The class is the one ECCC's answer names; the value must sit in it.",
+        f"- The rule: the first stretch of {air_out.MIN_WINDOW_HOURS} hours or more at level 0, from its first forecast "
+        f"hour to its last; failing that, at level {air_out.MAX_LEVEL} or lower; failing that, no useful window (keep "
+        "windows closed). A stretch that starts with the hour of the check, or lasts to the forecast's last hour, says so.",
+        f"- Not available unless all {air_out.HOURS} hours were read for certain: each one answered for the hour asked, "
+        "all from one model run made before them, each value a number in the class ECCC gave it.",
+        "- Day or night for each hour: the sun's elevation at the point, by NOAA's general solar position equations.",
+        "- Informational only: it is computed after the verdict and never changes the verdict or the confidence "
+        "(`test_the_forecast_never_changes_the_verdict` in `engine/tests/test_smoke_forecast.py`).",
+        "",
         "## Data sources",
         "",
         "| Source | What the engine takes from it | Limits |",
@@ -388,6 +406,19 @@ def document(arch: dict, data: dict, place, body: dict, merged: dict, tests: dic
         "past alerts: the replay's are ECCC's own CAP-CP messages, converted from the copies the NAAD System archive "
         f"keeps (`{sources.NAAD_ARCHIVE}`). Informational only: it never changes the verdict or the confidence "
         "(`test_the_alert_never_changes_the_verdict` in `engine/tests/test_alerts.py`). |",
+        f"| ECCC FireWork | The wildfire smoke in the air near the ground at your point for each of the next "
+        f"{air_out.HOURS} hours: the concentration, the class of ECCC's legend it falls in, the hour and the model run. "
+        f"Live: `{sources.ECCC_GEOMET}` (MSC GeoMet WMS, `GetFeatureInfo` on the layer `{sources.FIREWORK_LAYER}`, no "
+        f"key), one request for each hour, {live.FORECAST_WORKERS} at a time, for the point rounded to "
+        f"{num(sources.FIREWORK_CELL_DEG)}°, with {num(live.FORECAST_TIMEOUT)} seconds for each hour and "
+        f"{num(live.FORECAST_DEADLINE)} for all; kept {span(live.FORECAST_CACHE_FOR)} for that point. Replay: "
+        f"{'a forecast recorded with the day' if data['forecast_recorded'] else 'none recorded'}. Live sample: "
+        f"`data/samples/smoke-forecast-moncton.json`, {len(data['forecast_sample']['points'][0]['answers'])} answers "
+        f"fetched {data['forecast_sample']['fetchedAt']}. | Three answers only: a best time, no useful window, not "
+        "available. The first hour's answer names the newest model run and the others are asked for that run. GeoMet "
+        "gives one hour per request, answers its own errors with HTTP 200 and XML, and keeps a run about two days: a "
+        "check for a time other than now, and a replay day recorded without its forecast, are not available. The "
+        "forecast only includes fires already detected. |",
         f"| Open-Meteo | Hourly wind speed and direction at {listed(f'`{h}`' for h in heights)}, weather model "
         f"`{wind.WIND_MODEL}`, at {len(wind.GRID_POINTS)} grid points. Live: refreshed every "
         f"{span(live.WIND_REFRESH_EVERY)}. Replay: {data['wind_points']} points × {data['wind_hours']} hours, "
@@ -435,6 +466,8 @@ def document(arch: dict, data: dict, place, body: dict, merged: dict, tests: dic
         f"- ECCC air-quality alert: {alert['state']}"
         + (f": {alert['alert']['nameEn']} for {alert['alert']['zoneEn']}, issued {alert['alert']['issued']} "
            f"(recorded message: {alert['alert']['url']})." if alert["alert"] else "."),
+        f"- ECCC smoke forecast: {body['smokeForecast']['state'].replace('_', ' ')}"
+        + (" (none was recorded on that day; ECCC keeps a forecast about two days)." if not data["forecast_recorded"] else "."),
         "",
         *validation_lines(valid),
         "## Tests",
