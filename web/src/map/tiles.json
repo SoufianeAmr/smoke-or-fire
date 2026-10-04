@@ -1,0 +1,11 @@
+{
+  "file": "maritimes-20260928.pmtiles",
+  "build": "20260928",
+  "osmDataTime": "2026-09-28T04:00:00Z",
+  "schema": "4.15.2",
+  "bbox": [-72, 41, -56, 51],
+  "minzoom": 0,
+  "maxzoom": 10,
+  "bytes": 46196672,
+  "sha256": "d64e11f7b96bfc2992439b0adc8bd16ca0b69b1f9952e4a8e2e180f89e7de6f0"
+}

@@ -90,6 +90,31 @@ export interface Forward {
   paths: { height: Height; releasedAt: string; points: { lat: number; lon: number; time: string }[] }[];
 }
 
+/**
+ * The engine's "map" key, version 1 (engine/smoke_engine/schemas/map.v1.schema.json): what the map draws, and where each
+ * layer comes from. Informational: it never changes a verdict. Read it through src/map/model.ts, which checks it.
+ */
+export interface EngineMap {
+  version: 1;
+  you: { lat: number; lon: number };
+  /** The fire the verdict features; null with no fire in range. */
+  focus: { lat: number; lon: number } | null;
+  /** The air traced backward, one trail per height; each point is one hour older than the one before. */
+  trails: { height: Height; chosen: boolean; points: { lat: number; lon: number; hoursAgo: number }[] }[];
+  /** `observed`: the time is when a satellite saw it; false, when CWFIS reported it. `frp`: megawatts, or null. */
+  detections: { lat: number; lon: number; time: string; observed: boolean; frp: number | null; by: "FIRMS" | "CWFIS" | "both" }[];
+  /** Fires on Canada's official active fire list. */
+  fires: { id: string; lat: number; lon: number; stage: string | null; sizeHa: number | null; name: string | null }[];
+  /** The outline of ECCC's forecast zone under the active alert, as closed rings of [lon, lat]. */
+  alertZone: { rings: [number, number][][] } | null;
+  layers: {
+    trails: { source: "open_meteo_gfs"; model: string; run: string | null; recordedAt: string | null };
+    detections: { hours: number; radiusKm: number; count: number; shown: number; newest: string | null; firms: { ok: boolean; checkedAt: string | null }; cwfis: { ok: boolean; checkedAt: string | null } };
+    fires: { source: "nrcan_cwfis"; ok: boolean; checkedAt: string | null; count: number };
+    alertZone: { source: "eccc_geomet" | "naad_archive"; state: AlertState; issued: string | null; checkedAt: string | null; outline: boolean };
+  };
+}
+
 export interface VerdictJson {
   mode: "live" | "replay";
   time: string;
@@ -149,4 +174,6 @@ export interface VerdictJson {
     /** The newest detection from either source, at or before the check, even if older than 24 hours. */
     newestDetection: { time: string; hoursAgo: number; minutesAgo: number } | null;
   };
+  /** Absent from an older engine, null when the engine could not build it: the map then shows what the rest says. */
+  map?: EngineMap | null;
 }
