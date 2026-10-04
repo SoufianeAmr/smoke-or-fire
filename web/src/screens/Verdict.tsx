@@ -12,6 +12,7 @@ import { useApp, useT } from "../app/state";
 import { Boundary } from "../components/Boundary";
 import { ReplayBanner } from "../components/ReplayBanner";
 import { Screen } from "../components/Screen";
+import { BurnCard } from "../burn/BurnCard";
 import { Sticky911 } from "../components/Sticky911";
 import { LangToggle } from "../components/TopBar";
 import { BackIcon, ChevronDownIcon, ChevronRightIcon, ChevronUpIcon } from "../components/icons";
@@ -249,6 +250,8 @@ export function Verdict() {
               </Why>
               {/* Protect your home from smoke: with the sources and "Why?", at the sheet's half and full heights. */}
               <ProtectLink />
+              {/* Is burning allowed today? New Brunswick only: the province's burn status for the person's county. */}
+              <BurnCard json={result} />
             </div>
           </main>
           </div>

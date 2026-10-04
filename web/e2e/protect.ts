@@ -56,6 +56,15 @@ export async function open(page: Page) {
   await expect(page.locator("main.protect-main h1")).toBeVisible();
 }
 
+/**
+ * "New check", from the verdict. Its link is in the top bar, and a raised sheet may stand over that bar (in New
+ * Brunswick the sheet at half also holds the burn card): the sheet is lowered first, as a person does ("Show the map").
+ */
+export async function newCheck(page: Page) {
+  await sheetTo(page, "peek");
+  await page.getByRole("link", { name: "New check" }).click();
+}
+
 /** A replay town's verdict, then the screen. Moncton: AQHI 10+ (very high). Halifax: 2 (low), unexplained smoke. */
 export async function replay(page: Page, lang: Lang, town = "Moncton") {
   await start(page, lang, "replay");

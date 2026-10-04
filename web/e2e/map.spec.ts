@@ -309,8 +309,10 @@ test.describe("the map opens on the person and the fire, both whole above the sh
     });
   }
 
+  // An answer with no burn status, as the engine gives outside New Brunswick: the sheet at half then holds no burn
+  // card, and a strip of the map still shows above it. (In the province the sheet stands over the map: the next test.)
   test("the frame follows the sheet while the map has not been touched: at half, the two are still whole above it", async ({ page }) => {
-    await replay(page, "en", "Moncton");
+    await live(page, "en", { ...liveAnswer("moncton"), burn: null });
     await tiles(page);
     const before = await layout(page);
     await sheetTo(page, "half");
@@ -318,6 +320,23 @@ test.describe("the map opens on the person and the fire, both whole above the sh
     const after = await layout(page);
     expect(after.sheetTop).toBeLessThan(before.sheetTop - 60);
     expect(after.focus!.y).toBeLessThan(before.focus!.y - 30); // the map moved up with it
+  });
+
+  test("in New Brunswick the sheet at half also holds “Is burning allowed today?”: taller than the map’s room, it stands over the map and the top bar, and its handle brings both back", async ({ page }) => {
+    await replay(page, "en", "Moncton");
+    await tiles(page);
+    await sheetTo(page, "half");
+    // Every fact is in the sheet as text, and the map is an extra: it gives way to what the sheet holds.
+    await expect(page.locator("main section.burn")).toBeVisible();
+    await expect(sheet(page)).toHaveAttribute("data-whole", "true");
+    await expect(stage(page)).toHaveAttribute("inert", "");
+    await expect(call(page)).toBeVisible(); // Call 911 stays at the foot of the screen
+    // One press on the handle: the map again, with New check and EN/FR in reach.
+    await expect(handle(page)).toHaveAccessibleName(s("en", "sheet.less"));
+    await handle(page).click();
+    await expect(sheet(page)).toHaveAttribute("data-detent", "peek");
+    await expect(stage(page)).not.toHaveAttribute("inert", "");
+    await page.getByRole("link", { name: s("en", "nav.newCheck") }).click({ trial: true });
   });
 });
 

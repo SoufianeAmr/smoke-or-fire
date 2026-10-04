@@ -31,3 +31,11 @@
 - With only the card showing, a tall sheet (a fire close by, French, a small phone, 200% zoom) stood over the top bar and made New check and EN/FR unreachable, with no button to lower it. At that height the sheet now stops under the bar and scrolls inside.
 - Two history steps for one double tap: the sheet and the legend live in the browser's history so Back closes them, and a second press before the first had landed went back twice, out of the verdict. A change is now asked once per history entry.
 - A headless browser draws WebGL in software, many times slower than a phone's graphics chip, and this machine (7.7 GB of memory, shared with other test runs) was at its limit all night: the map's timings are reported with both, and read with that in mind.
+- New Brunswick's burn category layer dates each category `VALIDDATE`, which reads `14:00Z` and is neither UTC nor the time of the update: it is 2 p.m. Atlantic, the end of validity, stored as wall-clock time. The server's own clock (`VALIDDATE > CURRENT_TIMESTAMP + INTERVAL '11' HOUR`) and a sister layer's noon readings stamped `13:00Z` settled it.
+- ArcGIS Server sends its errors with HTTP 200 and a body of `{"error": …}`: one is a failure, and is never kept as the province's answer.
+- The province's county outlines follow the shore, and a town's listed point can sit in its harbour (Bathurst's is 170 m out): a point in no county gets the only county within 250 m, away from every border.
+- The same outlines take in six islets of Washington County, Maine (Treat Island, Dudley Island, St. Croix Island and ledges): left out at build time.
+- The map's coarse outline takes Calais, Maine for New Brunswick: for the burn card, a point in none of the province's counties is outside the province, whatever the map says.
+- The fire season is not a calendar: 2026's opened on April 1 by the Minister's order, three weeks before the third Monday of April. A category the province gives is shown whatever the date.
+- Two Listen buttons on one screen talked over each other, and one leaving the screen cut the other's sentence: one voice at a time, and only the button that is reading can stop the voice.
+- A card computed once from the check's time kept saying "valid until 2 p.m. tomorrow" on a screen left open for days: it follows the phone's clock, never one that runs behind the check.

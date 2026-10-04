@@ -4,7 +4,7 @@
 import { test, type BrowserContext, type Page, type Request } from "@playwright/test";
 import { readFileSync } from "node:fs";
 import { TEST_ENGINE_URL } from "./engine";
-import { BANDS, LANGS, TEST_TIMEOUT, answerAt, engine, expect, live, open, protectButton, replay, start, verdictFor, type Band, type Lang } from "./protect";
+import { BANDS, LANGS, TEST_TIMEOUT, answerAt, engine, expect, live, newCheck, open, protectButton, replay, start, verdictFor, type Band, type Lang } from "./protect";
 
 test.describe.configure({ timeout: TEST_TIMEOUT });
 
@@ -670,7 +670,7 @@ test.describe("the switch: “I have asthma or COPD”", () => {
 
       // A new check, for another town.
       await page.getByRole("link", { name: "Back" }).click();
-      await page.getByRole("link", { name: "New check" }).click();
+      await newCheck(page);
       await verdictFor(page, "Halifax");
       await open(page);
       await expect(atRisk(page)).toHaveAttribute("aria-checked", "true");
@@ -814,7 +814,7 @@ test.describe("private: nothing about the switch leaves the device", () => {
     await band(page).click();
     for (const t of CONTENT.tiles) await toggle(page, t.id).click();
     await page.getByRole("link", { name: "Back" }).click();
-    await page.getByRole("link", { name: "New check" }).click();
+    await newCheck(page);
     await verdictFor(page, "Moncton"); // the engine is asked again, with the switch on
     await open(page);
     await expect(atRisk(page)).toHaveAttribute("aria-checked", String(on));

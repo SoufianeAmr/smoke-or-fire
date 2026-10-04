@@ -25,6 +25,24 @@ export interface AirQualityAlert {
   url: string | null;
 }
 
+/** New Brunswick's burn category for the county of the spot. "not_checked": the engine could not tell; never a guess. */
+export type BurnState = "no_burn" | "restricted" | "permitted" | "season_closed" | "not_checked";
+
+/** Is burning allowed today (engine/smoke_engine/burn.py). Informational only: it never changes the verdict. */
+export interface Burn {
+  state: BurnState;
+  /** "Westmorland", "Saint John"; null when the county could not be told for certain. */
+  county: string | null;
+  /** The end of the category's validity, the province's next 2 p.m. update; null unless a category is given. */
+  validUntil: string | null;
+  /** When the engine asked the province; null when it did not answer, and in the replay. */
+  checkedAt: string | null;
+  /** The replay has none: the province keeps no past categories. */
+  source: "gnb_burn_categories" | "none_recorded";
+  /** Why it is not checked. */
+  reason: string | null;
+}
+
 export interface PathPoint {
   hoursAgo: number;
   time: string;
@@ -166,6 +184,8 @@ export interface VerdictJson {
   alerts?: {
     airQuality: { state: AlertState; source: "eccc_geomet" | "naad_archive"; checkedAt: string | null; alert: AirQualityAlert | null };
   };
+  /** Null outside New Brunswick, and absent from an older engine: the burn card is not shown. */
+  burn?: Burn | null;
   sources: {
     cwfis: { ok: boolean; checkedAt: string | null; newestDetection: string | null };
     firms: { ok: boolean; checkedAt: string | null; newestDetection: string | null; satellitesUsed: string[]; countsByLatencyClass: Record<LatencyClass, number> };

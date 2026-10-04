@@ -2710,6 +2710,14 @@
    "alert": null
   }
  },
+ "burn": {
+  "state": "not_checked",
+  "county": "Westmorland",
+  "validUntil": null,
+  "checkedAt": null,
+  "source": "none_recorded",
+  "reason": "unavailable"
+ },
  "sources": {
   "cwfis": {
    "ok": true,

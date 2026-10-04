@@ -19,8 +19,8 @@ from pathlib import Path
 
 from fastapi.testclient import TestClient
 
-from scripts import build_demo, build_places, validate
-from smoke_engine import aqhi, detections, fires, forward, places, trajectory, verdict, wind
+from scripts import build_counties, build_demo, build_places, validate
+from smoke_engine import aqhi, burn, detections, fires, forward, places, trajectory, verdict, wind
 from smoke_engine.app import HOURS_BACK, REPLAY_TIME, create_app
 from smoke_engine.feeds import live, sources
 from smoke_engine.feeds.replay import REPLAY_DIR, ReplayFeeds
@@ -450,6 +450,24 @@ def document(arch: dict, data: dict, place, body: dict, merged: dict, tests: dic
         "past alerts: the replay's are ECCC's own CAP-CP messages, converted from the copies the NAAD System archive "
         f"keeps (`{sources.NAAD_ARCHIVE}`). Informational only: it never changes the verdict or the confidence "
         "(`test_the_alert_never_changes_the_verdict` in `engine/tests/test_alerts.py`). |",
+        f"| Government of New Brunswick, burn categories | Each county's burn category of the day (no burn; restricted "
+        f"burn, 8 p.m. to 8 a.m.; burn permitted) and the end of its validity, for the card \"Is burning allowed "
+        f"today?\". Live: `{sources.GNB_BURN_SERVICE}` (the layers GNB's Fire Watch dashboard draws; no key), the list "
+        f"of all {len(burn._counties())} counties, kept for {num(live.CACHE_FOR.total_seconds() / 60)} minutes, with "
+        f"{num(live.BURN_TIMEOUT)} seconds in all to answer; the person's point is never sent. The county is the one "
+        f"whose outline holds the point: the province's own outlines, bundled in `data/places/nb-counties.geojson` "
+        f"({sum(len(ring) for _, polygons in burn._counties() for _, outer, holes in polygons for ring in (outer, *holes))} "
+        f"points; {len(build_counties.IN_MAINE)} islets of the layer that are in Maine are left out). Replay: none, the "
+        f"province keeps no past categories. | Five answers only: the three categories, fire season closed, not "
+        f"checked. A category the province gives is shown whatever the date. Fire season closed: the province lists "
+        f"the county with no category, from November to March. Not checked when the province does not answer, its "
+        f"answer is not the {len(burn._counties())} counties each once, a category is not named word for word as it "
+        f"was, the category is over {num(24 + burn.LATE_UPDATE.total_seconds() / 3600)} hours old or dated more than "
+        f"{num(burn.FURTHEST_AHEAD.total_seconds() / 3600)} hours ahead, the county has no category from April to "
+        f"October, a town's point is in another county than the names database lists, or a phone's point is within "
+        f"{num(burn.NEAR_LINE_KM)} km of a county with another answer. Hidden outside New Brunswick. The service states "
+        "no licence. Informational only: it never changes the verdict or the confidence "
+        "(`test_the_burn_status_never_changes_the_verdict` in `engine/tests/test_burn.py`). |",
         f"| Open-Meteo | Hourly wind speed and direction at {listed(f'`{h}`' for h in heights)}, weather model "
         f"`{wind.WIND_MODEL}`, at {len(wind.GRID_POINTS)} grid points. Live: refreshed every "
         f"{span(live.WIND_REFRESH_EVERY)}. Replay: {data['wind_points']} points × {data['wind_hours']} hours, "
@@ -497,6 +515,8 @@ def document(arch: dict, data: dict, place, body: dict, merged: dict, tests: dic
         f"- ECCC air-quality alert: {alert['state']}"
         + (f": {alert['alert']['nameEn']} for {alert['alert']['zoneEn']}, issued {alert['alert']['issued']} "
            f"(recorded message: {alert['alert']['url']})." if alert["alert"] else "."),
+        f"- Burning allowed today: {body['burn']['state'].replace('_', ' ')} for {body['burn']['county']} County "
+        "(no burn category was recorded: the province keeps no past ones).",
         "",
         *validation_lines(valid),
         *map_lines(on_map),
