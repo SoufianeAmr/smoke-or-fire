@@ -146,6 +146,11 @@ def alerts_params(lat: float, lon: float) -> dict:
     return {"f": "json", "bbox": f"{lon},{lat},{lon},{lat}", "skipGeometry": "true", "limit": 50}
 
 
+def alert_zones_params(lat: float, lon: float) -> dict:
+    """The same alerts with the outline of each one's forecast zone: the map draws the zone under an active alert."""
+    return {key: value for key, value in alerts_params(lat, lon).items() if key != "skipGeometry"}
+
+
 # --- NASA FIRMS: satellite fire detections (VIIRS and MODIS) -------------------------------------
 # The MAP_KEY sits inside every URL: never print, log or save a URL or error without mask_key().
 FIRMS_API = "https://firms.modaps.eosdis.nasa.gov/api"

@@ -1,0 +1,172 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://smoke-or-fire.vercel.app/schemas/map.v1.schema.json",
+  "title": "Smoke or Fire? engine: the \"map\" key of GET /verdict, version 1",
+  "description": "What the map draws and where each layer comes from. Informational: it is built after the verdict and never changes a verdict or its confidence. Every layer names its source and its time; null means not known, never a guess. Versioning: a new optional field keeps the version; a field removed or given another meaning makes version 2, and a reader that does not know a version treats the key as missing.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "you", "focus", "trails", "detections", "fires", "alertZone", "layers"],
+  "properties": {
+    "version": { "const": 1 },
+    "you": { "$ref": "#/$defs/point", "description": "The spot that was checked." },
+    "focus": {
+      "description": "The fire the verdict features (the one on the air's path, else the nearest): the map opens on it and on the person. Null with no fire in range.",
+      "anyOf": [{ "$ref": "#/$defs/point" }, { "type": "null" }]
+    },
+    "trails": {
+      "description": "The air traced backward from the person, one trail per height, in the order of rules.heights. Each point is one hour older than the one before; the first is the person.",
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["height", "chosen", "points"],
+        "properties": {
+          "height": { "enum": ["100m", "925hPa", "850hPa"] },
+          "chosen": { "type": "boolean", "description": "The height that gave the verdict." },
+          "points": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["lat", "lon", "hoursAgo"],
+              "properties": { "lat": { "$ref": "#/$defs/lat" }, "lon": { "$ref": "#/$defs/lon" }, "hoursAgo": { "type": "integer", "minimum": 0 } }
+            }
+          }
+        }
+      }
+    },
+    "detections": {
+      "description": "Satellite fire detections the verdict used: the last layers.detections.hours hours, within layers.detections.radiusKm of the person, oldest first. When there are more than the map carries, the newest are kept and layers.detections.count says how many there are.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["lat", "lon", "time", "observed", "frp", "by"],
+        "properties": {
+          "lat": { "$ref": "#/$defs/lat" },
+          "lon": { "$ref": "#/$defs/lon" },
+          "time": { "$ref": "#/$defs/time" },
+          "observed": { "type": "boolean", "description": "True: time is when a satellite saw it (NASA FIRMS). False: time is when CWFIS reported it, which can be hours later." },
+          "frp": { "description": "Fire radiative power in megawatts; null when the source gives none.", "type": ["number", "null"], "minimum": 0 },
+          "by": { "enum": ["FIRMS", "CWFIS", "both"] }
+        }
+      }
+    },
+    "fires": {
+      "description": "Fires on Canada's official active fire list (NRCan CWFIS) that are out of control or being held, within layers.detections.radiusKm of the person.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "lat", "lon", "stage", "sizeHa", "name"],
+        "properties": {
+          "id": { "type": "string" },
+          "lat": { "$ref": "#/$defs/lat" },
+          "lon": { "$ref": "#/$defs/lon" },
+          "stage": { "type": ["string", "null"] },
+          "sizeHa": { "type": ["number", "null"] },
+          "name": { "description": "The fire's public name, when the engine knows one.", "type": ["string", "null"] }
+        }
+      }
+    },
+    "alertZone": {
+      "description": "The outline of ECCC's forecast zone under the active air-quality alert, simplified. Null with no active alert, and when the outline could not be read.",
+      "anyOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["rings"],
+          "properties": {
+            "rings": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "description": "A closed ring of [lon, lat] pairs.",
+                "type": "array",
+                "minItems": 4,
+                "items": { "type": "array", "prefixItems": [{ "$ref": "#/$defs/lon" }, { "$ref": "#/$defs/lat" }], "items": false, "minItems": 2 }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "layers": {
+      "description": "Where each layer comes from, and its time.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["trails", "detections", "fires", "alertZone"],
+      "properties": {
+        "trails": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["source", "model", "run", "recordedAt"],
+          "properties": {
+            "source": { "const": "open_meteo_gfs" },
+            "model": { "type": "string" },
+            "run": { "description": "The newest model run in the live winds.", "anyOf": [{ "$ref": "#/$defs/time" }, { "type": "null" }] },
+            "recordedAt": { "description": "When the replay's winds were downloaded.", "anyOf": [{ "$ref": "#/$defs/time" }, { "type": "null" }] }
+          }
+        },
+        "detections": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["hours", "radiusKm", "count", "shown", "newest", "firms", "cwfis"],
+          "properties": {
+            "hours": { "type": "integer", "minimum": 1 },
+            "radiusKm": { "type": "number", "minimum": 0 },
+            "count": { "type": "integer", "minimum": 0 },
+            "shown": { "type": "integer", "minimum": 0 },
+            "newest": { "description": "The newest time a satellite saw one of them; never a report time.", "anyOf": [{ "$ref": "#/$defs/time" }, { "type": "null" }] },
+            "firms": { "$ref": "#/$defs/source" },
+            "cwfis": { "$ref": "#/$defs/source" }
+          }
+        },
+        "fires": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["source", "ok", "checkedAt", "count"],
+          "properties": {
+            "source": { "const": "nrcan_cwfis" },
+            "ok": { "type": "boolean" },
+            "checkedAt": { "anyOf": [{ "$ref": "#/$defs/time" }, { "type": "null" }] },
+            "count": { "type": "integer", "minimum": 0 }
+          }
+        },
+        "alertZone": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["source", "state", "issued", "checkedAt", "outline"],
+          "properties": {
+            "source": { "enum": ["eccc_geomet", "naad_archive"] },
+            "state": { "enum": ["active", "none", "not_checked"] },
+            "issued": { "description": "When ECCC issued the active alert.", "anyOf": [{ "$ref": "#/$defs/time" }, { "type": "null" }] },
+            "checkedAt": { "description": "When ECCC answered; null for recorded messages.", "anyOf": [{ "$ref": "#/$defs/time" }, { "type": "null" }] },
+            "outline": { "type": "boolean", "description": "Whether alertZone holds the zone's outline." }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "lat": { "type": "number", "minimum": -90, "maximum": 90 },
+    "lon": { "type": "number", "minimum": -180, "maximum": 180 },
+    "time": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$" },
+    "point": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["lat", "lon"],
+      "properties": { "lat": { "$ref": "#/$defs/lat" }, "lon": { "$ref": "#/$defs/lon" } }
+    },
+    "source": {
+      "description": "Whether the source answered, and when its answer was fetched (null for recorded data).",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ok", "checkedAt"],
+      "properties": { "ok": { "type": "boolean" }, "checkedAt": { "anyOf": [{ "$ref": "#/$defs/time" }, { "type": "null" }] } }
+    }
+  }
+}

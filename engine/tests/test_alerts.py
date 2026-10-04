@@ -208,7 +208,10 @@ def test_the_alert_never_changes_the_verdict(fires):
         answers.append(client.get("/verdict", params={**MONCTON, "time": NOON_UTC, "mode": "live"}).json())
 
     states = [body.pop("alerts")["airQuality"]["state"] for body in answers]
-    assert (states, answers[0] == answers[1] == answers[2]) == (["active", "none", "not_checked"], True)
+    # The map draws the alert's zone and names its state: that layer follows the alert, and nothing else does.
+    drawn = [(body["map"].pop("alertZone"), body["map"]["layers"].pop("alertZone")["state"]) for body in answers]
+    assert (states, [state for _, state in drawn]) == (["active", "none", "not_checked"], ["active", "none", "not_checked"])
+    assert answers[0] == answers[1] == answers[2]
 
 
 # --- the live feed, with ECCC and Open-Meteo faked at the HTTP transport ---------------------------

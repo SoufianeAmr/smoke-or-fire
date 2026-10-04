@@ -960,5 +960,447 @@
    "hoursAgo": 29,
    "minutesAgo": 1752
   }
+ },
+ "map": {
+  "version": 1,
+  "you": {
+   "lat": 46.09948,
+   "lon": -64.7998
+  },
+  "focus": null,
+  "trails": [
+   {
+    "height": "100m",
+    "chosen": true,
+    "points": [
+     {
+      "lat": 46.0995,
+      "lon": -64.7998,
+      "hoursAgo": 0
+     },
+     {
+      "lat": 46.3072,
+      "lon": -64.7048,
+      "hoursAgo": 1
+     },
+     {
+      "lat": 46.4912,
+      "lon": -64.6557,
+      "hoursAgo": 2
+     },
+     {
+      "lat": 46.6381,
+      "lon": -64.6011,
+      "hoursAgo": 3
+     },
+     {
+      "lat": 46.7386,
+      "lon": -64.4938,
+      "hoursAgo": 4
+     },
+     {
+      "lat": 46.8033,
+      "lon": -64.3698,
+      "hoursAgo": 5
+     },
+     {
+      "lat": 46.8421,
+      "lon": -64.2547,
+      "hoursAgo": 6
+     },
+     {
+      "lat": 46.8833,
+      "lon": -64.1335,
+      "hoursAgo": 7
+     },
+     {
+      "lat": 46.9431,
+      "lon": -64.0164,
+      "hoursAgo": 8
+     },
+     {
+      "lat": 47.0029,
+      "lon": -63.9164,
+      "hoursAgo": 9
+     },
+     {
+      "lat": 47.0607,
+      "lon": -63.8429,
+      "hoursAgo": 10
+     },
+     {
+      "lat": 47.1135,
+      "lon": -63.8072,
+      "hoursAgo": 11
+     },
+     {
+      "lat": 47.1486,
+      "lon": -63.8115,
+      "hoursAgo": 12
+     },
+     {
+      "lat": 47.1696,
+      "lon": -63.8629,
+      "hoursAgo": 13
+     },
+     {
+      "lat": 47.1827,
+      "lon": -63.9483,
+      "hoursAgo": 14
+     },
+     {
+      "lat": 47.1925,
+      "lon": -64.0482,
+      "hoursAgo": 15
+     },
+     {
+      "lat": 47.2028,
+      "lon": -64.1599,
+      "hoursAgo": 16
+     },
+     {
+      "lat": 47.2132,
+      "lon": -64.2861,
+      "hoursAgo": 17
+     },
+     {
+      "lat": 47.2221,
+      "lon": -64.43,
+      "hoursAgo": 18
+     },
+     {
+      "lat": 47.2287,
+      "lon": -64.5872,
+      "hoursAgo": 19
+     },
+     {
+      "lat": 47.2348,
+      "lon": -64.7506,
+      "hoursAgo": 20
+     },
+     {
+      "lat": 47.2465,
+      "lon": -64.9171,
+      "hoursAgo": 21
+     },
+     {
+      "lat": 47.2685,
+      "lon": -65.0883,
+      "hoursAgo": 22
+     },
+     {
+      "lat": 47.2959,
+      "lon": -65.2621,
+      "hoursAgo": 23
+     },
+     {
+      "lat": 47.3216,
+      "lon": -65.4358,
+      "hoursAgo": 24
+     }
+    ]
+   },
+   {
+    "height": "925hPa",
+    "chosen": false,
+    "points": [
+     {
+      "lat": 46.0995,
+      "lon": -64.7998,
+      "hoursAgo": 0
+     },
+     {
+      "lat": 46.3756,
+      "lon": -64.4457,
+      "hoursAgo": 1
+     },
+     {
+      "lat": 46.6004,
+      "lon": -64.1425,
+      "hoursAgo": 2
+     },
+     {
+      "lat": 46.7683,
+      "lon": -63.8997,
+      "hoursAgo": 3
+     },
+     {
+      "lat": 46.8793,
+      "lon": -63.7028,
+      "hoursAgo": 4
+     },
+     {
+      "lat": 46.9476,
+      "lon": -63.5175,
+      "hoursAgo": 5
+     },
+     {
+      "lat": 46.998,
+      "lon": -63.3378,
+      "hoursAgo": 6
+     },
+     {
+      "lat": 47.0612,
+      "lon": -63.1845,
+      "hoursAgo": 7
+     },
+     {
+      "lat": 47.1258,
+      "lon": -63.0757,
+      "hoursAgo": 8
+     },
+     {
+      "lat": 47.1625,
+      "lon": -63.016,
+      "hoursAgo": 9
+     },
+     {
+      "lat": 47.1801,
+      "lon": -62.9911,
+      "hoursAgo": 10
+     },
+     {
+      "lat": 47.1924,
+      "lon": -63.0012,
+      "hoursAgo": 11
+     },
+     {
+      "lat": 47.1971,
+      "lon": -63.0484,
+      "hoursAgo": 12
+     },
+     {
+      "lat": 47.1877,
+      "lon": -63.1375,
+      "hoursAgo": 13
+     },
+     {
+      "lat": 47.162,
+      "lon": -63.2579,
+      "hoursAgo": 14
+     },
+     {
+      "lat": 47.1261,
+      "lon": -63.391,
+      "hoursAgo": 15
+     },
+     {
+      "lat": 47.0925,
+      "lon": -63.5388,
+      "hoursAgo": 16
+     },
+     {
+      "lat": 47.0669,
+      "lon": -63.7056,
+      "hoursAgo": 17
+     },
+     {
+      "lat": 47.0496,
+      "lon": -63.8899,
+      "hoursAgo": 18
+     },
+     {
+      "lat": 47.0448,
+      "lon": -64.0915,
+      "hoursAgo": 19
+     },
+     {
+      "lat": 47.0471,
+      "lon": -64.3062,
+      "hoursAgo": 20
+     },
+     {
+      "lat": 47.0544,
+      "lon": -64.5233,
+      "hoursAgo": 21
+     },
+     {
+      "lat": 47.0775,
+      "lon": -64.7426,
+      "hoursAgo": 22
+     },
+     {
+      "lat": 47.1206,
+      "lon": -64.9693,
+      "hoursAgo": 23
+     },
+     {
+      "lat": 47.183,
+      "lon": -65.2071,
+      "hoursAgo": 24
+     }
+    ]
+   },
+   {
+    "height": "850hPa",
+    "chosen": false,
+    "points": [
+     {
+      "lat": 46.0995,
+      "lon": -64.7998,
+      "hoursAgo": 0
+     },
+     {
+      "lat": 46.2806,
+      "lon": -64.2728,
+      "hoursAgo": 1
+     },
+     {
+      "lat": 46.4041,
+      "lon": -63.7813,
+      "hoursAgo": 2
+     },
+     {
+      "lat": 46.4736,
+      "lon": -63.353,
+      "hoursAgo": 3
+     },
+     {
+      "lat": 46.5187,
+      "lon": -63.0201,
+      "hoursAgo": 4
+     },
+     {
+      "lat": 46.5361,
+      "lon": -62.7534,
+      "hoursAgo": 5
+     },
+     {
+      "lat": 46.5114,
+      "lon": -62.5282,
+      "hoursAgo": 6
+     },
+     {
+      "lat": 46.4525,
+      "lon": -62.3423,
+      "hoursAgo": 7
+     },
+     {
+      "lat": 46.3886,
+      "lon": -62.2071,
+      "hoursAgo": 8
+     },
+     {
+      "lat": 46.3205,
+      "lon": -62.1213,
+      "hoursAgo": 9
+     },
+     {
+      "lat": 46.2419,
+      "lon": -62.0764,
+      "hoursAgo": 10
+     },
+     {
+      "lat": 46.1617,
+      "lon": -62.0658,
+      "hoursAgo": 11
+     },
+     {
+      "lat": 46.085,
+      "lon": -62.0902,
+      "hoursAgo": 12
+     },
+     {
+      "lat": 46.0063,
+      "lon": -62.1432,
+      "hoursAgo": 13
+     },
+     {
+      "lat": 45.9307,
+      "lon": -62.2219,
+      "hoursAgo": 14
+     },
+     {
+      "lat": 45.8588,
+      "lon": -62.3283,
+      "hoursAgo": 15
+     },
+     {
+      "lat": 45.7882,
+      "lon": -62.4513,
+      "hoursAgo": 16
+     },
+     {
+      "lat": 45.7191,
+      "lon": -62.58,
+      "hoursAgo": 17
+     },
+     {
+      "lat": 45.6572,
+      "lon": -62.7191,
+      "hoursAgo": 18
+     },
+     {
+      "lat": 45.6156,
+      "lon": -62.8921,
+      "hoursAgo": 19
+     },
+     {
+      "lat": 45.5851,
+      "lon": -63.1061,
+      "hoursAgo": 20
+     },
+     {
+      "lat": 45.5525,
+      "lon": -63.3474,
+      "hoursAgo": 21
+     },
+     {
+      "lat": 45.521,
+      "lon": -63.6004,
+      "hoursAgo": 22
+     },
+     {
+      "lat": 45.4857,
+      "lon": -63.8648,
+      "hoursAgo": 23
+     },
+     {
+      "lat": 45.4437,
+      "lon": -64.1495,
+      "hoursAgo": 24
+     }
+    ]
+   }
+  ],
+  "detections": [],
+  "fires": [],
+  "alertZone": null,
+  "layers": {
+   "trails": {
+    "source": "open_meteo_gfs",
+    "model": "gfs025",
+    "run": null,
+    "recordedAt": "2026-09-27T03:09:18Z"
+   },
+   "detections": {
+    "hours": 24,
+    "radiusKm": 500.0,
+    "count": 0,
+    "shown": 0,
+    "newest": null,
+    "firms": {
+     "ok": true,
+     "checkedAt": null
+    },
+    "cwfis": {
+     "ok": true,
+     "checkedAt": null
+    }
+   },
+   "fires": {
+    "source": "nrcan_cwfis",
+    "ok": true,
+    "checkedAt": null,
+    "count": 0
+   },
+   "alertZone": {
+    "source": "naad_archive",
+    "state": "not_checked",
+    "issued": null,
+    "checkedAt": null,
+    "outline": false
+   }
+  }
  }
 }

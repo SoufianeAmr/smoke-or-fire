@@ -10,7 +10,8 @@ thread every 10 minutes, and saved to disk the same way. Detections older than
 30 minutes count as FIRMS being down. The MAP_KEY is masked in every log line,
 error and saved file.
 CWFIS fires and AQHI: fetched when asked, cached for 15 minutes.
-ECCC alerts: asked at every check, never cached, and given 5 seconds to answer.
+ECCC alerts: asked at every check, never cached, and given 5 seconds to answer. When an alert is active, a
+second query asks for its zone's outline (for the map), with 5 seconds of its own.
 """
 
 import json
@@ -319,6 +320,18 @@ class LiveFeeds:
             raise FeedUnavailable(f"{sources.ECCC_ALERTS}: no alerts kept for {at:%Y-%m-%dT%H:%MZ}")
         try:
             response = self._client.get(sources.ECCC_ALERTS, params=sources.alerts_params(lat, lon), timeout=ALERTS_TIMEOUT)
+            response.raise_for_status()
+            return response.json()
+        except (httpx.HTTPError, ValueError) as error:
+            raise FeedUnavailable(f"{sources.ECCC_ALERTS}: {type(error).__name__}: {error}") from error
+
+    def alert_zones(self, lat, lon, at):
+        """The alerts in effect at the point with their zones' outlines, for the map: asked only when an alert is
+        active, in a query of its own, so the alert check above stays as small and as quick as it was."""
+        if abs(self._now() - at) > CACHE_FOR:
+            raise FeedUnavailable(f"{sources.ECCC_ALERTS}: no alerts kept for {at:%Y-%m-%dT%H:%MZ}")
+        try:
+            response = self._client.get(sources.ECCC_ALERTS, params=sources.alert_zones_params(lat, lon), timeout=ALERTS_TIMEOUT)
             response.raise_for_status()
             return response.json()
         except (httpx.HTTPError, ValueError) as error:

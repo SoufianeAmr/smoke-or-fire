@@ -152,6 +152,12 @@ def weather_alert(
 
 
 FROST_ADVISORY = weather_alert(code="FTA", name_en="frost advisory", name_fr="avis de gel")
+
+
+def zone_of(alert: dict, coordinates: list, kind: str = "Polygon") -> dict:
+    """The same alert as the query without skipGeometry returns it: with its forecast zone's outline ([lon, lat] rings)."""
+    return {**alert, "geometry": {"type": kind, "coordinates": coordinates}}
+
 ALERTS_ANSWERED_AT = "2025-08-25T12:00:02.000000Z"
 
 
@@ -185,7 +191,7 @@ class FakeFeeds:
     """`down` names feeds that fail, the way a live feed fails when its service is down."""
 
     def __init__(
-        self, *, wind, active_fires=(), hotspots=(), firms=(), aqhi_stations=(), aqhi_readings=(), alerts=(), down=(),
+        self, *, wind, active_fires=(), hotspots=(), firms=(), aqhi_stations=(), aqhi_readings=(), alerts=(), zones=(), down=(),
         checked_at=None, wind_facts=None,
     ):
         self._wind = wind
@@ -198,6 +204,9 @@ class FakeFeeds:
         # A list of `weather_alert` features, or a whole answer (a dict) to send back as it is.
         self._alerts = alerts if isinstance(alerts, dict) else alerts_answer(list(alerts))
         self.alerts_asked = []
+        # The alerts at the point with their zones' outlines (`zone_of`), or a whole answer (a dict).
+        self._zones = zones if isinstance(zones, dict) else alerts_answer(list(zones))
+        self.zones_asked = []
         self._wind_facts = dict(wind_facts or {})
         self._down = set(down)
 
@@ -245,3 +254,8 @@ class FakeFeeds:
         self.alerts_asked.append((lat, lon))
         self._check("alerts")
         return self._alerts
+
+    def alert_zones(self, lat, lon, at):
+        self.zones_asked.append((lat, lon))
+        self._check("zones")
+        return self._zones
