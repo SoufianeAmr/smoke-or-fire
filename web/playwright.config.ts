@@ -1,16 +1,20 @@
 import { defineConfig } from "@playwright/test";
 import { TEST_ENGINE_URL } from "./e2e/engine";
 
+// The port the test build is served on: 4173, or E2E_PORT when another run on this machine already holds it.
+const PORT = Number(process.env.E2E_PORT ?? 4173);
+const SITE = `http://localhost:${PORT}`;
+
 // Browser tests run against a production build, at the screen files' 390 × 844. It goes to dist-e2e/,
 // built with a stand-in engine URL, so the deployable dist/ never carries it.
 export default defineConfig({
   testDir: "e2e",
   outputDir: "test-results",
-  use: { baseURL: "http://localhost:4173", viewport: { width: 390, height: 844 } },
+  use: { baseURL: SITE, viewport: { width: 390, height: 844 } },
   webServer: {
-    command: "npm run build -- --outDir dist-e2e && npx vite preview --outDir dist-e2e --port 4173 --strictPort",
+    command: `npm run build -- --outDir dist-e2e && npx vite preview --outDir dist-e2e --port ${PORT} --strictPort`,
     env: { VITE_ENGINE_URL: TEST_ENGINE_URL },
-    url: "http://localhost:4173",
+    url: SITE,
     reuseExistingServer: true,
     timeout: 180_000,
   },
