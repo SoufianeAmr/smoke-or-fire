@@ -9,6 +9,8 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperti
 import { Link, Navigate } from "react-router";
 import { useBackState } from "../app/back";
 import { useApp, useT } from "../app/state";
+import { AirOutTile } from "../airout/parts";
+import { airOutView } from "../airout/view";
 import { Boundary } from "../components/Boundary";
 import { ReplayBanner } from "../components/ReplayBanner";
 import { Screen } from "../components/Screen";
@@ -86,9 +88,12 @@ export function Verdict() {
           <WhatToDoCard view={view} />
           <AirQualityCard view={view} />
           <WhyCard view={view} startOpen />
+          {/* Nothing explains the smoke: Call 911 stays the largest thing to tap, and the forecast, which only knows
+              fires already detected, waits here with the other details. */}
+          {view.card.callFirst && <AirOutTile view={airOutView(result, lang)} />}
         </>
       ) : null,
-    [result, view, open],
+    [result, view, open, lang],
   );
 
   // How much of the map the sheet covers, and how tall the 911 bar is (its French line can wrap): the map's frame and
@@ -250,6 +255,8 @@ export function Verdict() {
               </Why>
               {/* Protect your home from smoke: with the sources and "Why?", at the sheet's half and full heights. */}
               <ProtectLink />
+              {/* The best time to air out, from ECCC's smoke forecast: the one answer here, its 48 hours on a screen of its own. */}
+              {!view.card.callFirst && <AirOutTile view={airOutView(result, lang)} />}
               {/* Is burning allowed today? New Brunswick only: the province's burn status for the person's county. */}
               <BurnCard json={result} />
             </div>

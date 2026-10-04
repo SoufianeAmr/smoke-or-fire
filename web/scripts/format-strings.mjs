@@ -3,8 +3,9 @@
 //   node scripts/format-strings.mjs
 import { readFileSync, writeFileSync } from "node:fs";
 
-for (const name of ["en", "fr"]) {
-  const url = new URL(`../src/i18n/${name}.json`, import.meta.url);
+// The shared tables, and the words that ship with a later screen's own files.
+for (const file of ["i18n/en.json", "i18n/fr.json", "airout/strings.en.json", "airout/strings.fr.json"]) {
+  const url = new URL(`../src/${file}`, import.meta.url);
   const strings = JSON.parse(readFileSync(url, "utf8"));
   const text = JSON.stringify(strings, null, 2).replace(/[ ‑ ]/g, (c) => "\\u" + c.charCodeAt(0).toString(16).padStart(4, "0"));
   writeFileSync(url, text + "\n", "utf8");

@@ -57,6 +57,23 @@ function ProtectRoute() {
   );
 }
 
+// "Best time to air out your home" likewise: its 48-hour strip is fetched when its tile on the verdict is pressed.
+const AirOut = lazy(() => import("./screens/AirOut").then((screen) => ({ default: screen.AirOut })));
+
+/** Its route: as protect's. */
+function AirOutRoute() {
+  const { result } = useApp();
+  if (!result) return <Navigate to="/" replace />;
+  return (
+    <Boundary fallback={<Navigate to="/no-data" replace />}>
+      <Suspense fallback={<Screen><Sticky911 /></Screen>}>
+        <AirOut />
+      </Suspense>
+    </Boundary>
+  );
+}
+
+
 /** Each screen opens at its top, as the screen files do. */
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -82,6 +99,7 @@ export function App() {
             <Route path="/loading" element={<Loading />} />
             <Route path="/verdict" element={<VerdictRoute />} />
             <Route path="/protect" element={<ProtectRoute />} />
+            <Route path="/air-out" element={<AirOutRoute />} />
             <Route path="/emergency" element={<Emergency />} />
             <Route path="/leave" element={<Leave />} />
             <Route path="/how-it-works" element={<HowItWorks />} />

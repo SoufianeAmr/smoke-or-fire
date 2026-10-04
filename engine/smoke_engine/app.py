@@ -20,6 +20,9 @@ from smoke_engine.forward import Fan, forward_fan
 from smoke_engine.geo import bearing_deg, compass, distance_km
 from smoke_engine.map import map_json
 from smoke_engine.places import area_code, nearest_community, public_fire_name, town_name
+from smoke_engine.smoke_forecast import LAYER as FORECAST_LAYER
+from smoke_engine.smoke_forecast import RULES as FORECAST_RULES
+from smoke_engine.smoke_forecast import Forecast, smoke_forecast
 from smoke_engine.trajectory import UNSTEADY_ABOVE_DEG, Path, trace_back
 from smoke_engine.verdict import (
     DRIFTING_KM,
@@ -300,6 +303,28 @@ def _burn_json(check: BurnCheck | None, mode: str) -> dict | None:
     }
 
 
+def _smoke_forecast_json(forecast: Forecast, mode: str) -> dict:
+    """ECCC's FireWork forecast for the spot, hour by hour in ECCC's own classes, and the best time to air out.
+    Replay reads a forecast recorded with the day, when there is one."""
+    window = forecast.window
+    return {
+        "state": forecast.state,
+        "source": "recorded" if mode == "replay" else "eccc_geomet",
+        "layer": FORECAST_LAYER,
+        "run": _iso_or_none(forecast.run),
+        "checkedAt": _iso_or_none(forecast.checked_at),
+        "window": {
+            "start": _iso(window.start),
+            "end": _iso(window.end),
+            "level": window.level,
+            "fromNow": window.from_now,
+            "toEnd": window.to_end,
+        } if window else None,
+        "hours": [{"time": _iso(h.time), "ugm3": round(h.ugm3, 1), "level": h.level, "day": h.day} for h in forecast.hours],
+        "rules": FORECAST_RULES,
+    }
+
+
 def _approach_json(approach: Approach | None, lat: float, lon: float, arrival: datetime) -> dict | None:
     if approach is None:
         return None
@@ -449,6 +474,7 @@ def create_app(feeds_by_mode: dict, now=_utc_now, lifespan=None) -> FastAPI:
             "aqhi": _aqhi_json(nearest_reading(feeds, lat, lon, arrival)),
             "alerts": _alerts_json(alert_check, mode),
             "burn": _burn_json(burn_status(feeds, lat, lon, arrival), mode),
+            "smokeForecast": _smoke_forecast_json(smoke_forecast(feeds, lat, lon, arrival), mode),
             "sources": _sources_json(checked, fused, firms, arrival, now()),
             # Informational only, and last: what the map draws, from what the verdict already used. One path for
             # live and replay.

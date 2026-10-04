@@ -14,6 +14,8 @@ ECCC alerts: asked at every check, never cached, and given 5 seconds to answer. 
 second query asks for its zone's outline (for the map), with 5 seconds of its own.
 New Brunswick burn categories: the list of all 15 counties, fetched when asked, kept for the 15-minute slot and
 given 5 seconds in all to answer; a failure is remembered for 2 minutes. The person's point is never sent.
+ECCC's FireWork smoke forecast: 48 hourly answers for the point's 0.1° cell, asked 6 at a time and given 8 seconds
+in all, then kept for an hour.
 """
 
 import json
@@ -21,6 +23,7 @@ import logging
 import os
 import threading
 import time
+from concurrent.futures import ThreadPoolExecutor, wait
 from contextlib import asynccontextmanager
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -44,6 +47,10 @@ FIRMS_FILE = WIND_FILE.with_name("live-firms.json")
 ALERTS_TIMEOUT = 5.0  # seconds: a slow alerts service must never hold up the verdict
 BURN_TIMEOUT = 5.0  # seconds for its three requests together, for the same reason
 BURN_RETRY_AFTER = timedelta(minutes=2)  # while the province does not answer, checks do not each wait for it
+FORECAST_TIMEOUT = 5.0  # seconds for one hour of the smoke forecast
+FORECAST_DEADLINE = 8.0  # seconds for all its hours: a slow forecast must never hold up the verdict either
+FORECAST_WORKERS = 6  # hours asked at a time: all 48 take about a second
+FORECAST_CACHE_FOR = timedelta(hours=1)  # ECCC runs the model twice a day
 
 
 def _utc_now() -> datetime:
@@ -79,8 +86,11 @@ class LiveFeeds:
         firms_key: str | None = None,
         now=_utc_now,
         sleep=time.sleep,
+        forecast_deadline: float = FORECAST_DEADLINE,
     ):
         self._client = client or httpx.Client(headers={"User-Agent": sources.USER_AGENT}, timeout=120)
+        self._forecast_deadline = forecast_deadline
+        self._forecast_pool = ThreadPoolExecutor(max_workers=FORECAST_WORKERS, thread_name_prefix="smoke-forecast")
         self._wind_file = Path(wind_file)
         self._now = now
         self._sleep = sleep
@@ -122,6 +132,7 @@ class LiveFeeds:
 
     def stop(self) -> None:
         self._stop.set()
+        self._forecast_pool.shutdown(wait=False, cancel_futures=True)
 
     def _load_saved_wind(self) -> None:
         try:
@@ -378,6 +389,42 @@ class LiveFeeds:
                 raise FeedUnavailable(f"{sources.GNB_BURN_SERVICE}: {type(error).__name__}: {error}") from error
             self._burn = (slot, {**answer, "checkedAt": now})
             return self._burn[1]
+
+    def smoke_forecast(self, lat, lon, times):
+        """ECCC's FireWork forecast near the point: one GetFeatureInfo answer for each hour, all from the newest
+        run. The first hour's answer names that run and the others are asked for it by name, so a run published
+        in between cannot mix in. GeoMet keeps a run about two days: a check for another time gets no answer."""
+        asked_at = self._now()
+        if not -CACHE_FOR <= asked_at - times[0] < timedelta(hours=1) + CACHE_FOR:
+            raise FeedUnavailable(f"{sources.ECCC_GEOMET}: no forecast kept for {times[0]:%Y-%m-%dT%H:%MZ}")
+        point = sources.firework_point(lat, lon)
+        key = ("smoke_forecast", point, times[0], len(times))
+        started = time.monotonic()
+        with self._lock:
+            self._cache = {k: v for k, v in self._cache.items() if v[0] > started}
+            if key in self._cache:
+                return self._cache[key][1]
+        try:
+            first = self._forecast_hour(point, times[0], None)
+            run = datetime.fromisoformat(first["features"][0]["properties"]["dim_reference_time"].replace("Z", "+00:00"))
+            asked = [self._forecast_pool.submit(self._forecast_hour, point, t, run) for t in times[1:]]
+            late = wait(asked, timeout=max(0.0, started + self._forecast_deadline - time.monotonic())).not_done
+            if late:
+                for hour in late:
+                    hour.cancel()
+                raise httpx.ReadTimeout(f"{len(late)} of {len(times)} hours not answered in {self._forecast_deadline:g} s")
+            answers = [first, *(hour.result() for hour in asked)]
+        except (httpx.HTTPError, ValueError, LookupError, TypeError, AttributeError) as error:
+            raise FeedUnavailable(f"{sources.ECCC_GEOMET}: {type(error).__name__}: {error}") from error
+        recorded = {"fetchedAt": asked_at.strftime("%Y-%m-%dT%H:%M:%SZ"), "point": list(point), "answers": answers}
+        with self._lock:
+            self._cache[key] = (started + FORECAST_CACHE_FOR.total_seconds(), recorded, asked_at)
+        return recorded
+
+    def _forecast_hour(self, point, at, run):
+        response = self._client.get(sources.ECCC_GEOMET, params=sources.firework_params(point, at, run), timeout=FORECAST_TIMEOUT)
+        response.raise_for_status()
+        return response.json()  # an error is XML with HTTP 200: not JSON, a ValueError
 
     def _cached(self, key, url: str, params: dict, timeout: float | None = None):
         now = time.monotonic()

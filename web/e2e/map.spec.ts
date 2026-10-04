@@ -309,9 +309,12 @@ test.describe("the map opens on the person and the fire, both whole above the sh
     });
   }
 
-  // An answer with no burn status, as the engine gives outside New Brunswick: the sheet at half then holds no burn
-  // card, and a strip of the map still shows above it. (In the province the sheet stands over the map: the next test.)
+  // Where a strip of the map is still left above the sheet at half: a tall phone (430 × 932), and an answer with no
+  // burn status, as the engine gives outside New Brunswick. On a 390 × 844 phone, and in the province on any phone,
+  // the sheet at half holds enough (Protect your home, the best time to air out, the burn card) to stand over the
+  // map: the next test.
   test("the frame follows the sheet while the map has not been touched: at half, the two are still whole above it", async ({ page }) => {
+    await page.setViewportSize({ width: 430, height: 932 });
     await live(page, "en", { ...liveAnswer("moncton"), burn: null });
     await tiles(page);
     const before = await layout(page);

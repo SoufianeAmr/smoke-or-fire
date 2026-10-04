@@ -338,8 +338,9 @@ test.describe("built for seniors: large words, large targets, the keyboard, smal
   test("the keyboard reaches Listen, the town’s rules, Fire Watch and Sources in that order, each with a visible ring; Enter opens the sources", async ({ page }) => {
     await live(page, "en", liveAnswer(burnOf("permitted")));
 
-    // The card follows "Why?" and the button to Protect your home: from that button, Tab goes into the card.
-    await page.locator("main a.protect-link").focus();
+    // The card follows "Why?" and the rows to Protect your home and to the best time to air out: from whatever comes
+    // just before it, Tab goes into the card.
+    await card(page).evaluate((el) => (el.previousElementSibling as HTMLElement).focus());
     const order: string[] = [];
     for (let i = 0; i < 4; i++) {
       await page.keyboard.press("Tab");

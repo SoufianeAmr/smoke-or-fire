@@ -1,12 +1,27 @@
 import { describe, expect, test, vi } from "vitest";
-import en from "./en.json";
-import fr from "./fr.json";
+import airoutEn from "../airout/strings.en.json";
+import airoutFr from "../airout/strings.fr.json";
+import sharedEn from "./en.json";
+import sharedFr from "./fr.json";
 import { TODO } from "./index";
+
+// Every string of the app: the shared tables, and the words that ship with a later screen's own files.
+const en = { ...sharedEn, ...airoutEn };
+const fr = { ...sharedFr, ...airoutFr };
 
 // A ? ! : or ; not preceded by a no-break space (U+00A0) or narrow no-break space (U+202F).
 const NO_SPACE_BEFORE_PUNCTUATION = new RegExp(`[^${String.fromCharCode(0xa0, 0x202f)}][?!:;]`);
 
 describe("strings", () => {
+  test("the words of “Best time to air out” ship with that feature, not with the first screens: the shared tables do not hold them, and they are known once its file has loaded", async () => {
+    expect(Object.keys({ ...sharedEn, ...sharedFr }).filter((key) => /^(voice\.)?airout\./.test(key))).toEqual([]);
+    expect(Object.keys(airoutEn).filter((key) => !/^(voice\.)?airout\./.test(key))).toEqual([]);
+    vi.resetModules();
+    const { translate } = await import("./index");
+    await import("../airout/strings");
+    expect([translate("en", "airout.label"), translate("fr", "airout.label")]).toEqual([airoutEn["airout.label"], airoutFr["airout.label"]]);
+  });
+
   test("English and French have the same keys", () => {
     expect(Object.keys(fr).sort()).toEqual(Object.keys(en).sort());
   });
