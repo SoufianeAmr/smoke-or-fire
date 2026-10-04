@@ -74,6 +74,10 @@ function AirOutRoute() {
 }
 
 
+// The dispatch board is for call takers, at a desk: it loads only when its address is opened, so the public app never
+// carries it. No public screen links to it.
+const Dispatch = lazy(() => import("./screens/Dispatch"));
+
 /** Each screen opens at its top, as the screen files do. */
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -105,6 +109,7 @@ export function App() {
             <Route path="/how-it-works" element={<HowItWorks />} />
             <Route path="/location-off" element={<LocationOff />} />
             <Route path="/no-data" element={<NoData />} />
+            <Route path="/dispatch" element={<Suspense fallback={null}><Dispatch /></Suspense>} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Trail>

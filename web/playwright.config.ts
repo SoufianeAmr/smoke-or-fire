@@ -26,7 +26,7 @@ export default defineConfig({
     timeout: 180_000,
   },
   projects: [
-    { name: "flow", testMatch: /(flow|live|leave|listen|keep|glance|loading|protect|burn|airout|look[\w-]*)\.spec\.ts/, use: NO_WEBGL },
+    { name: "flow", testMatch: /(flow|live|leave|listen|keep|glance|loading|protect|burn|airout|dispatch|look[\w-]*)\.spec\.ts/, use: NO_WEBGL },
     // Every screen at 375 × 667 and 390 × 844: main action and 911 bar visible without scrolling.
     { name: "small-screens", testMatch: /small-screens\.spec\.ts/, use: NO_WEBGL },
     // The verdict's map: the sheet, the frame, the overlay, the legend, each way it falls back, the budgets. WebGL on.

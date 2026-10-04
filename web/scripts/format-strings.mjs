@@ -4,7 +4,7 @@
 import { readFileSync, writeFileSync } from "node:fs";
 
 // The shared tables, and the words that ship with a later screen's own files.
-for (const file of ["i18n/en.json", "i18n/fr.json", "airout/strings.en.json", "airout/strings.fr.json"]) {
+for (const file of ["i18n/en.json", "i18n/fr.json", "airout/strings.en.json", "airout/strings.fr.json", "dispatch/en.json", "dispatch/fr.json"]) {
   const url = new URL(`../src/${file}`, import.meta.url);
   const strings = JSON.parse(readFileSync(url, "utf8"));
   const text = JSON.stringify(strings, null, 2).replace(/[ ‑ ]/g, (c) => "\\u" + c.charCodeAt(0).toString(16).padStart(4, "0"));

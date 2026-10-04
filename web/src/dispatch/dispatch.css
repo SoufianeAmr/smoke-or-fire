@@ -1,0 +1,155 @@
+/* The dispatch board (/dispatch): a desk screen, read from a chair and worked by keyboard. The public app's own
+   colours and type (DESIGN-LOCK tokens): cream page, white cards, navy, orange, amber, red; Inter; 18 px or more
+   everywhere. Two columns on a wide screen, one under 980 px, which is also what a 200% zoom gives. */
+
+.dispatch{min-height:100dvh;color:#1A1D21;font-family:Inter,'Helvetica Neue',Arial,sans-serif;font-size:18px;line-height:1.45}
+.dispatch p,.dispatch h1,.dispatch h2,.dispatch h3,.dispatch h4,.dispatch ul,.dispatch ol{margin:0}
+.dispatch ul,.dispatch ol{padding:0;list-style:none}
+.dispatch button,.dispatch input,.dispatch textarea{font-family:inherit}
+/* No 911 bar here: a focused control keeps only a little room under it. */
+html:has(.dispatch){scroll-padding-bottom:16px}
+.dispatch input:focus-visible,.dispatch textarea:focus-visible{outline:3px solid #1B2A4A;outline-offset:3px}
+.d-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+
+/* The banner: on every state of the page, and in view while the page scrolls where the window is tall enough. */
+.d-banner{padding:10px 20px;background:#1B2A4A;color:#FFFFFF;font-size:20px;font-weight:700;line-height:1.3;text-align:center;text-wrap:balance}
+@media (min-height: 600px){
+  .d-banner{position:sticky;top:0;z-index:5}
+  html:has(.dispatch){scroll-padding-top:64px}
+}
+/* Replay: recorded data. Amber with near-black words, and the word "Replay". */
+.d-replay{padding:8px 20px;background:#F79009;color:#1A1D21;font-weight:700;text-align:center;text-wrap:balance}
+
+.d-page{max-width:1280px;margin:0 auto;padding:20px 24px 48px;display:flex;flex-direction:column;gap:20px}
+.d-card{background:#FFFFFF;border-radius:18px;box-shadow:0 1px 2px rgba(26,29,33,0.06),0 8px 24px rgba(26,29,33,0.07);padding:20px}
+.d-row{display:flex;flex-wrap:wrap;align-items:center;gap:12px}
+.d-hint{color:#4F5561}
+
+.d-head{display:flex;flex-wrap:wrap;align-items:center;gap:12px 16px}
+.d-head > svg{flex-shrink:0}
+.d-head-words{flex:1 1 320px;min-width:0}
+.d-head h1{font-size:34px;font-weight:800;line-height:1.1;letter-spacing:-0.02em}
+.d-head-words p{margin-top:4px;color:#4F5561;text-wrap:pretty}
+.d-head-tools{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+/* Live or replay: the selected one white with a navy outline, as on the public app's first screen. */
+.d-modes{display:flex;gap:4px;padding:4px;border-radius:18px;background:#EDE6DA}
+.d-modes button{min-height:48px;padding:4px 14px;border:0;border-radius:14px;background:transparent;color:#1A1D21;font-size:18px;font-weight:700;line-height:1.25;cursor:pointer}
+.d-modes button[aria-pressed="true"]{background:#FFFFFF;color:#1B2A4A;box-shadow:inset 0 0 0 2px #1B2A4A}
+
+/* Buttons: outlined navy; the main one of a block filled. 56 px tall, as everywhere in the app. */
+.d-btn{min-height:56px;display:inline-flex;align-items:center;gap:10px;padding:8px 18px;border:2px solid #1B2A4A;border-radius:16px;background:#FFFFFF;color:#1B2A4A;font-size:18px;font-weight:700;line-height:1.25;text-align:left;cursor:pointer}
+.d-btn:hover{background:#F3EEE6}
+.d-btn-main{background:#1B2A4A;color:#FFFFFF}
+.d-btn-main:hover{background:#0F1A33}
+.d-small{min-height:44px;padding:4px 14px}
+
+/* The place */
+.d-place{position:relative;display:flex;flex-direction:column;gap:6px}
+.d-place label{font-size:20px;font-weight:700}
+.d-place input{width:100%;height:64px;padding:0 18px;border:2px solid #1B2A4A;border-radius:16px;background:#FFFFFF;color:#1A1D21;font-size:24px;font-weight:600}
+.d-place [role="listbox"]{background:#FFFFFF;border-radius:18px;box-shadow:0 1px 2px rgba(26,29,33,0.06),0 8px 24px rgba(26,29,33,0.12);overflow:hidden}
+.d-place [role="option"]{min-height:56px;display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px;padding:12px 18px;font-size:20px;cursor:pointer}
+.d-place [role="option"] span{color:#4F5561;font-size:18px}
+/* The place Enter takes: a navy bar at its left and a tint, never the tint alone. */
+.d-place [role="option"][aria-selected="true"]{background:#E9EDF5;box-shadow:inset 6px 0 0 #1B2A4A}
+.d-none{font-weight:600}
+
+.d-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:20px;align-items:start}
+@media (min-width: 980px){
+  .d-grid{grid-template-columns:minmax(0,1.15fr) minmax(0,1fr)}
+}
+.d-answer{display:flex;flex-direction:column;gap:16px}
+.d-empty{color:#4F5561;font-size:20px}
+.d-error{display:flex;flex-direction:column;align-items:flex-start;gap:10px;border:3px dashed #1B2A4A}
+.d-error h3{font-size:24px;font-weight:800}
+
+/* The known-smoke card: the public card's shape, colour and line. */
+.d-known{border-radius:18px;padding:16px 20px 18px;display:flex;flex-direction:column;gap:10px}
+.d-known-for{font-weight:600}
+.d-known-main{display:flex;align-items:center;gap:16px}
+.d-known .glance-shape{width:72px;height:72px}
+.d-known-line{font-size:30px;font-weight:800;line-height:1.15;letter-spacing:-0.02em}
+.d-part{display:inline-block}
+.d-known-sure{text-wrap:pretty}
+.d-known-note,.d-known-mark{align-self:flex-start;padding:6px 12px;border-radius:12px;background:#FFFFFF;color:#1A1D21;font-weight:700}
+.d-known-mark{border:2px solid #1B2A4A;color:#1B2A4A}
+
+/* The facts: an icon whose outline says the state (filled: found or in effect; outlined: none; dashed: not checked),
+   the name with the same state in words, what was found, who says so and when, and the links. */
+.d-facts{display:flex;flex-direction:column;gap:16px}
+.d-facts > li{display:flex;gap:14px}
+.d-facts > li > div{min-width:0}
+.d-facts > li + li{padding-top:16px;border-top:1px solid #EEE7DC}
+.d-fact-icon{flex-shrink:0;width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid #1B2A4A;background:#FFFFFF;color:#1B2A4A}
+[data-tone="active"] > .d-fact-icon{background:#1B2A4A;color:#FFFFFF}
+[data-tone="notChecked"] > .d-fact-icon{border-style:dashed}
+.d-facts h4{font-size:20px;font-weight:800;line-height:1.3}
+.d-fact-headline{font-size:20px;font-weight:700}
+.d-facts p{text-wrap:pretty}
+.d-links{display:flex;flex-wrap:wrap;gap:0 20px}
+/* A long address breaks inside its link on a narrow screen, so the page never scrolls sideways. */
+.d-links a{min-height:44px;display:inline-flex;flex-wrap:wrap;align-items:center;gap:0 6px;font-weight:700;overflow-wrap:anywhere}
+.d-host{font-weight:500;color:#4F5561}
+
+.d-notes{display:flex;flex-direction:column;gap:8px}
+.d-status:empty{display:none}
+.d-status{font-weight:700}
+.dispatch textarea{width:100%;padding:12px 14px;border:2px solid #1B2A4A;border-radius:14px;background:#FFFFFF;color:#1A1D21;font-size:18px;line-height:1.45;resize:vertical}
+.d-notes textarea{background:#FAF6F0}
+
+/* The three questions */
+.d-script{display:flex;flex-direction:column;gap:14px}
+.d-script-head{justify-content:space-between}
+.d-script h2,.d-surge h2{font-size:26px;font-weight:800;line-height:1.2;letter-spacing:-0.01em}
+.d-questions{display:flex;flex-direction:column;gap:14px}
+.d-questions > li{display:flex;flex-direction:column;gap:10px;padding:14px 16px;border-radius:16px;border:2px solid #E6DFD3}
+.d-questions > li[data-state="current"]{border-color:#1B2A4A;box-shadow:0 0 0 4px rgba(27,42,74,0.14)}
+.d-question{display:flex;gap:12px;font-size:22px;font-weight:700;line-height:1.3;text-wrap:pretty}
+.d-number{flex-shrink:0;width:34px;height:34px;border-radius:50%;background:#1B2A4A;color:#FFFFFF;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800}
+/* A question not reached yet: quieter, still easy to read. An answered one: smaller, its answer is what matters now. */
+.d-questions > li[data-state="waiting"] .d-question{font-weight:500;color:#4F5561}
+.d-questions > li[data-state="waiting"] .d-number{background:#FFFFFF;color:#1B2A4A;box-shadow:inset 0 0 0 2px #1B2A4A}
+.d-questions > li[data-state="answered"]{gap:4px;padding:10px 16px}
+.d-questions > li[data-state="answered"] .d-question{font-size:18px;font-weight:500}
+.d-answers{display:flex;flex-wrap:wrap;gap:10px}
+.d-pick{font-size:20px}
+.d-pick kbd{flex-shrink:0;min-width:30px;height:30px;padding:0 6px;border-radius:8px;background:#E9EDF5;color:#1B2A4A;display:inline-flex;align-items:center;justify-content:center;font-family:inherit;font-size:18px;font-weight:800}
+.d-given{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;padding-left:46px}
+
+/* Where the answers end. Each kind has its colour, its shape and its words: red triangle for dispatch, amber diamond
+   for a fire pit, and for "no fire nearby" the answer's own shape beside a navy-outlined card. */
+.d-result{display:flex;align-items:center;gap:16px;padding:16px 18px;border-radius:18px;border:3px solid #1B2A4A;background:#FFFFFF}
+.d-result .glance-shape{flex-shrink:0;width:64px;height:64px}
+/* The result takes the keyboard when the answers end, so a screen reader says it: it shows no ring of its own. */
+.d-result h3{font-size:28px;font-weight:800;line-height:1.15;letter-spacing:-0.01em;outline:none}
+.d-result p{margin-top:4px;font-size:20px;font-weight:500;text-wrap:pretty}
+.d-result[data-kind="dispatch"]{background:#D92D20;border-color:#D92D20;color:#FFFFFF}
+.d-result[data-kind="firePit"]{background:#F79009;border-color:#F79009;color:#1A1D21}
+.d-tile{flex-shrink:0;width:72px;height:72px;border-radius:16px;display:flex;align-items:center;justify-content:center}
+.d-tile .glance-shape{width:52px;height:52px}
+
+/* Surge mode */
+.d-surge{display:flex;flex-direction:column;align-items:flex-start;gap:14px}
+.d-surge > p{max-width:70ch;text-wrap:pretty}
+.d-why{font-weight:600}
+/* The mark: an empty box, or a filled one with a tick, beside the words; pressed, the button is filled too. */
+.d-check{flex-shrink:0;width:26px;height:26px;border-radius:7px;border:2px solid currentColor;position:relative}
+.d-mark[aria-pressed="true"]{background:#1B2A4A;color:#FFFFFF}
+.d-mark[aria-pressed="true"] .d-check::after{content:"";position:absolute;left:7px;top:2px;width:7px;height:13px;border:solid currentColor;border-width:0 3px 3px 0;transform:rotate(45deg)}
+.d-drafts{align-self:stretch;display:grid;grid-template-columns:minmax(0,1fr);gap:20px}
+@media (min-width: 980px){
+  .d-drafts{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+}
+.d-draft{display:flex;flex-direction:column;gap:8px}
+.d-draft label{font-size:20px;font-weight:700}
+.d-draft canvas{display:block;width:100%;height:auto;border-radius:14px;border:1px solid #E6DFD3}
+.d-alt{color:#4F5561;text-wrap:pretty}
+
+.d-foot{display:flex;flex-direction:column;gap:6px;color:#4F5561}
+.d-foot a{font-weight:700}
+
+@media (max-width: 520px){
+  .d-page{padding:16px 16px 40px}
+  .d-known-line{font-size:26px}
+  .d-given{padding-left:0}
+}

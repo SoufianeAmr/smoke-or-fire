@@ -1,0 +1,40 @@
+{
+  "about": "Burn bans the provinces announced, hand-curated from their own news releases. The dispatch board shows a record only in the replay, and only on the dates it covers (the replay's Aug 25, 2025 is inside both), labelled as from the province's news release of its date, with its link. Today's burn status is never read from here: it is the engine's. Nothing here is looked up at runtime. Every record needs a source that says it, confirmed by a person; 'active' covers only the dates the sources support. 'pages' are the provinces' own pages, linked where the board has no status.",
+  "records": [
+    {
+      "province": "NB",
+      "active": { "from": "2025-08-25", "to": "2025-08-25" },
+      "authority": { "en": "Government of New Brunswick", "fr": "Gouvernement du Nouveau-Brunswick" },
+      "published": "2025-08-25",
+      "says": { "en": "A burn ban, however, will remain in place.", "fr": "L’interdiction de brûlage demeure cependant en vigueur." },
+      "source": {
+        "en": "https://www.gnb.ca/en/news/n-b.2025.08.most-restrictions-on-crown-land-to-be-lifted-tonight.html",
+        "fr": "https://www.gnb.ca/fr/nouvelles/n-b.2025.08.la-plupart-des-restrictions-relatives-aux-terres-de-la-couronne-seront-levees-ce-soir.html"
+      },
+      "note": "News release of the Department of Natural Resources and the Office of the Premier, 'Most restrictions on Crown land to be lifted tonight'. It supports the day it was published; the ban began earlier in August."
+    },
+    {
+      "province": "NS",
+      "active": { "from": "2025-07-30", "to": "2025-09-25" },
+      "authority": { "en": "Province of Nova Scotia", "fr": "Province de la Nouvelle-Écosse" },
+      "published": "2025-07-30",
+      "says": { "en": "Nova Scotia has proclaimed a provincewide burn ban.", "fr": null },
+      "source": { "en": "https://news.novascotia.ca/en/2025/07/30/provincewide-burn-ban-effect", "fr": null },
+      "note": "News release 'Provincewide Burn Ban in Effect': in place from July 30 until October 15 or until conditions improve. Lifted in all counties except Annapolis at 8 p.m. on September 26, 2025 (https://news.novascotia.ca/en/2025/09/26/provincewide-burn-ban-lifted-except-annapolis-county), so the record ends the day before. No French version of the release was found."
+    }
+  ],
+  "pages": {
+    "NB": {
+      "en": { "label": "New Brunswick Fire Watch", "url": "https://www.gnb.ca/en/emergency/fire-watch.html" },
+      "fr": { "label": "Indice des feux du Nouveau-Brunswick", "url": "https://www.gnb.ca/fr/urgence/indice-des-feux.html" }
+    },
+    "NS": {
+      "en": { "label": "Nova Scotia burn restrictions (BurnSafe)", "url": "https://novascotia.ca/burnsafe/" },
+      "fr": { "label": "Restrictions de brûlage de la Nouvelle-Écosse", "url": "https://novascotia.ca/burnsafe/fr/" }
+    },
+    "PE": {
+      "en": { "label": "Prince Edward Island burning restrictions", "url": "https://www.princeedwardisland.ca/en/topic/burning" },
+      "fr": null
+    }
+  }
+}

@@ -897,7 +897,12 @@ test.describe("private: nothing about the switch leaves the device", () => {
     }
     // How many pings a visit sends is not fixed: the first screen sends one only if it had drawn before the visit
     // moved on. They are held above for what they carry, and left out of the comparison of the two visits.
-    expect(runs.on.filter((request) => !ping(request)).map(line).sort()).toEqual(runs.off.filter((request) => !ping(request)).map(line).sort());
+    // Nor is which font files the browser fetches: that follows the glyphs it has drawn so far. They are plain GETs to
+    // the font host, with nothing of the page in them, and are left out of the comparison too.
+    const fontFile = (request: Sent) => request.url.startsWith("https://fonts.gstatic.com/");
+    for (const visit of [runs.on, runs.off]) expect(visit.filter(fontFile).map((request) => [request.method, request.body ?? null])).toEqual(visit.filter(fontFile).map(() => ["GET", null]));
+    const compared = (visit: Sent[]) => visit.filter((request) => !ping(request) && !fontFile(request)).map(line).sort();
+    expect(compared(runs.on)).toEqual(compared(runs.off));
     // Header by header, the two visits are alike too: nothing is added when the switch is on.
     const names = (sent: Sent[]) => [...new Set(sent.flatMap((request) => Object.keys(request.headers)))].sort();
     expect(names(runs.on)).toEqual(names(runs.off));
