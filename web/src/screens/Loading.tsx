@@ -38,7 +38,9 @@ export function Loading() {
     if (!place) return;
     let cancelled = false;
     const leaving = new AbortController();
-    const started = Date.now();
+    // Measured by the page's own clock, which only runs forward: the phone's clock can be set back mid-check (a time
+    // sync), and the screen would then stay for as long as the clock stepped.
+    const started = performance.now();
     setResult(null);
     setWaking(false);
     // The verdict screen's own file, and the map behind it, are fetched while this screen shows. The map is an extra:
@@ -57,7 +59,7 @@ export function Loading() {
           // the verdict opens on the outline map
         }
         setResult(json);
-        setTimeout(() => !cancelled && navigate("/verdict"), Math.max(0, MIN_SHOW_MS - (Date.now() - started)));
+        setTimeout(() => !cancelled && navigate("/verdict"), Math.min(MIN_SHOW_MS, Math.max(0, MIN_SHOW_MS - (performance.now() - started))));
       })
       // Screen 9b, which says why: the engine's own no-data answer, or no answer at all in time.
       .catch((error: unknown) => !cancelled && navigate("/no-data", { state: { reason: error instanceof LiveError ? error.kind : "noData" } }));

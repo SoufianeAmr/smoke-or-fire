@@ -15,6 +15,11 @@ export default defineConfig({
     // Replay files and place data live in the repo's data/ folder and are bundled into the app.
     alias: { "@data": dataDir },
   },
+  // One stylesheet for the whole app, loaded with the first screen. Split by screen, the bundler makes the first
+  // request for a screen's file wait for that screen's stylesheet before it even starts: one small stylesheet that
+  // does not arrive then holds the whole check on "Tracing the air…", with the answer already in hand
+  // (e2e/loading.spec.ts). The styles are small; the code stays split by screen.
+  build: { cssCodeSplit: false },
   server: { fs: { allow: [".", dataDir] } },
   test: { include: ["src/**/*.test.ts"] },
 });

@@ -25,10 +25,8 @@ export default defineConfig({
     reuseExistingServer: true,
     timeout: 180_000,
   },
-  // On a machine short of memory, fewer workers: E2E_WORKERS=2 npm run e2e.
-  workers: process.env.E2E_WORKERS ? Number(process.env.E2E_WORKERS) : undefined,
   projects: [
-    { name: "flow", testMatch: /(flow|live|leave|listen|keep|glance|protect|burn|airout|look[\w-]*)\.spec\.ts/, use: NO_WEBGL },
+    { name: "flow", testMatch: /(flow|live|leave|listen|keep|glance|loading|protect|burn|airout|look[\w-]*)\.spec\.ts/, use: NO_WEBGL },
     // Every screen at 375 × 667 and 390 × 844: main action and 911 bar visible without scrolling.
     { name: "small-screens", testMatch: /small-screens\.spec\.ts/, use: NO_WEBGL },
     // The verdict's map: the sheet, the frame, the overlay, the legend, each way it falls back, the budgets. WebGL on.
