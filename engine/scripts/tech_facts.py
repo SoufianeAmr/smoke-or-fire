@@ -4,6 +4,7 @@ the engine's own answer, or an actual run of the test suites; none is typed by h
     uv run python -m scripts.tech_facts     (from engine/; runs all three test suites, a few minutes)
 """
 
+import gzip
 import json
 import os
 import re
@@ -183,17 +184,78 @@ def test_counts(tmp: Path) -> dict:
     engine = {"passed": int(suite.get("tests")) - failed - int(suite.get("skipped")), "failed": failed, "skipped": int(suite.get("skipped"))}
 
     report = tmp / "vitest.json"
-    _run(["npx", "vitest", "run", "--reporter=json", f"--outputFile={report}"], ROOT / "web")
+    # UNIT_WORKERS: fewer test processes at once on a busy machine (as E2E_WORKERS for the browser tests).
+    fewer = ["--maxWorkers", os.environ["UNIT_WORKERS"]] if os.environ.get("UNIT_WORKERS") else []
+    _run(["npx", "vitest", "run", "--reporter=json", f"--outputFile={report}", *fewer], ROOT / "web")
     result = json.loads(report.read_text(encoding="utf-8"))
     unit = {"passed": result["numPassedTests"], "failed": result["numFailedTests"], "skipped": result["numPendingTests"] + result["numTodoTests"]}
 
     report = tmp / "playwright.json"
-    projects = ["flow", "small-screens"]  # what `npm run e2e` runs
+    projects = ["flow", "small-screens", "map"]  # what `npm run e2e` runs
     _run(["npx", "playwright", "test", *(f"--project={p}" for p in projects), "--reporter=json"], ROOT / "web",
          env={**os.environ, "PLAYWRIGHT_JSON_OUTPUT_NAME": str(report)})
     stats = json.loads(report.read_text(encoding="utf-8"))["stats"]
     browser = {"passed": stats["expected"], "failed": stats["unexpected"] + stats["flaky"], "skipped": stats["skipped"], "projects": projects}
     return {"engine": engine, "unit": unit, "browser": browser}
+
+
+# --- The map ---------------------------------------------------------------------------------------
+
+def map_facts(body: dict) -> dict:
+    """The basemap's pin, the map key of the Moncton answer, and what the test build weighs (web/dist-e2e, as the
+    browser tests left it): each gzipped at level 9, as a host serves it."""
+    tiles = load("web/src/map/tiles.json")
+    schema = load("engine/smoke_engine/schemas/map.v1.schema.json")
+    fetch = read("web/scripts/fetch-tiles.mjs")
+    spec = read("web/e2e/map.spec.ts")
+    locked = load("web/package-lock.json")["packages"]
+    dist = ROOT / "web" / "dist-e2e"
+    weigh = lambda files: sum(len(gzip.compress(f.read_bytes(), 9, mtime=0)) for f in files)  # noqa: E731
+    drawn = body["map"]
+    return {
+        "tiles": tiles,
+        "tool": re.search(r'TOOL_VERSION = "([^"]+)"', fetch).group(1),
+        "maplibre": locked["node_modules/maplibre-gl"]["version"],
+        "pmtiles": locked["node_modules/pmtiles"]["version"],
+        "version": schema["properties"]["version"]["const"],
+        "main": weigh(dist.glob("assets/index-*.js")),
+        "main_before": int(re.search(r"MAIN_BEFORE = ([\d_]+)", spec).group(1).replace("_", "")),
+        "verdict": weigh(dist.glob("assets/Verdict-*.js")),
+        "map": weigh([*dist.glob("vendor/maplibre-gl-*/*.mjs"), *dist.glob("assets/TileMap-*.js")]),
+        "map_budget": int(re.search(r"MAP_BUDGET = ([\d_]+)", spec).group(1).replace("_", "")),
+        "trails": [len(t["points"]) for t in drawn["trails"]],
+        "detections": len(drawn["detections"]),
+        "fires": len(drawn["fires"]),
+        "zone_points": [len(ring) for ring in drawn["alertZone"]["rings"]] if drawn["alertZone"] else [],
+        "layers": list(drawn["layers"]),
+    }
+
+
+def map_lines(m: dict) -> list[str]:
+    tiles = m["tiles"]
+    kb = lambda size: f"{size / 1000:.1f} kB"  # noqa: E731
+    return [
+        "## The map",
+        "",
+        f"- Basemap: `web/public/tiles/{tiles['file']}`, one PMTiles file of vector tiles, zooms {tiles['minzoom']} to "
+        f"{tiles['maxzoom']}, box `{','.join(str(v) for v in tiles['bbox'])}` (the wind grid), {tiles['bytes'] / 1e6:.1f} MB, "
+        f"SHA-256 `{tiles['sha256'][:16]}…`. Cut from Protomaps build `{tiles['build']}` (tile schema {tiles['schema']}; "
+        f"OpenStreetMap data of {tiles['osmDataTime']}) by go-pmtiles {m['tool']} (`web/scripts/fetch-tiles.mjs`, "
+        "`npm run tiles`). Never committed: fetched, and checked against its pinned size and hash.",
+        f"- Drawn by maplibre-gl {m['maplibre']}, its three ES modules served as they are from `/vendor/`; the tiles are "
+        f"read by byte range with pmtiles {m['pmtiles']}. Where that cannot be drawn (no WebGL, the tiles or the "
+        "library not loaded, no map key), the bundled outlines are drawn with d3-geo, with the same overlay.",
+        f"- The engine's `map` key, version {m['version']} (`engine/smoke_engine/schemas/map.v{m['version']}.schema.json`), "
+        f"with layers {listed(f'`{name}`' for name in m['layers'])}. For the Moncton replay: {len(m['trails'])} trails of "
+        f"{listed(m['trails'])} points, {m['detections']} detections, {m['fires']} fires on Canada's official list, and an "
+        + (f"alert zone of {listed(m['zone_points'])} points." if m["zone_points"] else "alert zone: none.")
+        + " Informational: it never changes a verdict or its confidence (`test_the_map_never_changes_the_verdict_or_its_confidence` "
+        "in `engine/tests/test_map.py`).",
+        f"- What the test build weighs, gzipped (level 9): main bundle {kb(m['main'])} ({kb(m['main_before'])} before the map); "
+        f"the verdict screen, its own file, {kb(m['verdict'])}; the map (MapLibre's three modules and the app's tile map) "
+        f"{kb(m['map'])}, under its budget of {kb(m['map_budget'])} (`web/e2e/map.spec.ts`).",
+        "",
+    ]
 
 
 def outcome(counts: dict) -> str:
@@ -243,7 +305,7 @@ def validation_lines(v: dict) -> list[str]:
     ]
 
 
-def document(arch: dict, data: dict, place, body: dict, merged: dict, tests: dict, ran_at: str, valid: dict) -> str:
+def document(arch: dict, data: dict, place, body: dict, merged: dict, tests: dict, ran_at: str, valid: dict, on_map: dict) -> str:
     heights = wind.HEIGHTS
     step_hours = num(trajectory.STEP_S / 3600)
     lat_range = f"{num(wind.GRID_LAT_MIN)}°N to {num(wind.GRID_LAT_MAX)}°N"
@@ -284,8 +346,8 @@ def document(arch: dict, data: dict, place, body: dict, merged: dict, tests: dic
         f"{', '.join(arch['web_libs'])}; tests: {', '.join(arch['test_libs'])} |",
         "",
         "- The traces, fire clustering, verdict, confidence and forward trace are all computed in Python by the engine. "
-        "Every verdict, path and distance the web app shows comes from the engine's answer; the app projects the "
-        "returned points onto a static map of bundled outlines with d3-geo.",
+        "Every verdict, path and distance the web app shows comes from the engine's answer; the app draws the "
+        "returned points over a basemap (MapLibre over its own tiles, or the bundled outlines with d3-geo: see The map).",
         f"- Live mode calls `GET /verdict` on the engine. Replay mode never calls it: the web app bundles the engine's "
         f"saved answers for {data['demo_towns']} towns (`data/demo/`, written by `engine/scripts/build_demo.py` from "
         "the recorded data in `data/replay/`).",
@@ -437,6 +499,7 @@ def document(arch: dict, data: dict, place, body: dict, merged: dict, tests: dic
            f"(recorded message: {alert['alert']['url']})." if alert["alert"] else "."),
         "",
         *validation_lines(valid),
+        *map_lines(on_map),
         "## Tests",
         "",
         f"From an actual run on {ran_at}:",
@@ -474,7 +537,7 @@ def main() -> None:
     with tempfile.TemporaryDirectory() as tmp:
         tests = test_counts(Path(tmp))
     previous = OUT.read_text(encoding="utf-8") if OUT.exists() else ""
-    text = document(architecture(), data_facts(), place, body, merges(), tests, ran_at, valid)
+    text = document(architecture(), data_facts(), place, body, merges(), tests, ran_at, valid, map_facts(body))
     OUT.write_text(with_snowflake(text, previous), encoding="utf-8")
     print(f"{OUT.name}: engine {outcome(tests['engine'])}; web unit {outcome(tests['unit'])}; browser {outcome(tests['browser'])}")
 

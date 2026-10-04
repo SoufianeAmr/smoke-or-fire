@@ -37,6 +37,8 @@ Every answer comes with an honest **High / Medium / Low confidence**, official a
 
 **The answer as one glance.** The verdict opens on one card: a large icon and one line, *Drifting smoke · Long Lake fire · 159 km SSW*, with an arrow pointing from you toward the fire. Each verdict has its own icon, shape and colour (orange circle, amber diamond, red triangle), never colour alone. Under the line, three badges say where each fact comes from; one tap on a badge shows its source, its time and a link: the **satellite fire detection** (NASA FIRMS, NRCan CWFIS), the **wind trace** (GFS winds through Open-Meteo, with the model run), and **ECCC's air-quality alert** for your forecast zone. That last badge has three states, told by shape and word: *active* (filled), *none in effect* (outlined), *not checked* (dashed) when ECCC could not be asked. It is never a guess. On most phones in a browser (a screen under 800 px tall) the three badges share one row (an icon and a word that says the state: *Alert*, *None*, *Not checked*) so they and **Why?** show without scrolling; the full name shows on a tap. The one exception is a fire under 25 km: its notice comes first, and **Why?** then needs a scroll on a small phone. When nothing explains the smoke, **Call 911 is the screen's main action**. Everything else (map, confidence, advice, air quality, the reasons) is one tap away behind **Why?**, word for word as before.
 
+**The answer lives on the map.** The verdict opens on a map of the Maritimes, with that card in a sheet at its foot. On the map: the air you are breathing traced back hour by hour at three heights (the ribbon, a bead for each hour), every satellite fire detection of the last 24 hours as an orange dot that is bigger where more heat was measured, a flame for each fire on Canada's official list, a soft dot for you, and ECCC's forecast zone as a dashed outline when an air-quality alert is active. It opens on you and the fire, both in view. The sheet has three heights, each a button away: the card; **Sources and why** (the three badges and **Why?**); and everything **Why?** says. **Legend** names, for each thing on the map, who it comes from, when, and a link, ECCC's first. **+**, **−** and **Recentre** are buttons too, and Recentre never asks for your location. If the detailed map cannot be drawn (no WebGL, or the map did not load), an outline map shows the same things and says so in plain words. Call 911 stays at the foot of the screen throughout.
+
 **Scenario 1: smoke from far away (Moncton, Aug 25, 2025).** *Drifting smoke · Long Lake fire · 159 km SSW*, with ECCC's special air quality statement for Moncton and southeast New Brunswick shown as active. Behind **Why?**: low confidence and why, the map with the air traced backward and the fire's smoke traced forward meeting near Moncton, official AQHI advice, Health Canada's advice to take a break in places with filtered air (one tap finds the nearest library), and the 811 nurse line.
 
 **Scenario 2: fire near you (Bridgetown, N.S.).** Flames, a rising smoke column, something burning nearby, or simply not sure → **Call 911 now**, with what to tell the dispatcher and, on a tap, the phone's location to read out. *Told to leave?* → the reception centre **Annapolis County actually opened** during the Long Lake evacuation, register first, directions in the phone's Maps app, the officials' grab list, and a one-tap text to family with the user's location. It's shown only to people near that fire.
@@ -63,13 +65,13 @@ flowchart LR
 | Part | Role | Hosting |
 |---|---|---|
 | **engine/** | Traces the air, fuses fire data, returns the verdict as JSON | **Render** (free web service, `render.yaml` blueprint). Wind and FIRMS refresh in background threads and are cached to disk, so a restart answers within seconds. A scheduled ping to `/health` keeps it awake. |
-| **web/** | All screens, EN/FR strings, maps drawn with d3-geo | **Vercel** (static build). The replay is bundled, so it never depends on the engine. |
+| **web/** | All screens, EN/FR strings. The verdict's map: MapLibre GL JS over the app's own basemap file (OpenStreetMap, as PMTiles), with an outline map (d3-geo) to fall back on | **Vercel** (static build, with the basemap file beside it: no tile server, no key). The replay is bundled, so it never depends on the engine. |
 | **analytics/** | Season-scale validation in SQL + Streamlit | **Snowflake** (offline; the app never calls it at runtime) |
 
 ### API
 | Endpoint | Description |
 |---|---|
-| `GET /verdict?lat=&lon=&time=&mode=live\|replay` | Verdict, confidence, traced paths (3 heights), closest approach, forward check, featured fire, AQHI, ECCC air-quality alert (active, none, or not checked), wind model run, source status |
+| `GET /verdict?lat=&lon=&time=&mode=live\|replay` | Verdict, confidence, traced paths (3 heights), closest approach, forward check, featured fire, AQHI, ECCC air-quality alert (active, none, or not checked), wind model run, source status, and `map`: what the map draws and where each layer comes from (version 1, [schema](engine/smoke_engine/schemas/map.v1.schema.json)) |
 | `GET /health` | Whether live wind and FIRMS data are loaded |
 | `GET /` | Service description |
 
@@ -99,7 +101,7 @@ flowchart LR
 
 ## Validation
 
-The **unchanged** engine was tested on real 2025 events where smoke was publicly reported, plus two quiet control days. **The rules were committed before any run.** Full table and sources: [VALIDATION.md](VALIDATION.md). The air-quality alert and the wind's model run were added to the answer later; they are informational and never change a verdict or its confidence (a test holds that), so every saved answer keeps its verdict.
+The **unchanged** engine was tested on real 2025 events where smoke was publicly reported, plus two quiet control days. **The rules were committed before any run.** Full table and sources: [VALIDATION.md](VALIDATION.md). The air-quality alert, the wind's model run and the `map` key were added to the answer later; they are informational and never change a verdict or its confidence (a test holds that for each), so every saved answer keeps its verdict.
 
 - Long Lake smoke correctly traced for **Moncton (Aug 25)** and **Charlottetown (Aug 14)**.
 - Two events matched the rules but for the **wrong source**: a Saint John refinery that satellites see as heat. This is documented, with the fix planned.
@@ -131,6 +133,7 @@ smoke-or-fire/
 ├── data/              replay recordings, demo verdicts, validation data, places
 ├── analytics/         Snowflake SQL views and Streamlit data room
 ├── design/            frozen screens, DESIGN-LOCK.md, GAPS.md
+├── docs/decisions/    decision records (0003: the map)
 ├── render.yaml        Render blueprint for the engine
 ├── TECH-FACTS.md      numbers generated from the code, data and test runs
 ├── VALIDATION.md      tests on real 2025 events
@@ -152,10 +155,12 @@ Optional: `FIRMS_MAP_KEY=...` in `engine/.env` enables NASA FIRMS in live mode (
 ```bash
 cd web
 npm install
+npm run tiles      # the basemap: 46 MB, fetched once, checked against its pinned hash (not in git)
 npm run dev        # set VITE_ENGINE_URL to your engine for live mode
 npm test           # unit tests
-npm run e2e        # browser tests
+npm run e2e        # browser tests (E2E_PORT=4175 to use another port)
 ```
+Without the basemap the app still runs: the verdict shows the outline map. `npm run deploy` fetches it first.
 See `web/package.json` for all scripts. Current test counts are in [TECH-FACTS.md](TECH-FACTS.md).
 
 ---
@@ -175,6 +180,9 @@ See `web/package.json` for all scripts. Current test counts are in [TECH-FACTS.m
 - The AQHI is an **area-wide** reading; smoke from a nearby source can be much stronger.
 - ECCC's alerts answer carries no data time: if ECCC's own list were stale but well formed, the badge would read "none in effect". The badge shows when ECCC was asked, and reads "not checked" whenever the answer cannot be read for certain.
 - Traces can leave the wind grid before 24 h; the app says how many hours it traced.
+- The detailed map needs WebGL 2; a phone without it gets the outline map, with the same things on it. The basemap covers the wind grid, to zoom 10 (towns and main roads).
+- The map's buttons are Legend, +, − and Recentre. Moving it sideways is by a drag or the arrow keys: it has no button. In a window too small for a map (a small window at 200% zoom) the map is not shown; the answer, the sources and "Why?" are all still there.
+- On the map a fire is a flame only when it is on Canada's official list. A fire known only from satellites (Long Lake, in the recorded data) is its detections and its name.
 - Evacuation centres are shown only for events officials announced; the app plans no routes (it hands the address to the phone's maps app).
 
 ## Roadmap
@@ -183,6 +191,7 @@ See `web/package.json` for all scripts. Current test counts are in [TECH-FACTS.m
 - Pilot with a municipality or EMO, with official live evacuation announcements.
 - An embeddable version for city and fire-department websites.
 - Natural recorded voices, and voice questions once they understand every accent.
+- On the map: the smoke moving along the air's path, and the fire's smoke traced forward (3b).
 
 ## Data sources and credits
 
@@ -199,6 +208,8 @@ See `web/package.json` for all scripts. Current test counts are in [TECH-FACTS.m
 | Hourly wind (GFS 0.25°) | Open-Meteo.com | CC BY 4.0 |
 | Community names and locations | NRCan, Canadian Geographical Names Database | Open Government Licence – Canada |
 | Province and marine outlines | Natural Earth | Public domain |
+| Basemap (roads, towns, coastlines, place names) | © OpenStreetMap contributors, as built into vector tiles by Protomaps (build 20260928), cut to the Maritimes and served by the app itself (`web/scripts/fetch-tiles.mjs`) | Open Database License; the credit on the map links to openstreetmap.org/copyright |
+| Map drawing | MapLibre GL JS; tiles read with PMTiles | BSD 3-Clause |
 | Long Lake evacuation centres and alerts | Municipality of the County of Annapolis (REMO), Aug–Sep 2025 releases | — |
 | Centre coordinates | NRCan Geolocation Service | Open Government Licence – Canada |
 
