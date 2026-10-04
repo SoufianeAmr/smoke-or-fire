@@ -199,3 +199,7 @@ overlay while dragging: 0, in every run.
   existing test that starts the full Chromium). Run again on their own, the first three pass; the fourth
   could not start its browser this time, and passed alone at 07:30. None of the four fails for a reason in
   the code that could be found. TECH-FACTS.md says what its run saw.
+- 10:10 A second regeneration, one browser at a time, was stopped part way: two other tests (in glance.spec)
+  had already timed out under the same load. Their group passes alone, 49 of 49. TECH-FACTS.md is left as the
+  09:36 run wrote it; a run on a quiet machine (`uv run python -m scripts.tech_facts`, from `engine/`) is the
+  way to a clean count.
