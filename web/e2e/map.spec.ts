@@ -139,18 +139,23 @@ test.describe("the sheet: the card, then the badges, then everything, each by a 
       for (const hiddenThing of ["main .badge >> nth=0", "main .why-toggle", "#why-all"]) await expect(page.locator(hiddenThing)).toBeHidden();
       expect((await layout(page)).sheetTop - (await layout(page)).stage.y).toBeGreaterThanOrEqual(280); // most of the room is the map's
 
-      // Half: the three badges in one row and "Why?", whole above the 911 bar; the map still shows above the sheet.
+      // Half: the three badges in one row, "Why?" and, under it, what a person can do next (Protect your home), whole
+      // above the 911 bar. The map is an extra and gives way to them: a strip of it still shows above the sheet where
+      // the phone has room for one (84 px, its Legend button's); where it has not, the sheet stands over the whole
+      // map, and its handle brings the map back.
       await handle(page).click();
       await expect(sheet(page)).toHaveAttribute("data-detent", "half");
       await expect(handle(page)).toHaveAccessibleName(s(lang, "sheet.less"));
       const bar = (await call(page).locator("..").boundingBox())!.y;
-      for (const shown of [...(await page.locator("main .badge").all()), page.locator("main .why-toggle")]) {
+      for (const shown of [...(await page.locator("main .badge").all()), page.locator("main .why-toggle"), page.locator("main a.protect-link")]) {
         await expect(shown).toBeVisible();
         const box = (await shown.boundingBox())!;
         expect(box.y + box.height).toBeLessThanOrEqual(bar + 0.5);
       }
       await expect(page.locator("main .why-toggle")).toHaveAttribute("aria-expanded", "false");
-      expect((await layout(page)).sheetTop - (await layout(page)).stage.y).toBeGreaterThanOrEqual(150);
+      const strip = (await layout(page)).sheetTop - (await layout(page)).stage.y;
+      const overMap = (await sheet(page).getAttribute("data-whole")) !== null;
+      expect(strip >= 84 || overMap, `${Math.round(strip)} px of map above the sheet at half`).toBe(true);
 
       // Full: everything screens 7a–7d say; the sheet stands over the whole map, which takes no focus.
       await page.locator("main .why-toggle").click();
@@ -185,6 +190,9 @@ test.describe("the sheet: the card, then the badges, then everything, each by a 
   test("a flick on the handle does what its button does: up raises the sheet, down lowers it", async ({ page }) => {
     await replay(page, "en", "Moncton");
     const flick = async (by: number) => {
+      // The sheet measures itself and settles a frame after its height changes: the press waits until the handle has
+      // stopped moving (hover does), so it lands on the handle, as a finger does.
+      await handle(page).hover();
       const box = (await handle(page).boundingBox())!;
       await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
       await page.mouse.down();

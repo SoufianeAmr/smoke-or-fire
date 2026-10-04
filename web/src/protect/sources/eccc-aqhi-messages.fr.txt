@@ -1,0 +1,34 @@
+Source: Environnement et Changement climatique Canada
+Title: Messages de la Cote air santé
+URL: https://www.meteo.gc.ca/airquality/healthmessage_f.html
+Date modified: 2026-09-03
+Retrieved: 2026-10-04
+Below: the text of the page's main content, one block (heading, paragraph, list item, table cell) per line.
+---
+Messages de la Cote air santé
+Ce tableau est un sommaire des messages de la Cote air santé par catégorie.
+Niveau de risque pour la santé
+Cote air santé
+Messages relatifs à la santé
+Message destiné à la population touchée*
+Message destiné à la population en général
+Risque faible
+1 - 3
+Profitez de vos activités habituelles en plein air.
+idéale pour les activités en plein air.
+Risque modéré
+4 - 6
+Envisagez de réduire ou de réorganiser les activités exténuantes en plein air si vous éprouvez des symptômes.
+Aucun besoin de modifier vos activités habituelles en plein air à moins d'éprouver des symptômes comme la toux et une irritation de la gorge.
+Risque élevé
+7 - 10
+Réduisez ou réorganisez les activités exténuantes en plein air. Les enfants et les personnes âgées devraient également modérer leurs activités.
+Envisagez de réduire ou de réorganiser les activités exténuantes en plein air si vous éprouvez des symptômes comme la toux et une irritation de la gorge.
+Risque très élevé
+Plus de 10
+Évitez les activités exténuantes en plein air. Les enfants et les personnes âgées devraient également éviter de se fatiguer en plein air.
+Réduisez ou réorganisez les activités exténuantes en plein air, particulièrement si vous éprouvez des symptômes comme la toux et une irritation de la gorge.
+*Vous n'êtes pas certain de courir un risque ? Consultez ce guide santé qui vous aidera à déterminer si la pollution atmosphérique représente un risque pour votre santé. Les personnes qui souffrent de maladies cardiaques ou respiratoires sont plus à risque. Suivez les conseils de votre médecin en ce qui concerne l'activité physique et la gestion de votre maladie.
+Rétroaction
+Date de modification :
+2026-09-03

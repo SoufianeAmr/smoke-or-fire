@@ -13,8 +13,11 @@ const PAUSE_MS = 300;
 
 export const canSpeak = () => typeof window !== "undefined" && !!window.speechSynthesis && typeof window.SpeechSynthesisUtterance === "function";
 
-/** `sentences` are read in order, one utterance each, with a pause between them. */
-export function ListenButton({ sentences, style }: { sentences: string[]; style?: CSSProperties }) {
+/**
+ * `sentences` are read in order, one utterance each, with a pause between them. `onDevice`: read only by a voice that
+ * works on the device (some browsers' best voices send what they say to a voice service); with none, nothing is said.
+ */
+export function ListenButton({ sentences, style, onDevice = false }: { sentences: string[]; style?: CSSProperties; onDevice?: boolean }) {
   const { lang } = useApp();
   const t = useT();
   const [supported] = useState(canSpeak);
@@ -59,7 +62,8 @@ export function ListenButton({ sentences, style }: { sentences: string[]; style?
     const synth = window.speechSynthesis;
     synth.cancel();
     const id = ++run.current;
-    const voice = pickVoice(synth.getVoices(), lang);
+    const voice = pickVoice(onDevice ? synth.getVoices().filter((v) => v.localService) : synth.getVoices(), lang);
+    if (onDevice && !voice) return;
     const say = (i: number) => {
       if (run.current !== id) return;
       if (i >= sentences.length) {

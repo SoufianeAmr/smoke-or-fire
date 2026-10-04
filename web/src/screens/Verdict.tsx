@@ -23,6 +23,7 @@ import { MapStage } from "../map/MapStage";
 import { readMap } from "../map/model";
 import { mapText, type Basemap } from "../map/text";
 import { startMap as startMapFor } from "../map/warm";
+import { ProtectLink } from "../protect/ProtectLink";
 import { AnswerInFull, Badges, GlanceLine, GlanceShape, Why } from "../verdict/card";
 import { AirQualityCard, ConfidenceCard, TwoPossibilitiesCard, WhatToDoCard, WhyCard } from "../verdict/cards";
 import { GLANCE } from "../verdict/glance";
@@ -246,6 +247,8 @@ export function Verdict() {
               <Why card={view.card} open={open} onToggle={() => setDetent(open ? "half" : "full")}>
                 {whyAll}
               </Why>
+              {/* Protect your home from smoke: with the sources and "Why?", at the sheet's half and full heights. */}
+              <ProtectLink />
             </div>
           </main>
           </div>

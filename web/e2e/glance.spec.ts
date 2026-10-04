@@ -761,7 +761,10 @@ test.describe("on a small phone: with the sheet at half, the three badges and â€
     expect(new Set(m.badges.map((b) => Math.round(b.top))).size).toBe(1);
     const map = (await page.locator(".map-stage").boundingBox())!;
     const top = (await page.locator(".answer-sheet").boundingBox())!.y;
-    expect(top - map.y).toBeGreaterThanOrEqual(150); // the map still shows above the sheet at half
+    // The sheet at half also holds, under "Why?", what a person can do next. A strip of the map still shows above it
+    // where the phone has room for one (84 px, its Legend button's); else the sheet stands over the whole map.
+    const overMap = (await page.locator(".answer-sheet").getAttribute("data-whole")) !== null;
+    expect(top - map.y >= 84 || overMap, `${Math.round(top - map.y)} px of map above the sheet at half`).toBe(true);
   });
 
   test("on a tall screen (480 Ã— 1024) each badge carries its full name, one under the other", async ({ page }) => {

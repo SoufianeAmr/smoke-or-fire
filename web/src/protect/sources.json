@@ -1,0 +1,68 @@
+{
+  "eccc-aqhi-messages": {
+    "publisher": {
+      "en": "Environment and Climate Change Canada",
+      "fr": "Environnement et Changement climatique Canada"
+    },
+    "title": {
+      "en": "Air Quality Health Index Messages",
+      "fr": "Messages de la Cote air santé"
+    },
+    "url": {
+      "en": "https://www.weather.gc.ca/airquality/healthmessage_e.html",
+      "fr": "https://www.meteo.gc.ca/airquality/healthmessage_f.html"
+    },
+    "modified": {
+      "en": "2026-09-03",
+      "fr": "2026-09-03"
+    },
+    "retrieved": {
+      "en": "2026-10-04",
+      "fr": "2026-10-04"
+    }
+  },
+  "hc-smoke-heat": {
+    "publisher": {
+      "en": "Health Canada",
+      "fr": "Santé Canada"
+    },
+    "title": {
+      "en": "Wildfire smoke with extreme heat",
+      "fr": "Fumée des feux de forêt et chaleur extrême"
+    },
+    "url": {
+      "en": "https://www.canada.ca/en/health-canada/services/publications/healthy-living/combine-wildfire-smoke-heat.html",
+      "fr": "https://www.canada.ca/fr/sante-canada/services/publications/vie-saine/effets-combines-fumee-feux-foret-chaleur.html"
+    },
+    "modified": {
+      "en": "2025-07-30",
+      "fr": "2025-07-30"
+    },
+    "retrieved": {
+      "en": "2026-10-04",
+      "fr": "2026-10-04"
+    }
+  },
+  "hc-air-cleaner": {
+    "publisher": {
+      "en": "Health Canada",
+      "fr": "Santé Canada"
+    },
+    "title": {
+      "en": "Using a portable air cleaner to improve indoor air",
+      "fr": "Utiliser un purificateur d’air portatif pour améliorer l’air intérieur"
+    },
+    "url": {
+      "en": "https://www.canada.ca/en/health-canada/services/air-quality/indoor-air-contaminants/choosing-portable-purifier.html",
+      "fr": "https://www.canada.ca/fr/sante-canada/services/qualite-air/contaminants-air-interieur/choisir-purificateur-portatif.html"
+    },
+    "modified": {
+      "en": "2021-12-24",
+      "fr": "2021-12-24"
+    },
+    "retrieved": {
+      "en": "2026-10-04",
+      "fr": "2026-10-04"
+    }
+  }
+}

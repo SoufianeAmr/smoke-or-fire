@@ -40,6 +40,23 @@ function VerdictRoute() {
   );
 }
 
+// "Protect your home" is a file of its own too, fetched when its button on the verdict is pressed: the first screens
+// do not carry it, and stay as light as they were.
+const Protect = lazy(() => import("./protect/Protect").then((screen) => ({ default: screen.Protect })));
+
+/** Its route: as the verdict's. With no check made it goes back to the start at once, without waiting for the file. */
+function ProtectRoute() {
+  const { result } = useApp();
+  if (!result) return <Navigate to="/" replace />;
+  return (
+    <Boundary fallback={<Navigate to="/no-data" replace />}>
+      <Suspense fallback={<Screen><Sticky911 /></Screen>}>
+        <Protect />
+      </Suspense>
+    </Boundary>
+  );
+}
+
 /** Each screen opens at its top, as the screen files do. */
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -64,6 +81,7 @@ export function App() {
             <Route path="/location" element={<Location />} />
             <Route path="/loading" element={<Loading />} />
             <Route path="/verdict" element={<VerdictRoute />} />
+            <Route path="/protect" element={<ProtectRoute />} />
             <Route path="/emergency" element={<Emergency />} />
             <Route path="/leave" element={<Leave />} />
             <Route path="/how-it-works" element={<HowItWorks />} />

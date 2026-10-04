@@ -34,10 +34,10 @@ export function LangToggle({ on = "page" }: { on?: "page" | "band" }) {
 
 /**
  * Back arrow on the left, language switch on the right (screens 02–06, 08, 09). `back` is a route, or -1 for the previous
- * screen. With `listen`, a Listen button before the language switch says those sentences aloud. Children sit right after
- * the Back link (the questions' progress mark).
+ * screen. With `listen`, a Listen button before the language switch says those sentences aloud (`listenOnDevice`: only
+ * with a voice that works on the device). Children sit right after the Back link (the questions' progress mark).
  */
-export function TopBar({ back, listen, children }: { back: string | -1; listen?: string[]; children?: ReactNode }) {
+export function TopBar({ back, listen, listenOnDevice, children }: { back: string | -1; listen?: string[]; listenOnDevice?: boolean; children?: ReactNode }) {
   const t = useT();
   const navigate = useNavigate();
   // Opened directly (a link or bookmark), there is no previous screen in the app: the link goes to Check.
@@ -50,7 +50,7 @@ export function TopBar({ back, listen, children }: { back: string | -1; listen?:
       </Link>
       {children}
       <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-        {listen && <ListenButton sentences={listen} />}
+        {listen && <ListenButton sentences={listen} onDevice={listenOnDevice} />}
         <LangToggle />
       </div>
     </div>
