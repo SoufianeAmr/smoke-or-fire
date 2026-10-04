@@ -55,11 +55,12 @@ function Arrow({ arrow }: { arrow: NonNullable<VerdictView["card"]["arrow"]> }) 
   );
 }
 
-/** The line, as the screen's title. Each part stays whole where it fits: the line breaks at the dots first. */
+/** The line, as the screen's title. Each part stays whole where it fits: the line breaks at the dots first. It can take
+ *  the focus (never by Tab): the verdict screen puts it there as it opens, so a screen reader starts with the answer. */
 export function GlanceLine({ card }: { card: VerdictView["card"] }) {
   const last = card.parts.length - 1;
   return (
-    <h1 id="verdict-h" className="glance-line" style={{ margin: "14px 0 0", fontSize: "34px", fontWeight: "800", lineHeight: "1.14", letterSpacing: "-0.02em" }}>
+    <h1 id="verdict-h" className="glance-line" tabIndex={-1} style={{ margin: "14px 0 0", fontSize: "34px", fontWeight: "800", lineHeight: "1.14", letterSpacing: "-0.02em" }}>
       {card.parts.map((part, i) => (
         <span key={i}>
           <span className="glance-part" style={{ display: "inline-block" }}>

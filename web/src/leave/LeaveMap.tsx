@@ -7,7 +7,7 @@ import { CoffeeIcon, HouseIcon } from "../components/icons";
 import { centreOf, type CentreType, type EvacuationEvent, type LatLon } from "../data/evacuation";
 import { Basemap, round } from "../map/basemap";
 import { circleBox, placeLabel, type Box } from "../map/labels";
-import { FLAME } from "../verdict/VerdictMap";
+import { FLAME } from "../verdict/marks";
 
 const W = 358;
 const H = 240;

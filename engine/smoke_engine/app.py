@@ -1,11 +1,13 @@
 """GET /verdict: is the smoke at this spot from a known fire?"""
 
+import logging
 import math
 from datetime import datetime, timedelta, timezone
 from typing import Literal
 
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import JSONResponse
 
 from smoke_engine.alerts import AlertCheck, air_quality_alert
@@ -15,6 +17,7 @@ from smoke_engine.feeds import FeedUnavailable
 from smoke_engine.fires import FIRE_RADIUS_KM, HOTSPOT_HOURS, Approach, Fire, closest_approach, known_fires
 from smoke_engine.forward import Fan, forward_fan
 from smoke_engine.geo import bearing_deg, compass, distance_km
+from smoke_engine.map import map_json
 from smoke_engine.places import area_code, nearest_community, public_fire_name, town_name
 from smoke_engine.trajectory import UNSTEADY_ABOVE_DEG, Path, trace_back
 from smoke_engine.verdict import (
@@ -27,6 +30,8 @@ from smoke_engine.verdict import (
     display_km,
 )
 from smoke_engine.wind import GRID_POINTS, HEIGHTS, WIND_MODEL, hours_needed, inside_grid, parse_open_meteo
+
+log = logging.getLogger("smoke_engine.app")
 
 HOURS_BACK = 24
 REPLAY_TIME = datetime(2025, 8, 25, 12, tzinfo=timezone.utc)  # Moncton replay: Aug 25, 2025, 12:00 UTC
@@ -249,7 +254,7 @@ def _alerts_json(check: AlertCheck, mode: str) -> dict:
     return {
         "airQuality": {
             "state": check.state,
-            "source": "naad_archive" if mode == "replay" else "eccc_geomet",
+            "source": _alert_source(mode),
             "checkedAt": _iso_or_none(check.checked_at),
             "alert": {
                 "code": alert.code,
@@ -265,6 +270,19 @@ def _alerts_json(check: AlertCheck, mode: str) -> dict:
             } if alert else None,
         }
     }
+
+
+def _alert_source(mode: str) -> str:
+    return "naad_archive" if mode == "replay" else "eccc_geomet"
+
+
+def _map_or_none(**parts) -> dict | None:
+    """The map key. Informational: a map that cannot be built is null, and the verdict is still given."""
+    try:
+        return map_json(**parts)
+    except Exception:
+        log.exception("the map could not be built")
+        return None
 
 
 def _approach_json(approach: Approach | None, lat: float, lon: float, arrival: datetime) -> dict | None:
@@ -311,6 +329,9 @@ def create_app(feeds_by_mode: dict, now=_utc_now, lifespan=None) -> FastAPI:
     app = FastAPI(title="Smoke or Fire? engine", lifespan=lifespan)
     # The web app is served from another origin; the API is public and read-only.
     app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["GET"])
+    # A verdict with its map is tens of kilobytes of JSON: sent compressed to a browser that asks for it (a phone on
+    # a slow connection gets it several times sooner).
+    app.add_middleware(GZipMiddleware, minimum_size=1024)
 
     @app.get("/")
     def index():
@@ -379,6 +400,9 @@ def create_app(feeds_by_mode: dict, now=_utc_now, lifespan=None) -> FastAPI:
         featured = approaches[chosen].fire if verdict_ in ("drifting", "unclear") else nearest
         fan = forward_fan(winds, featured.lat, featured.lon, lat, lon, arrival) if featured else None
 
+        # Informational only, like the forward trace and the AQHI: after the verdict, never part of it.
+        alert_check = air_quality_alert(feeds, lat, lon, arrival)
+
         path_json = {height: _path_json(path, lat, lon) for height, path in paths.items()}
         return {
             "mode": mode,
@@ -408,9 +432,14 @@ def create_app(feeds_by_mode: dict, now=_utc_now, lifespan=None) -> FastAPI:
             },
             "forward": _forward_json(fan),
             "aqhi": _aqhi_json(nearest_reading(feeds, lat, lon, arrival)),
-            # Informational only, like the forward trace and the AQHI: after the verdict, never part of it.
-            "alerts": _alerts_json(air_quality_alert(feeds, lat, lon, arrival), mode),
+            "alerts": _alerts_json(alert_check, mode),
             "sources": _sources_json(checked, fused, firms, arrival, now()),
+            # Informational only, and last: what the map draws, from what the verdict already used. One path for
+            # live and replay.
+            "map": _map_or_none(
+                feeds=feeds, lat=lat, lon=lon, arrival=arrival, paths=paths, chosen=chosen, fires=fires, featured=featured,
+                checked=checked, wind_facts=wind_facts, alert_check=alert_check, alert_source=_alert_source(mode),
+            ),
         }
 
     return app

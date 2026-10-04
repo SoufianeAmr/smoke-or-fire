@@ -1,7 +1,7 @@
 // The first milestone: the full replay flow for Moncton, in the browser.
 import { expect, test, type Locator, type Page } from "@playwright/test";
 import { answer } from "./look";
-import { openWhy } from "./verdict";
+import { openWhy, sheetTo } from "./verdict";
 
 const NBSP = String.fromCharCode(0xa0);
 // Health Canada, "Wildfire smoke with extreme heat".
@@ -30,12 +30,17 @@ test("Moncton replay: Check → Q1 flames → Q2 sky → Q3 nearby → Location 
 
   await expect(page.getByText(`Replay${NBSP}· Moncton${NBSP}· Aug 25, 2025${NBSP}·`)).toBeVisible();
 
-  // As the verdict opens: the glance card, its line as the screen's title, the three source badges, and "Why?" closed.
+  // As the verdict opens: the map, and over its foot the glance card, its line as the screen's title. One tap up
+  // ("Sources and why"): the three source badges, and "Why?" closed.
   await expect(page.locator("section.glance")).toHaveAttribute("data-state", "drifting");
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(`Drifting smoke${NBSP}· Long Lake fire${NBSP}· 159 km SSW`);
+  await expect(page.getByRole("region", { name: "Map", exact: true })).toBeVisible();
   const badges = page.locator("main .badge");
   await expect(badges.locator(".badge-label")).toHaveText(["Satellite fire detection", "Wind trace", "ECCC air quality alert: active"]);
   expect(await badges.evaluateAll((els) => els.map((el) => el.getAttribute("data-badge")))).toEqual(["fire", "trace", "alert"]);
+  for (const badge of await badges.all()) await expect(badge).toBeHidden();
+  await page.getByRole("button", { name: "Sources and why" }).click();
+  await sheetTo(page, "half");
   for (const badge of await badges.all()) await expect(badge).toBeVisible();
   const why = page.getByRole("button", { name: "Why?" });
   await expect(why).toHaveAttribute("aria-expanded", "false");
@@ -59,6 +64,7 @@ test("Moncton replay: Check → Q1 flames → Q2 sky → Q3 nearby → Location 
   await expect(confidence).toBeVisible();
 
   // The fire's smoke, traced forward: 24 paths that draw outward from the fire once.
+  await forward.scrollIntoViewIfNeeded();
   await expect(forward).toBeVisible();
   await expect(page.locator("polyline.fan")).toHaveCount(24);
   const fan = await page.locator("polyline.fan").first().evaluate((el) => [getComputedStyle(el).animationName, getComputedStyle(el).animationIterationCount]);

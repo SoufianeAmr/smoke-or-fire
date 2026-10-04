@@ -81,7 +81,11 @@ describe("index.html", () => {
       .filter((f) => /\.(html|tsx?)$/.test(f) && !f.endsWith(".test.ts"));
     expect(files).toContain("src/main.tsx");
     expect(files.filter((f) => /serviceWorker|caches\.open|CacheStorage/.test(read(f).toString("utf8")))).toEqual([]);
-    expect(readdirSync(new URL("public", WEB), { recursive: true, encoding: "utf8" }).filter((f) => /sw\.js|worker/i.test(f))).toEqual([]);
+    // A web worker is not a service worker: the map library's own (vendor/maplibre-gl-…/maplibre-gl-worker.mjs, copied there
+    // by scripts/vendor-map.mjs) reads map tiles off the main thread and stores nothing. It is checked by what it holds.
+    const served = readdirSync(new URL("public", WEB), { recursive: true, encoding: "utf8" }).map((f) => f.replace(/\\/g, "/"));
+    expect(served.filter((f) => /sw\.js|worker/i.test(f) && !/^vendor\/maplibre-gl-[\d.]+\/maplibre-gl-worker\.mjs$/.test(f))).toEqual([]);
+    expect(served.filter((f) => /\.m?js$/.test(f) && /serviceWorker|caches\.open|CacheStorage/.test(read(`public/${f}`).toString("utf8")))).toEqual([]);
     // Nor a build plugin that would add one (vite-plugin-pwa, Workbox).
     expect(read("vite.config.ts").toString("utf8")).not.toMatch(/pwa|workbox|serviceWorker/i);
     const pkg = JSON.parse(read("package.json").toString("utf8"));

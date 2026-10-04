@@ -29,6 +29,12 @@ export function pickVoice<V extends Voice>(voices: V[], lang: Lang): V | null {
 
 /** Sentences: split after . ? or ! followed by a space. */
 const sentences = (text: string) => text.split(/(?<=[.?!])\s+(?=\S)/).filter((s) => s.trim() !== "");
+
+/**
+ * Words written for the eye, as the voice says them, one sentence per item: "within 500 km" is said "within 500
+ * kilometres". For what a screen shows and also reads aloud (the map's summary).
+ */
+export const aloud = (lang: Lang, text: string) => sentences(text.replace(/(\d+)\s*km\b/g, (_, km: string) => spokenKm(Number(km), lang)));
 const fill = (text: string, vars: Vars) => text.replace(/\{(\w+)\}/g, (match, name) => (name in vars ? String(vars[name]) : match));
 
 /**

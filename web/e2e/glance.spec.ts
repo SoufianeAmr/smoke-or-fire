@@ -1,9 +1,11 @@
 // The verdict as one glance: a large icon in its own shape and colour, one line, the source badges under it, and
 // "Why?" in front of everything the screen said before. In the replay (Aug 25, 2025) and live, in English and French.
+// The card is in a sheet at the foot of the map: the screen opens on the card alone; the badges and "Why?" are one tap
+// up ("Sources and why", the sheet at half), where most of these tests look at them.
 import { expect, test, type Page, type Route } from "@playwright/test";
 import { readFileSync } from "node:fs";
 import { TEST_ENGINE_URL } from "./engine";
-import { openBadge, openWhy } from "./verdict";
+import { openBadge, openWhy, sheetTo } from "./verdict";
 
 type Lang = "en" | "fr";
 const LANGS = ["en", "fr"] as const;
@@ -30,22 +32,24 @@ async function start(page: Page, lang: Lang, mode: "replay" | "live") {
     await page.waitForFunction(() => sessionStorage.getItem("smoke-or-fire")?.includes('"lang":"fr"'));
   }
 }
-async function search(page: Page, town: string) {
+/** `raised`: the sheet is brought to half, where the badges and "Why?" are; false leaves the screen as it opens. */
+async function search(page: Page, town: string, raised = true) {
   await page.goto("/location");
   await page.locator("input[type=search]").fill(town);
   await page.getByRole("option", { name: new RegExp(`^${town},`) }).first().click();
   await expect(page.locator("#verdict-h")).toBeVisible({ timeout: 15_000 });
+  if (raised) await sheetTo(page, "half");
 }
-/** The replay town's verdict: its card in front. */
-async function replay(page: Page, lang: Lang, town: string) {
+/** The replay town's verdict: its card in front, the badges and "Why?" under it (or, not `raised`, as it opens). */
+async function replay(page: Page, lang: Lang, town: string, raised = true) {
   await start(page, lang, "replay");
-  await search(page, town);
+  await search(page, town, raised);
 }
 /** A live verdict: the engine answers GET /verdict with `answer`. */
-async function live(page: Page, lang: Lang, answer: object, town = "Moncton") {
+async function live(page: Page, lang: Lang, answer: object, town = "Moncton", raised = true) {
   await page.route(`${TEST_ENGINE_URL}/verdict**`, (route: Route) => route.fulfill({ json: answer, headers: { "access-control-allow-origin": "*" } }));
   await start(page, lang, "live");
-  await search(page, town);
+  await search(page, town, raised);
 }
 
 // Live answers, made of the engine's recorded ones: checked now, with the winds' newest model run and ECCC's answer.
@@ -101,8 +105,8 @@ const STATES = [
 test.describe("the card: one line under a large icon", () => {
   for (const lang of LANGS) {
     for (const state of STATES) {
-      test(`${lang.toUpperCase()} ${state.state} (${state.town} replay): as the screen opens, the icon in its shape and colour, the line as the title, the badges, and "Why?" closed`, async ({ page }) => {
-        await replay(page, lang, state.town);
+      test(`${lang.toUpperCase()} ${state.state} (${state.town} replay): as the screen opens, the icon in its shape and colour and the line as the title; one tap up, the badges, and "Why?" closed`, async ({ page }) => {
+        await replay(page, lang, state.town, false);
 
         expect(await look(page)).toMatchObject({ state: state.state, shape: state.shape, background: state.background });
         const shape = card(page).locator(".glance-shape");
@@ -114,8 +118,11 @@ test.describe("the card: one line under a large icon", () => {
         expect(plain(await line(page).innerText()).split(" ").filter((word) => word !== "·").length).toBeLessThanOrEqual(11);
         // The dots never start a line: each follows its part after a no-break space.
         expect((await line(page).locator(".glance-part").allTextContents()).slice(0, -1).every((part) => part.endsWith(`${NBSP}·`))).toBe(true);
+        // The badges are on the page, out of sight and out of reach until the sheet is raised.
         await expect(badges(page)).toHaveCount(3);
         expect(await badges(page).evaluateAll((all) => all.map((b) => b.getAttribute("data-badge")))).toEqual(["fire", "trace", "alert"]);
+        for (const b of await badges(page).all()) await expect(b).toBeHidden();
+        await sheetTo(page, "half");
         for (const b of await badges(page).all()) await expect(b).toBeVisible();
         // Everything the verdict said before is on the page, behind "Why?", and not shown.
         const why = page.locator("main .why-toggle");
@@ -444,11 +451,13 @@ test.describe("“Why?”: everything the verdict said, unchanged, one tap away"
     expect(await page.locator("#why-all > div > section").evaluateAll((all) => all.map((el) => el.getAttribute("aria-labelledby") ?? "why"))).toEqual(["answer-h", "fire-h", "conf-h", "poss-h", "todo-h", "aqhi-h", "why"]);
   });
 
-  test("a fire close by (Bridgetown): the notice and its link stay in front, above the badges, without a tap", async ({ page }) => {
-    await replay(page, "en", "Bridgetown");
+  test("a fire close by (Bridgetown): the notice and its link are in front as the screen opens, without a tap, and above the badges", async ({ page }) => {
+    await replay(page, "en", "Bridgetown", false);
 
     const notice = page.locator("main > section").first();
     await expect(notice).toContainText("The fire is close to you. Follow official instructions, and call 911 if you see flames or a smoke column.");
+    await expect(notice.getByRole("link", { name: "Told to leave your home? What to do" })).toBeVisible();
+    await sheetTo(page, "half");
     await expect(notice.getByRole("link", { name: "Told to leave your home? What to do" })).toBeVisible();
     const [noticeBox, firstBadge] = [await notice.boundingBox(), await badge(page, "fire").boundingBox()];
     expect(noticeBox!.y + noticeBox!.height).toBeLessThanOrEqual(firstBadge!.y);
@@ -519,16 +528,18 @@ test.describe("Call 911", () => {
   });
 });
 
-test.describe("on a small phone: the three badges and “Why?” show above the 911 bar without scrolling", () => {
+test.describe("on a small phone: with the sheet at half, the three badges and “Why?” show above the 911 bar without scrolling", () => {
   type Box = { top: number; bottom: number; left: number; right: number; width: number; height: number };
-  type Measures = { scrolled: number; width: number; bar: number; badges: Box[]; why: Box; line: Box };
-  /** Where things are as the screen stands: the 911 bar's top edge, the three badges, "Why?", and the card's line. */
+  type Measures = { scrolled: number; width: number; bar: number; under: number; badges: Box[]; why: Box; line: Box };
+  /** Where things are as the screen stands: how far the sheet is scrolled, the 911 bar's top edge, the foot of the
+   *  sheet's handle (what the sheet shows starts under it), the three badges, "Why?", and the card's line. */
   const measure = (page: Page): Promise<Measures> =>
     page.evaluate(() => {
       const box = (el: Element) => { const r = el.getBoundingClientRect(); return { top: r.top, bottom: r.bottom, left: r.left, right: r.right, width: r.width, height: r.height }; };
       return {
-        scrolled: window.scrollY,
+        scrolled: document.querySelector(".answer-sheet")!.scrollTop,
         width: window.innerWidth,
+        under: document.querySelector(".sheet-handle")!.getBoundingClientRect().bottom,
         bar: document.querySelector('a[href="tel:911"]')!.parentElement!.getBoundingClientRect().top,
         badges: [...document.querySelectorAll("main .badge")].map(box),
         why: box(document.querySelector("main .why-toggle")!),
@@ -537,7 +548,7 @@ test.describe("on a small phone: the three badges and “Why?” show above the 
     });
   /** The three badges, 56 px or more each way, side by side in one row, and "Why?" under them: all whole above the bar. */
   function expectAllAboveTheBar(m: Measures) {
-    expect([m.scrolled, m.badges.length]).toEqual([0, 3]); // as the screen opens
+    expect([m.scrolled, m.badges.length]).toEqual([0, 3]); // as the sheet comes up: nothing scrolled
     for (const b of m.badges) {
       expect(Math.min(b.width, b.height)).toBeGreaterThanOrEqual(56);
       expect([b.left >= 0, b.right <= m.width, b.top >= m.line.bottom]).toEqual([true, true, true]); // on the screen, under the card
@@ -585,7 +596,7 @@ test.describe("on a small phone: the three badges and “Why?” show above the 
 
       for (const lang of LANGS) {
         for (const town of PHONES.includes(viewport) ? TOWNS : TIGHTEST) {
-          test(`${lang.toUpperCase()} ${town} replay: one row of three badges and “Why?”, whole above the bar as the screen opens`, async ({ page }) => {
+          test(`${lang.toUpperCase()} ${town} replay: one row of three badges and “Why?”, whole above the bar`, async ({ page }) => {
             await replay(page, lang, town);
             await page.evaluate(() => document.fonts.ready);
 
@@ -662,16 +673,16 @@ test.describe("on a small phone: the three badges and “Why?” show above the 
               .poll(async () => {
                 const [m, p] = [await measure(page), (await panel.boundingBox())!];
                 const tapped = m.badges[["fire", "trace", "alert"].indexOf(id)];
-                const fits = p.height <= m.bar - 76;
-                // Too tall to fit: the page has scrolled the row to the top of the screen, the panel right under it.
-                return [p.x >= 0 && p.x + p.width <= m.width && p.width > m.width - 40, tapped.top >= 0, p.y >= tapped.bottom && p.y <= tapped.bottom + 24, fits ? p.y + p.height <= m.bar + 0.5 : m.scrolled > 0 && p.y <= 100];
+                const fits = p.height + 76 <= m.bar - m.under - 12;
+                // Too tall to fit: the sheet has scrolled the row to its top, under the handle, the panel right under it.
+                return [p.x >= 0 && p.x + p.width <= m.width && p.width > m.width - 40, tapped.top >= m.under - 0.5, p.y >= tapped.bottom && p.y <= tapped.bottom + 24, fits ? p.y + p.height <= m.bar + 0.5 : m.scrolled > 0 && tapped.top <= m.under + 30];
               })
               .toEqual([true, true, true, true]);
             // Its end comes into reach.
             await panel.locator("a").last().scrollIntoViewIfNeeded();
             const [link, bar] = [(await panel.locator("a").last().boundingBox())!, (await measure(page)).bar];
             expect(link.y + link.height).toBeLessThanOrEqual(bar + 0.5);
-            await page.evaluate(() => window.scrollTo(0, 0));
+            await page.evaluate(() => document.querySelector(".answer-sheet")!.scrollTo(0, 0));
           }
           await badge(page, "alert").click();
           await expect(page.locator("#badge-alert")).toBeHidden();
@@ -680,9 +691,15 @@ test.describe("on a small phone: the three badges and “Why?” show above the 
 
       // The one case where they do not all fit: the notice is what to do, so it comes first, and it is tall.
       for (const lang of LANGS) {
-        test(`${lang.toUpperCase()} a fire close by (Bridgetown): the notice comes first, then the row of badges, then “Why?”, which needs a scroll`, async ({ page }) => {
-          await replay(page, lang, "Bridgetown");
+        test(`${lang.toUpperCase()} a fire close by (Bridgetown): the notice comes first, as the screen opens; one tap up, the row of badges after it, then “Why?”, which needs a scroll`, async ({ page }) => {
+          await replay(page, lang, "Bridgetown", false);
           await page.evaluate(() => document.fonts.ready);
+          // As the screen opens: the card, then the notice, with nothing scrolled.
+          const first = (await page.locator("main > section").first().boundingBox())!;
+          const asOpened = await measure(page);
+          expect([asOpened.scrolled, first.y >= asOpened.line.bottom]).toEqual([0, true]);
+          if (viewport.height >= 667) expect(first.y + first.height).toBeLessThanOrEqual(asOpened.bar + 0.5); // the notice whole
+          await sheetTo(page, "half");
 
           const notice = (await page.locator("main > section").first().boundingBox())!;
           const opened = await measure(page);
@@ -690,7 +707,7 @@ test.describe("on a small phone: the three badges and “Why?” show above the 
           // Still one row of three, after the notice.
           expect([new Set(opened.badges.map((b) => Math.round(b.top))).size, opened.badges.every((b) => b.top >= notice.y + notice.height)]).toEqual([1, true]);
           if (viewport.height >= 667) {
-            // 375 × 667, as the screen opens: the notice whole, and the three badges whole under it, above the bar.
+            // 375 × 667, the sheet at half: the notice whole, and the three badges whole under it, above the bar.
             expect(notice.y + notice.height).toBeLessThanOrEqual(opened.bar + 0.5);
             expect(opened.badges.every((b) => b.bottom <= opened.bar + 0.5 && Math.min(b.width, b.height) >= 56)).toBe(true);
           } else {
@@ -711,31 +728,44 @@ test.describe("on a small phone: the three badges and “Why?” show above the 
   test.describe("the layout is chosen as the screen opens, and kept while it is read", () => {
     const tops = (page: Page) => badges(page).evaluateAll((all) => [...new Set(all.map((b) => Math.round(b.getBoundingClientRect().top)))].length);
 
-    test("a browser’s bars slide away mid-scroll and the screen grows taller: the row of badges stays a row", async ({ page }) => {
+    test("a browser’s bars slide away and the screen grows taller: the row of badges stays a row, the card its size", async ({ page }) => {
       await page.setViewportSize({ width: 390, height: 740 }); // a 390 px phone in a browser, its bars showing
       await replay(page, "en", "Moncton");
       expect(await tops(page)).toBe(1);
       const before = await line(page).evaluate((el) => getComputedStyle(el).fontSize);
 
       await openWhy(page);
-      await page.setViewportSize({ width: 390, height: 840 }); // the bars gone
-      await expect.poll(() => page.evaluate(() => window.innerHeight)).toBe(840);
+      // Taller than any phone: a layout that followed the height would put the badges back in a column, with a larger line.
+      await page.setViewportSize({ width: 390, height: 1040 });
+      await expect.poll(() => page.evaluate(() => window.innerHeight)).toBe(1040);
       await page.evaluate(() => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done))));
 
       expect([await tops(page), await line(page).evaluate((el) => getComputedStyle(el).fontSize)]).toEqual([1, before]);
       await expect(badge(page, "alert").locator(".badge-short")).toBeVisible();
     });
 
-    test("the phone is turned (a new width): the layout is chosen again", async ({ page }) => {
-      await replay(page, "en", "Moncton"); // 390 × 844: one badge under the other
+    test("the screen is turned (a new width): the layout is chosen again", async ({ page }) => {
+      await page.setViewportSize({ width: 480, height: 1024 }); // a tall screen: one badge under the other
+      await replay(page, "en", "Moncton");
       expect(await tops(page)).toBe(3);
 
-      await page.setViewportSize({ width: 844, height: 390 });
+      await page.setViewportSize({ width: 1024, height: 480 });
       await expect.poll(() => tops(page)).toBe(1);
     });
   });
 
-  test("on a tall phone (390 × 844) each badge carries its full name, one under the other", async ({ page }) => {
+  test("on a phone (390 × 844) the badges share one row too: a column of three would leave none of the map showing above the sheet", async ({ page }) => {
+    await replay(page, "en", "Moncton");
+
+    const m = await measure(page);
+    expect(new Set(m.badges.map((b) => Math.round(b.top))).size).toBe(1);
+    const map = (await page.locator(".map-stage").boundingBox())!;
+    const top = (await page.locator(".answer-sheet").boundingBox())!.y;
+    expect(top - map.y).toBeGreaterThanOrEqual(150); // the map still shows above the sheet at half
+  });
+
+  test("on a tall screen (480 × 1024) each badge carries its full name, one under the other", async ({ page }) => {
+    await page.setViewportSize({ width: 480, height: 1024 });
     await replay(page, "en", "Moncton");
 
     const m = await measure(page);

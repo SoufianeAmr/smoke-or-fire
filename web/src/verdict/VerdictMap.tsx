@@ -4,6 +4,7 @@ import { useApp } from "../app/state";
 import { FlameIcon, SatelliteIcon } from "../components/icons";
 import { Basemap, frameProjection, round } from "../map/basemap";
 import { circleBox, placeLabel, textBox, type Box } from "../map/labels";
+import { FLAME } from "./marks";
 import type { Height, PathPoint, VerdictJson } from "./types";
 import type { VerdictView } from "./view";
 
@@ -11,7 +12,6 @@ const W = 358;
 const H = 220;
 const ARROW = "M-5 -4.5L5 0L-5 4.5Z";
 const FAN_OPACITY = "0.5"; // 35% was too faint at 390 × 844, on the map and in the legend
-export const FLAME = "M12 21.5c3.9 0 6.5-2.6 6.5-6.3 0-3-1.8-5.3-3.4-7-.4 1.6-1.2 2.6-2.3 3.2.4-3.2-1-6.3-3.8-8.9.2 3.4-1.5 5.4-3 7.3-1.2 1.6-2 3.2-2 5.4 0 3.7 2.6 6.3 6.5 6.3z";
 
 type XY = [number, number];
 const pts = (list: XY[]) => list.map(([x, y]) => `${round(x)},${round(y)}`).join(" ");

@@ -8,7 +8,7 @@ import { expect, test, type Locator, type Page, type Route } from "@playwright/t
 import { readFileSync } from "node:fs";
 import { TEST_ENGINE_URL } from "./engine";
 import { answer } from "./look";
-import { openWhy } from "./verdict";
+import { openWhy, sheetTo } from "./verdict";
 
 type Lang = "en" | "fr";
 type Spoken = { text: string; lang: string; rate: number; pitch: number; volume: number; voice: string | null; at: number; end: number };
@@ -209,11 +209,8 @@ const nameSaid = (label: string) => label.replace(/\s*[?!.]+$/, "");
 /** The three badges' full names, in order (on a small phone each shows on a tap; it is always the button's name). */
 const badgeLabels = async (page: Page) => (await page.locator("main .badge .badge-label").allTextContents()).map((label) => label.trim());
 
-/**
- * What the verdict shows as it opens ("Why?" closed), as the voice says it: the card's line in spoken words, the
- * notice when it is on the screen, each badge by its label, where the rest is, then 911.
- */
-async function cardScript(page: Page, lang: Lang) {
+/** The card's line as the voice says it. */
+async function lineScript(page: Page, lang: Lang) {
   const s = STRINGS[lang];
   const [state, second, third] = await cardParts(page);
   let line: string[];
@@ -230,6 +227,48 @@ async function cardScript(page: Page, lang: Lang) {
     const within = valuesOf(lang, "card.noFireWithin", second); // "No known fire within 500 km"; otherwise "No known fire upwind"
     line = within ? script(lang, "voice.card.noFires", within) : script(lang, "voice.card.unexplained");
   }
+  return line;
+}
+/** Where the voice sends for 911. Nothing explains the smoke: Call 911 is the main action, "the big red button". */
+const callScript = async (page: Page, lang: Lang) => script(lang, (await cardParts(page))[0] === STRINGS[lang]["card.unexplained"] ? "voice.card.call" : "voice.verdict.call");
+
+/**
+ * What the verdict shows as it opens (the map, and the card in the sheet at its foot), as the voice says it: the
+ * card's line in spoken words, the notice when it is on the screen, what the map shows (its summary, a sentence at a
+ * time, distances in full), where the rest is, then 911.
+ */
+async function peekScript(page: Page, lang: Lang) {
+  const summary = (await text(page, "#map-summary")).replace(/(\d+)\s*km\b/g, (_, km: string) => spokenKm(lang, Number(km))).split(/(?<=[.?!])\s+(?=\S)/);
+  return [
+    ...(await lineScript(page, lang)),
+    ...(await noticeScript(page, lang)),
+    ...summary,
+    ...script(lang, "voice.card.more", { more: await text(page, ".sheet-handle") }),
+    ...(await callScript(page, lang)),
+  ];
+}
+/** Every button that script names: the notice's link when shown, the sheet's handle, and Call 911. */
+async function peekButtons(page: Page, lang: Lang) {
+  const s = STRINGS[lang];
+  if ((await noticeLink(page, lang).count()) > 0) await named(noticeLink(page, lang), s["leave.entry"]);
+  await named(page.locator(".sheet-handle"), s["sheet.more"]);
+  await expect(page.getByRole("region", { name: s["map.region"], exact: true })).toBeVisible(); // "the map"
+  await named(page.locator('a.press[href="tel:911"]'), s["sticky.call"], RED);
+  await expect(page.locator('a[href="tel:911"]')).toHaveCount(1);
+}
+async function peekLabels(page: Page, lang: Lang) {
+  const s = STRINGS[lang];
+  return [...((await noticeLink(page, lang).count()) ? [s["leave.entry"]] : []), s["sheet.more"], s["sticky.call"]];
+}
+
+/**
+ * What the verdict shows with the sheet at half ("Why?" closed), as the voice says it: the card's line in spoken
+ * words, the notice when it is on the screen, each badge by its label, where the rest is, then 911.
+ */
+async function cardScript(page: Page, lang: Lang) {
+  const s = STRINGS[lang];
+  const [state] = await cardParts(page);
+  const line = await lineScript(page, lang);
   const [fire, trace, alert] = await badgeLabels(page);
   return [
     ...line,
@@ -359,9 +398,11 @@ type Screen = {
   seconds?: number;
 };
 const keys = (...names: string[]) => async (_: Page, lang: Lang) => names.map((name) => STRINGS[lang][name]);
-/** A verdict's two readings: the card as the screen opens, then, with "Why?" open, everything screens 7a–7d say. */
+/** A verdict's three readings: the card and the map as the screen opens; the card and its badges with the sheet at
+ *  half; then, with "Why?" open, everything screens 7a–7d say. */
 const twoReadings = (name: string, open: Screen["open"]): Screen[] => [
-  { name, open, script: cardScript, buttons: cardButtons, labels: cardLabels, seconds: 20 },
+  { name, open, script: peekScript, buttons: peekButtons, labels: peekLabels, seconds: 20 },
+  { name: `${name}, Sources and why open`, open: async (page, lang) => { await open(page, lang); await sheetTo(page, "half"); }, script: cardScript, buttons: cardButtons, labels: cardLabels, seconds: 20 },
   { name: `${name}, Why? open`, open: async (page, lang) => { await open(page, lang); await openWhy(page); }, script: verdictScript, buttons: verdictButtons, labels: verdictLabels, seconds: 20 },
 ];
 
@@ -670,9 +711,21 @@ test.describe("Listen: stopping", () => {
     await stopped(page, before);
   });
 
+  test("the verdict raising the sheet stops it: the reading was of the map, and the badges are now what shows", async ({ page }) => {
+    await start(page, "en");
+    await verdictFor(page, "Moncton");
+    await holdSentences(page);
+    await listenButton(page, "en").click();
+    await expect(page.getByRole("button", { name: "Stop", exact: true })).toBeVisible();
+    const before = await cancels(page);
+    await sheetTo(page, "half");
+    await stopped(page, before);
+  });
+
   test("the verdict opening Why? stops it: the reading was of the card, not of what Why? shows", async ({ page }) => {
     await start(page, "en");
     await verdictFor(page, "Moncton");
+    await sheetTo(page, "half");
     await holdSentences(page);
     await listenButton(page, "en").click();
     await expect(page.getByRole("button", { name: "Stop", exact: true })).toBeVisible();

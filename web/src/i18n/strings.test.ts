@@ -34,7 +34,8 @@ describe("strings", () => {
   });
 
   test("no emoji in any string", () => {
-    const emoji = [...Object.entries(en), ...Object.entries(fr)].filter(([, text]) => /\p{Extended_Pictographic}/u.test(text)).map(([key]) => key);
+    // The copyright sign of the map's credit ("© OpenStreetMap") is in Unicode's pictographic set; it is not an emoji.
+    const emoji = [...Object.entries(en), ...Object.entries(fr)].filter(([, text]) => /\p{Extended_Pictographic}/u.test(text.replace(/©/g, ""))).map(([key]) => key);
     expect(emoji).toEqual([]);
   });
 

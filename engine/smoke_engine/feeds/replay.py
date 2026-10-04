@@ -67,6 +67,15 @@ class ReplayFeeds:
     def alerts(self, lat, lon, at):
         """What ECCC's alerts collection would have listed for the point at `at`, from the recorded messages
         (alerts.json): for each zone and alert, the newest message sent by then, unless it had expired."""
+        listed = [{**feature, "geometry": None} for feature in self._listed(lat, lon, at)]
+        return {"type": "FeatureCollection", "features": listed, "numberMatched": len(listed), "numberReturned": len(listed)}
+
+    def alert_zones(self, lat, lon, at):
+        """The same alerts with their zones' outlines, as the recorded messages give them."""
+        listed = self._listed(lat, lon, at)
+        return {"type": "FeatureCollection", "features": listed, "numberMatched": len(listed), "numberReturned": len(listed)}
+
+    def _listed(self, lat, lon, at) -> list:
         recorded = self._load("alerts.json")
         first, end = (_time(t) for t in recorded["covers"])
         if not first <= at < end:
@@ -81,9 +90,4 @@ class ReplayFeeds:
                 and any(in_ring(lat, lon, ring) for ring in feature["geometry"]["coordinates"])
             ):
                 newest[key] = feature
-        listed = [
-            {**feature, "geometry": None}
-            for feature in newest.values()
-            if at < _time(feature["properties"]["expiration_datetime"])
-        ]
-        return {"type": "FeatureCollection", "features": listed, "numberMatched": len(listed), "numberReturned": len(listed)}
+        return [feature for feature in newest.values() if at < _time(feature["properties"]["expiration_datetime"])]

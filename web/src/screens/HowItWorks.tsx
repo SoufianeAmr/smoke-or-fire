@@ -7,7 +7,7 @@ import { ReplayBanner } from "../components/ReplayBanner";
 import { Screen } from "../components/Screen";
 import { CLEAR_OF_BAR, Sticky911 } from "../components/Sticky911";
 import { TopBar } from "../components/TopBar";
-import { VERDICT_ICONS } from "../verdict/cards";
+import { VERDICT_ICONS } from "../verdict/marks";
 
 const CARD: CSSProperties = { background: "#FFFFFF", borderRadius: "18px", padding: "20px", display: "flex", flexDirection: "column", gap: "12px", boxShadow: "0 1px 2px rgba(26, 29, 33, 0.06), 0 8px 24px rgba(26, 29, 33, 0.07)" };
 const BODY: CSSProperties = { margin: "0", fontSize: "18px", lineHeight: "1.45" };

@@ -33,6 +33,8 @@ export interface Badge {
 
 export interface VerdictView {
   variant: Variant;
+  /** The place the check is for, as the screen names it. */
+  town: string;
   /** The glance card: the answer in one line, under a large icon. Everything else on the screen is behind "Why?". */
   card: {
     state: Verdict;
@@ -50,6 +52,10 @@ export interface VerdictView {
     answer: string;
     /** What Listen says while "Why?" is closed: the line, the badges by name, where the rest is, then 911. */
     voice: string[];
+    /** The start of that script (the line in spoken words, then the fire-is-close notice) and its end (911): what
+     *  Listen says around the map while only the card shows. */
+    lead: string[];
+    call: string[];
   };
   badges: Badge[];
   band: { label: string; headline: string; sub: string };
@@ -110,6 +116,12 @@ function atlantic(iso: string): { date: string; hour: string; minute: string } {
   const f = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Halifax", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
   const p = Object.fromEntries(f.formatToParts(new Date(iso)).map((x) => [x.type, x.value]));
   return { date: `${p.year}-${p.month}-${p.day}`, hour: p.hour, minute: p.minute };
+}
+
+/** A time as the badges and the map's legend give it: "2025-08-25, 04:50 (Atlantic time)", "2025-08-25, 4 h 50 (heure de l’Atlantique)". */
+export function atlanticTime(lang: Lang, iso: string): string {
+  const { date, hour, minute } = atlantic(iso);
+  return translate(lang, "time.atlantic", { date, hour: lang === "fr" ? Number(hour) : hour, minute });
 }
 
 /** Local time words for when the wind shifted (Atlantic time). */
@@ -446,10 +458,7 @@ export function verdictView(json: VerdictJson, lang: Lang, townName?: string): V
   const arrow = direction && COMPASS.includes(direction) ? { deg: COMPASS.indexOf(direction) * 22.5, label: towardWord(direction) } : null;
 
   // Times in a badge: "2025-08-25, 04:50 (Atlantic time)", "2025-08-25, 4 h 50 (heure de l’Atlantique)".
-  const at = (iso: string) => {
-    const { date, hour, minute } = atlantic(iso);
-    return t("time.atlantic", { date, hour: lang === "fr" ? Number(hour) : hour, minute });
-  };
+  const at = (iso: string) => atlanticTime(lang, iso);
   const link = (key: "badge.fire.link.firms" | "badge.fire.link.cwfis" | "badge.trace.link" | "badge.alert.link" | "badge.alert.link.archive", vars?: Vars) => ({
     label: t(key),
     host: t(`${key}.host` as StringKey),
@@ -569,17 +578,19 @@ export function verdictView(json: VerdictJson, lang: Lang, townName?: string): V
         : variant === "7d"
           ? say("voice.card.noFires", { km: json.rules.fireRadiusKm })
           : say("voice.card.unexplained");
+  const spokenLead = [...spokenLine, ...(notice ? say("voice.verdict.notice", { link: notice.link }) : [])];
+  const spokenCall = say(callFirst ? "voice.card.call" : "voice.verdict.call");
   const cardVoice = [
-    ...spokenLine,
-    ...(notice ? say("voice.verdict.notice", { link: notice.link }) : []),
+    ...spokenLead,
     ...say("voice.card.badges", { fire: badges[0].label, trace: badges[1].label, alert: badges[2].label }),
     // The button's name inside a sentence, without its own question mark: "tap the Why button."
     ...say("voice.card.why", { why: t("card.why").replace(/\s*[?!.]+$/, "") }),
-    ...say(callFirst ? "voice.card.call" : "voice.verdict.call"),
+    ...spokenCall,
   ];
 
   return {
     variant,
+    town,
     card: {
       state,
       parts,
@@ -590,6 +601,8 @@ export function verdictView(json: VerdictJson, lang: Lang, townName?: string): V
       why: t("card.why"),
       answer: t("card.answer"),
       voice: cardVoice,
+      lead: spokenLead,
+      call: spokenCall,
     },
     badges,
     band,

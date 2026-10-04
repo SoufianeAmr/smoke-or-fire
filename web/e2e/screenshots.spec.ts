@@ -1,5 +1,6 @@
 // Pictures of the three questions, the screens around them and every state of the verdict, in English and French, at
-// 390 × 844: saved to screenshots/ as <nn>-<name>-<lang>.png, for a person to look at. Replay mode, but for the verdict
+// 390 × 844: saved to screenshots/ as <nn>-<name>-<lang>.png, for a person to look at. The verdict's map is the
+// detailed one (this project runs with WebGL), at each height of the sheet, in the replay and live. Replay mode, but for the verdict
 // states only a live answer gives (no fire in range, ECCC's alert not checked or active now). Nothing is compared: a
 // picture's test fails only when its screen could not be reached. Never part of `npm run e2e`: run with
 // `npm run e2e:shots`.
@@ -9,7 +10,7 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { TEST_ENGINE_URL } from "./engine";
 import { answer } from "./look";
-import { openBadge, openWhy } from "./verdict";
+import { openBadge, openWhy, sheetTo } from "./verdict";
 
 type Lang = "en" | "fr";
 const STRINGS: Record<Lang, Record<string, string>> = {
@@ -38,13 +39,23 @@ async function question(page: Page, route: "/q1" | "/q2" | "/q3") {
   await expect(page.locator('main .look-answers[data-ready="true"]')).toBeVisible();
 }
 
-/** A replay town's verdict: its glance card in front. */
+/** A replay town's verdict as it opens: the map drawn (the detailed one, or the outline map with its note; or no map,
+ *  on a small phone where the card and the fire-is-close notice leave it no room), and the glance card in the sheet. */
 async function verdict(page: Page, town: string) {
   await page.goto("/location");
   await page.locator("input[type=search]").fill(town);
   await page.getByRole("option", { name: new RegExp(`^${town},`) }).first().click();
   await expect(page.locator("#verdict-h")).toBeVisible({ timeout: 15_000 });
+  await page.waitForFunction(() => { const map = document.querySelector(".map-stage"); return map?.getAttribute("data-basemap") === "tiles" || map?.hasAttribute("data-fallback") || (map as HTMLElement | null)?.inert === true; }, null, { timeout: 20_000 });
 }
+/** A browser with no WebGL, for the picture of the outline map. Before the page loads. */
+const noWebGL = (page: Page) =>
+  page.addInitScript(() => {
+    const original = HTMLCanvasElement.prototype.getContext;
+    HTMLCanvasElement.prototype.getContext = function (this: HTMLCanvasElement, kind: string, ...rest: unknown[]) {
+      return /webgl/.test(kind) ? null : (original as (...args: unknown[]) => unknown).call(this, kind, ...rest);
+    } as typeof original;
+  });
 
 const demo = (town: string) => JSON.parse(readFileSync(new URL(`../../data/demo/${town}.json`, import.meta.url), "utf8"));
 // A live answer made of the engine's recorded one: checked now, with the winds' newest model run and ECCC's answer.
@@ -200,6 +211,7 @@ const SHOTS: Shot[] = [
     file: "16-verdict-official-list",
     open: async (page) => {
       await verdict(page, "Bathurst");
+      await sheetTo(page, "half");
       await expect(page.locator('main .badge[data-badge="fire"]')).toBeVisible();
     },
   },
@@ -276,6 +288,7 @@ const SHOTS: Shot[] = [
     phone: SMALL,
     open: async (page) => {
       await verdict(page, "Bridgetown");
+      await sheetTo(page, "half");
       await page.locator("main .why-toggle").scrollIntoViewIfNeeded();
     },
   },
@@ -285,6 +298,44 @@ const SHOTS: Shot[] = [
     phone: SMALL,
     open: (page) => liveVerdict(page, liveAnswer("moncton", NOT_CHECKED), "Moncton"),
   },
+  // The answer on the map: each height of the sheet, in the replay and live; the legend; and the outline map.
+  { name: "30 Map, replay (Moncton): peek, the card", file: "30-map-replay-peek", open: (page) => verdict(page, "Moncton") },
+  { name: "31 Map, replay (Moncton): half, the badges", file: "31-map-replay-half", open: async (page) => { await verdict(page, "Moncton"); await sheetTo(page, "half"); } },
+  { name: "32 Map, replay (Moncton): full, Why?", file: "32-map-replay-full", open: async (page) => { await verdict(page, "Moncton"); await openWhy(page); } },
+  { name: "33 Map, live (Moncton): peek, the card", file: "33-map-live-peek", open: (page) => liveVerdict(page, liveAnswer("moncton", WARNING), "Moncton") },
+  { name: "34 Map, live (Moncton): half, the badges", file: "34-map-live-half", open: async (page) => { await liveVerdict(page, liveAnswer("moncton", WARNING), "Moncton"); await sheetTo(page, "half"); } },
+  { name: "35 Map, live (Moncton): full, Why?", file: "35-map-live-full", open: async (page) => { await liveVerdict(page, liveAnswer("moncton", WARNING), "Moncton"); await openWhy(page); } },
+  {
+    name: "36 Map, the legend: each layer with its source and its time",
+    file: "36-map-legend",
+    whole: true,
+    open: async (page, lang) => {
+      await verdict(page, "Moncton");
+      await page.getByRole("button", { name: STRINGS[lang]["map.legend"] }).click();
+      await expect(page.getByRole("dialog")).toBeVisible();
+    },
+  },
+  {
+    name: "37 Map, no WebGL: the outline map, the same overlay, and a note",
+    file: "37-map-outline",
+    open: async (page) => {
+      await noWebGL(page);
+      await verdict(page, "Moncton");
+      await expect(page.locator(".map-note")).toBeVisible();
+    },
+  },
+  { name: "38 Map on a small phone (375 × 667), replay (Moncton): peek", file: "38-map-small-peek", phone: SMALL, open: (page) => verdict(page, "Moncton") },
+  { name: "39 Map on the smallest phone (320 × 568), replay (Moncton): peek", file: "39-map-smallest-peek", phone: SMALLEST, open: (page) => verdict(page, "Moncton") },
+  {
+    name: "40 Map, moved: Recentre in the credit's corner",
+    file: "40-map-moved",
+    open: async (page, lang) => {
+      await verdict(page, "Moncton");
+      await page.getByRole("button", { name: STRINGS[lang]["map.zoomIn"] }).click();
+      await expect(page.getByRole("button", { name: STRINGS[lang]["map.recentre"] })).toBeVisible();
+      await page.waitForTimeout(900);
+    },
+  },
 ];
 
 /** Wait as pixels.spec.ts does (the network quiet, the fonts in), switch animations off, and save the picture. */
@@ -293,9 +344,16 @@ async function save(page: Page, file: string, whole = false) {
   await page.evaluate(() => document.fonts.ready);
   await page.addStyleTag({ content: "*,*::before,*::after{animation:none!important;transition:none!important}" });
   if (whole) {
-    // A phone as tall as the page: everything shows, and the 911 bar stays at the foot.
-    await page.setViewportSize({ width: page.viewportSize()!.width, height: await page.evaluate(() => document.documentElement.scrollHeight) });
-    await page.evaluate(() => window.scrollTo(0, 0));
+    // A phone as tall as the page: everything shows, and the 911 bar stays at the foot. On the verdict the page is
+    // the phone's height and the sheet (or the legend) scrolls inside it: tall enough for all it holds.
+    const height = await page.evaluate(() => {
+      const inside = document.querySelector<HTMLElement>(".map-legend") ?? document.querySelector<HTMLElement>(".answer-sheet");
+      if (!inside) return document.documentElement.scrollHeight;
+      const box = inside.getBoundingClientRect();
+      return Math.ceil(box.top + inside.scrollHeight + (window.innerHeight - box.bottom));
+    });
+    await page.setViewportSize({ width: page.viewportSize()!.width, height });
+    await page.evaluate(() => { window.scrollTo(0, 0); document.querySelector(".answer-sheet")?.scrollTo(0, 0); });
   }
   mkdirSync(OUT, { recursive: true });
   await page.screenshot({ path: join(OUT, file) });

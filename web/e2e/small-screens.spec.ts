@@ -3,8 +3,8 @@
 // The 911 bar: one line of text and the red Call 911 button, about 72 px tall, on every screen but Call 911 now and
 // Nearby fire, which have their own Call 911 button, and the verdict that nothing explains, whose bar is the taller
 // one: "Look outside. See flames or a smoke column?" above a Call 911 button as wide as the bar.
-// The verdict: the glance card (its shape, Listen, its line) is whole as the screen opens; above the slim bar, the
-// first source badge is too.
+// The verdict: the glance card (its shape, Listen, its line) is whole as the screen opens, in the sheet at the foot of
+// the map. The source badges are one tap up (e2e/glance.spec.ts, e2e/map.spec.ts).
 import { expect, test, type Locator, type Page } from "@playwright/test";
 import { readFileSync } from "node:fs";
 
@@ -103,10 +103,10 @@ const LISTEN = new RegExp(`^(${STRINGS.en["listen.play"]}|${STRINGS.fr["listen.p
 /** The glance card: its line, the row above the line, and in that row the state's shape and the Listen button. */
 const verdictMain = (page: Page) => {
   const card = page.locator("section[aria-labelledby=verdict-h]");
-  return [page.locator("#verdict-h"), card.locator("> div").nth(1), card.locator("svg.glance-shape"), card.getByRole("button", { name: LISTEN })];
+  return [page.locator("#verdict-h"), card.locator(".glance-head"), card.locator("svg.glance-shape"), card.getByRole("button", { name: LISTEN })];
 };
-/** Above the slim bar, the first source badge too. */
-const verdictAndBadge = (page: Page) => [...verdictMain(page), page.locator("main .badge").first()];
+/** With the sheet's own handle ("Sources and why"), which is how the badges are reached. */
+const verdictAndHandle = (page: Page) => [...verdictMain(page), page.locator(".sheet-handle")];
 /** A question's answers, all of them: three on Q1, four on Q2, six on Q3. */
 const answers = (page: Page) => [page.locator("main a[data-answer]")];
 
@@ -121,12 +121,12 @@ const SCREENS: Check[] = [
   { name: "04 Emergency", open: (p) => p.goto("/emergency").then(), main: (p) => [p.locator('main a[href="tel:911"]')], bar: false },
   { name: "05 Location", open: (p) => p.goto("/location").then(), main: (p) => [p.locator('main a[href="/loading"]').first(), p.locator("input[type=search]")], bar: true },
   { name: "06 Loading", open: (p) => searchTown(p, "Moncton"), main: (p) => [p.locator("h1")], bar: true },
-  { name: "07a Verdict (Moncton)", open: (p) => verdictFor(p, "Moncton"), main: verdictAndBadge, bar: true },
-  // The fire is under 25 km away: its notice comes first under the card, so the badges start lower. Only the card here.
-  { name: "07a Verdict (Bridgetown)", open: (p) => verdictFor(p, "Bridgetown"), main: verdictMain, bar: true },
-  { name: "07c Verdict (Charlottetown)", open: (p) => verdictFor(p, "Charlottetown"), main: verdictAndBadge, bar: true },
+  { name: "07a Verdict (Moncton)", open: (p) => verdictFor(p, "Moncton"), main: verdictAndHandle, bar: true },
+  // The fire is under 25 km away: its notice comes under the card, in front too.
+  { name: "07a Verdict (Bridgetown)", open: (p) => verdictFor(p, "Bridgetown"), main: verdictAndHandle, bar: true },
+  { name: "07c Verdict (Charlottetown)", open: (p) => verdictFor(p, "Charlottetown"), main: verdictAndHandle, bar: true },
   // Nothing explains the smoke: the call-first bar.
-  { name: "07b Verdict (Halifax)", open: (p) => verdictFor(p, "Halifax"), main: verdictMain, bar: true, callFirst: true },
+  { name: "07b Verdict (Halifax)", open: (p) => verdictFor(p, "Halifax"), main: verdictAndHandle, bar: true, callFirst: true },
   { name: "08 How it works", open: (p) => p.goto("/how-it-works").then(), main: (p) => [p.locator("h1")], bar: true },
   { name: "09a Location off", open: (p) => p.goto("/location-off").then(), main: (p) => [p.locator("input[type=search]"), p.locator('main a[href="/loading"]')], bar: true },
   { name: "09b No data", open: (p) => p.goto("/no-data").then(), main: (p) => [p.locator("main button")], bar: true },
