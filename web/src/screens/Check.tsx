@@ -1,25 +1,15 @@
 // 01 · Check, the home screen: a layout of its own, in the app's colours and Inter (design/DESIGN-LOCK.md, "Amendment:
 // the home screen"). Its rules are in styles.css, under "01 Check".
-import { useEffect, type CSSProperties } from "react";
+import { useEffect } from "react";
 import { Link } from "react-router";
 import { useApp, useT } from "../app/state";
 import { Screen } from "../components/Screen";
+import { Tools } from "../components/TopBar";
 import { ChevronRightIcon, FlameIcon } from "../components/icons";
 import { wakeEngine } from "../data/live";
-import type { Lang } from "../i18n";
 import { useInstall } from "../keep/keep";
 import { KeepOnPhone } from "../keep/KeepOnPhone";
-import { ListenButton } from "../listen/ListenButton";
 import { checkVoice } from "../listen/speech";
-
-// Listen as words beside the language link, with no outline. Its 56 px to tap stay.
-const LISTEN: CSSProperties = { padding: "0 12px 0 4px", border: "0", borderRadius: "4px", background: "transparent", fontSize: "16px" };
-
-/** The language the screen is not in, named in its own words: "Français" on the English screen, "English" on the French. */
-const OTHER: Record<Lang, { code: Lang; name: "lang.fr" | "lang.en" }> = {
-  en: { code: "fr", name: "lang.fr" },
-  fr: { code: "en", name: "lang.en" },
-};
 
 const NBSP = String.fromCharCode(0xa0);
 
@@ -101,11 +91,10 @@ const Tick = () => (
 );
 
 export function Check() {
-  const { mode, lang, setMode, setLang, reset } = useApp();
+  const { mode, lang, setMode, reset } = useApp();
   const t = useT();
   const isReplay = mode === "replay";
   const install = useInstall();
-  const other = OTHER[lang];
   // Live: one quiet request wakes the engine as the app opens, so it is usually up by the end of the three questions.
   // Replay never calls the engine, not even for this.
   useEffect(() => {
@@ -120,10 +109,7 @@ export function Check() {
           <Logo />
           <span className="home-brand-name">{t("check.title")}</span>
         </h1>
-        <div className="home-tools">
-          <ListenButton sentences={checkVoice(lang, isReplay, install.offered)} style={LISTEN} />
-          <button type="button" lang={other.code} onClick={() => setLang(other.code)} className="home-lang">{t(other.name)}</button>
-        </div>
+        <Tools listen={checkVoice(lang, isReplay, install.offered)} />
       </header>
       <main className="home-main">
         {/* What the app is for, in a drawing and a line: nothing has been checked yet, so the card states no finding. */}

@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { Link, useLocation } from "react-router";
 import { useT } from "../app/state";
+import type { StringKey } from "../i18n";
 import { CLEAR_OF_BAR } from "../components/Sticky911";
 
 export const MAIN: CSSProperties = { flexGrow: "1", display: "flex", flexDirection: "column", gap: "16px", padding: `8px 16px ${CLEAR_OF_BAR}` };
@@ -61,7 +62,7 @@ export function Answer({ answer, to, shape, style, children }: { answer: string;
   );
 }
 
-// Small, and drawn into the blank right of the Back arrow: the bar also holds Listen and EN / FR. It takes no tap: where
+// Small, and drawn into the blank right of the Back arrow: the bar also holds Listen and the language. It takes no tap: where
 // it sits over the edge of the Back link, the tap is Back's.
 const STEPS: CSSProperties = { flexShrink: "0", display: "flex", alignItems: "center", gap: "5px", margin: "0 auto 0 -10px", pointerEvents: "none" };
 const DOT: CSSProperties = { width: "8px", height: "8px", borderRadius: "999px", border: "2px solid #1B2A4A" };
@@ -92,8 +93,13 @@ export function useTitleFocus() {
 
 const SMALL: CSSProperties = { fontSize: "16px", lineHeight: "1.45", color: "#1B2A4A" };
 
-/** "About these questions": where they come from, closed until asked for. Opened, it scrolls clear of the 911 bar. */
-export function About() {
+/** The words of an "About" note: its link, its line, and its source with the source's address. */
+export type AboutWords = { label: StringKey; body: StringKey; source: StringKey; url: StringKey };
+const QUESTIONS: AboutWords = { label: "look.about", body: "look.about.body", source: "look.about.source", url: "look.about.source.url" };
+
+/** "About these questions": where they come from, closed until asked for. Opened, it scrolls clear of the 911 bar.
+ *  `words`: another screen's own note, made the same way ("About this card"). */
+export function About({ words = QUESTIONS }: { words?: AboutWords }) {
   const t = useT();
   const [open, setOpen] = useState(false);
   const text = useRef<HTMLDivElement>(null);
@@ -103,13 +109,13 @@ export function About() {
   return (
     <div className="look-about" style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", padding: "0 4px" }}>
       <button type="button" className="look-about-toggle" aria-expanded={open} aria-controls="look-about-text" onClick={() => setOpen(!open)} style={{ ...SMALL, minHeight: "56px", padding: "0", border: "0", background: "transparent", fontFamily: "inherit", fontWeight: "600", textAlign: "left", textDecoration: "underline", cursor: "pointer" }}>
-        {t("look.about")}
+        {t(words.label)}
       </button>
       {/* No display here: it would show the text while it is hidden. */}
       <div id="look-about-text" ref={text} hidden={!open}>
-        <p style={{ ...SMALL, margin: "0", color: "#1A1D21" }}>{t("look.about.body")}</p>
-        <a href={t("look.about.source.url")} target="_blank" rel="noopener noreferrer" style={{ ...SMALL, minHeight: "56px", display: "flex", alignItems: "center", fontWeight: "600" }}>
-          {t("look.about.source")}
+        <p style={{ ...SMALL, margin: "0", color: "#1A1D21" }}>{t(words.body)}</p>
+        <a href={t(words.url)} target="_blank" rel="noopener noreferrer" style={{ ...SMALL, minHeight: "56px", display: "flex", alignItems: "center", fontWeight: "600" }}>
+          {t(words.source)}
         </a>
       </div>
     </div>

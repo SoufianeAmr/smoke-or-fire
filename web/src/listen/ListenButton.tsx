@@ -69,8 +69,11 @@ function useDeviceVoice(lang: Lang, follow: boolean): [DeviceVoice, () => void] 
  * words are shown with it and are its description for a screen reader. Off, it can still take the focus, so the
  * reason is read with it; pressing it does nothing.
  * `label` names the button for a screen reader where a screen has a second one: "Listen: is burning allowed today?".
+ * `text`: the words on the button while it is not reading, where they are not "Listen" ("Hear it").
+ * `hiddenWithoutVoice`: the button reads only on the device too, and is there only while the language has a voice
+ * that works there: with none, or before the browser has listed its voices, there is no button at all.
  */
-export function ListenButton({ sentences, style, onDevice = false, label, noVoice }: { sentences: string[]; style?: CSSProperties; onDevice?: boolean; label?: { play: string; stop: string }; noVoice?: string }) {
+export function ListenButton({ sentences, style, onDevice = false, label, noVoice, text, hiddenWithoutVoice = false }: { sentences: string[]; style?: CSSProperties; onDevice?: boolean; label?: { play: string; stop: string }; noVoice?: string; text?: string; hiddenWithoutVoice?: boolean }) {
   const { lang } = useApp();
   const t = useT();
   const [supported] = useState(canSpeak);
@@ -80,7 +83,7 @@ export function ListenButton({ sentences, style, onDevice = false, label, noVoic
   const current = useRef<SpeechSynthesisUtterance | null>(null); // held so Chrome can't collect it before its end event
 
   const says = noVoice !== undefined; // this button says why when it cannot read
-  const [device, noneFound] = useDeviceVoice(lang, supported && says);
+  const [device, noneFound] = useDeviceVoice(lang, supported && (says || hiddenWithoutVoice));
   const reason = useId();
   // Never off while it reads: Stop must work, and the voice reading is the device's.
   const off = says && (!supported || (device === "none" && !speaking));
@@ -118,6 +121,8 @@ export function ListenButton({ sentences, style, onDevice = false, label, noVoic
   }, [speaking, stop]);
 
   if (!supported && !says) return null;
+  // Never taken away while it reads: Stop must work.
+  if (hiddenWithoutVoice && device !== "found" && !speaking) return null;
 
   const listen = () => {
     if (speaking) return stop();
@@ -125,8 +130,8 @@ export function ListenButton({ sentences, style, onDevice = false, label, noVoic
     const synth = window.speechSynthesis;
     // The voice first: a button with no voice it may use says nothing, and stops nobody else's reading. One that
     // says why is then off: the device's voice went without the browser saying so.
-    const plan = voiceFor(synth.getVoices(), lang, onDevice || says);
-    if (!plan) return says ? noneFound() : undefined;
+    const plan = voiceFor(synth.getVoices(), lang, onDevice || says || hiddenWithoutVoice);
+    if (!plan) return says || hiddenWithoutVoice ? noneFound() : undefined;
     if (reading && reading.owner !== owner) reading.stop();
     reading = { owner, stop };
     synth.cancel();
@@ -169,7 +174,7 @@ export function ListenButton({ sentences, style, onDevice = false, label, noVoic
     <>
       <button type="button" onClick={listen} className={off ? undefined : "press"} aria-disabled={off || undefined} aria-describedby={off ? reason : undefined} aria-label={label && (speaking ? label.stop : label.play)} style={{ ...OUTLINED, ...style, ...(off ? OFF : null) }}>
         {speaking ? <StopIcon size={22} /> : <SpeakerIcon size={24} />}
-        {t(speaking ? "listen.stop" : "listen.play")}
+        {speaking ? t("listen.stop") : text ?? t("listen.play")}
       </button>
       {off && <p id={reason} className="listen-off" style={REASON}>{noVoice}</p>}
     </>

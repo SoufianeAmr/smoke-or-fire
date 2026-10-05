@@ -1,13 +1,14 @@
 // Call 911 within reach on every screen: one button that can be tapped, never none and never two, however far the page
 // is scrolled and whatever is open over it. On the verdict too: under the taller bar of a verdict that nothing explains,
-// with "Why?" open and with a source badge open. And "Call 911 now" (Emergency): one line that fits any answer, the big white
-// button, and, on a tap, where the phone is, to read to the dispatcher. The phone's position is shown only while it is
+// with "Why?" open and with a source badge open. And "Call 911 now" (Emergency): the big red button first, what the
+// dispatcher will ask, and, on a tap, where the phone is, to read to the dispatcher or to hear. The phone's position is shown only while it is
 // fresh (10 minutes, by its own time); a replay town is never shown as where the person is. EN and FR.
 import { expect, test, type Locator, type Page } from "@playwright/test";
 import { readFileSync } from "node:fs";
 import { answer } from "./look";
 import { openBadge, openWhy } from "./verdict";
 import { toFrench } from "./language";
+import { navigations } from "./navigations";
 
 type Lang = "en" | "fr";
 type Box = { x: number; y: number; width: number; height: number };
@@ -24,7 +25,8 @@ const RED = "rgb(217, 45, 32)";
 const WHITE = "rgb(255, 255, 255)";
 
 // The line under the title gives no reason any more: Yes, Not sure, a rising column and something burning all lead here.
-const SUB = { en: "When in doubt, call 911.", fr: "En cas de doute, appelez le 911." };
+// New Brunswick's own 911 page, in each language: where the card's words come from.
+const GNB_911 = { en: "https://www.gnb.ca/en/topic/laws-safety/community-safety/911.html", fr: "https://www.gnb.ca/fr/sujet/lois-securite/securite-communautaire/911.html" };
 const OLD_SUB = { en: "Flames or a smoke column can mean", fr: "Des flammes ou une colonne de fumée peuvent" };
 
 // The phone, in Moncton: at the city's own point in the community list (NRCan CGNDB), so the nearest community is Moncton.
@@ -127,7 +129,40 @@ function noGeolocation() {
   delete (Navigator.prototype as { geolocation?: Geolocation }).geolocation;
 }
 
-// Call 911 now: the big button, and the location block in "Where you are".
+// Which voices a test browser has depends on the machine: the tests of "Hear it" give it a known list. For each
+// language, a voice that works on the device and a voice service (the words go to a server to be spoken).
+type Voice = { lang: string; name: string; localService: boolean };
+const ON_DEVICE = { en: "Microsoft Linda - English (Canada)", fr: "Amélie" };
+const VOICES: Voice[] = [
+  { lang: "en-CA", name: ON_DEVICE.en, localService: true },
+  { lang: "en-US", name: "Google US English", localService: false },
+  { lang: "fr-CA", name: ON_DEVICE.fr, localService: true },
+  { lang: "fr-FR", name: "Google français", localService: false },
+];
+/** A browser that lists these voices, notes what it is given to say, and ends each sentence at once. */
+function fakeSpeech(voices: Voice[]) {
+  const w = window as unknown as { __spoken: Record<string, unknown>[] };
+  w.__spoken = [];
+  class Utterance {
+    text: string; lang = ""; voice: unknown = null; rate = 1; pitch = 1; volume = 1; onend: (() => void) | null = null; onerror: (() => void) | null = null;
+    constructor(text: string) { this.text = text; }
+  }
+  Object.defineProperty(window, "SpeechSynthesisUtterance", { value: Utterance, configurable: true, writable: true });
+  Object.defineProperty(window, "speechSynthesis", {
+    configurable: true,
+    value: {
+      getVoices: () => voices,
+      addEventListener: () => {},
+      removeEventListener: () => {},
+      speak: (u: Record<string, unknown>) => { w.__spoken.push(u); setTimeout(() => (u.onend as (() => void) | null)?.(), 10); },
+      cancel: () => {},
+    },
+  });
+}
+const spoken = (page: Page): Promise<{ text: string; voice: string | null }[]> =>
+  page.evaluate(() => (window as unknown as { __spoken: { text: string; voice: { name: string } | null }[] }).__spoken.map((u) => ({ text: u.text, voice: u.voice?.name ?? null })));
+
+// Call 911 now: the big button, and the location block in "Where are you?".
 const callNow = (page: Page) => page.locator('main a[href="tel:911"]');
 const whereBox = (page: Page) => page.locator("main .where-box");
 const showButton = (page: Page) => page.locator("main .where-box button.where-show");
@@ -201,21 +236,32 @@ const scrollToBottom = (page: Page) => page.evaluate(() => window.scrollTo(0, do
 
 for (const lang of LANGS) {
   test.describe(`Call 911 now, what the screen says (${lang.toUpperCase()})`, () => {
-    test("the title, one line that fits any answer, one big white Call 911 button, the largest thing to tap; no 911 bar", async ({ page }) => {
+    test("the Call 911 button first, red on a white page and the largest thing to tap; then what the dispatcher will ask, with the location card; no 911 bar", async ({ page }) => {
       await emergency(page, lang);
+      // The title is a screen reader's: the button under it says the same to the eye.
       await expect(page.getByRole("heading", { level: 1 })).toHaveText(s(lang, "emergency.title"));
-      expect(s(lang, "emergency.sub")).toBe(SUB[lang]);
-      await expect(page.locator("main p").filter({ hasText: SUB[lang] })).toHaveText(SUB[lang]);
       expect(await page.locator("body").innerText()).not.toContain(OLD_SUB[lang]);
 
-      // One Call 911 on the page, in the screen itself: white on the red page, 104 px or taller.
+      // One Call 911 on the page, in the screen itself: red with white words on the white page, 104 px or taller, as
+      // wide as the page's column, and above everything else under the top bar.
       await expect(page.locator('a[href="tel:911"]')).toHaveCount(1);
       const call = callNow(page);
       await expect(call).toHaveText(s(lang, "emergency.call"));
-      expect(await call.evaluate((el) => getComputedStyle(el).backgroundColor)).toBe(WHITE);
+      expect(await call.evaluate((el) => { const st = getComputedStyle(el); return [st.backgroundColor, st.color]; })).toEqual([RED, WHITE]);
+      expect(await page.locator("main").evaluate((el) => [getComputedStyle(el.parentElement!).backgroundColor, getComputedStyle(document.body).backgroundColor])).toEqual([WHITE, WHITE]);
       const box = (await call.boundingBox())!;
       expect(box.height).toBeGreaterThanOrEqual(104);
-      // Nothing else to tap is as large: Back, Listen, EN and FR, Show my location, Told to leave.
+      const main = (await page.locator("main").boundingBox())!;
+      expect(Math.round(box.width)).toBe(Math.round(main.width - 40));
+      const under = await page.locator("main section, main > p, main > a").evaluateAll((els) => Math.min(...els.map((el) => el.getBoundingClientRect().top)));
+      expect(under).toBeGreaterThanOrEqual(box.y + box.height);
+      // Red is the button's alone.
+      const red = await page.evaluate((colour) => [...document.querySelectorAll("body *")].filter((el) => {
+        const st = getComputedStyle(el);
+        return [st.color, st.backgroundColor, st.borderTopColor, st.stroke, st.fill].includes(colour) && !el.closest('a[href="tel:911"]');
+      }).length, RED);
+      expect(red).toBe(0);
+      // Nothing else to tap is as large: Back, Listen, the language, Show my location, Told to leave.
       const others = await page.locator("a, button").evaluateAll((els) =>
         els.filter((el) => el.getAttribute("href") !== "tel:911").map((el) => {
           const r = el.getBoundingClientRect();
@@ -225,19 +271,53 @@ for (const lang of LANGS) {
       expect(others.length).toBeGreaterThanOrEqual(5);
       expect(others.filter((other) => other.area >= box.width * box.height)).toEqual([]);
 
-      // Tell the dispatcher: still four things to say, the first one now with the location block; Told to leave stays.
-      const tell = page.locator("section[aria-labelledby=tell-h]");
-      await expect(tell.getByRole("heading")).toHaveText(s(lang, "emergency.tell"));
-      const items = tell.locator("ol > li");
-      await expect(items).toHaveCount(4);
-      await expect(items.first()).toContainText(s(lang, "emergency.tell1.lead"));
-      await expect(items.first()).toContainText(s(lang, "emergency.tell1"));
-      await expect(items.first().locator(".where-box")).toHaveCount(1);
+      // What the dispatcher will ask. First, where you are: one card, with the location block. Then three things in one
+      // row, each with a drawing. Then two lines, the first with a drawing, and Told to leave.
+      const first = page.locator("section[aria-labelledby=ask-h]");
+      await expect(first.getByRole("heading")).toHaveText(s(lang, "emergency.ask.first"));
+      await expect(first.locator(".where-box")).toHaveCount(1);
+      await expect(page.locator("main .where-box")).toHaveCount(1);
+      const also = page.locator("section[aria-labelledby=also-h]");
+      await expect(also.getByRole("heading")).toHaveText(s(lang, "emergency.ask.also"));
+      await expect(also.locator("li")).toHaveText([s(lang, "emergency.ask.see"), s(lang, "emergency.ask.danger"), s(lang, "emergency.ask.phone")]);
+      await expect(also.locator("li svg")).toHaveCount(3);
+      expect(new Set(await also.locator("li").evaluateAll((els) => els.map((el) => Math.round(el.getBoundingClientRect().top)))).size, "one row").toBe(1);
+      await expect(page.locator("main .emergency-close")).toHaveText(s(lang, "emergency.close"));
+      await expect(page.locator("main .emergency-close svg")).toHaveCount(1);
+      await expect(page.locator("main .emergency-lead")).toHaveText(s(lang, "emergency.lead"));
       await expect(page.locator('main a[href="/leave"]')).toHaveText(s(lang, "leave.entry"));
 
       // No 911 bar: the big button is this screen's Call 911.
       expect(await fixedBars(page)).toBe(0);
       await expect(page.locator("a.sticky-call")).toHaveCount(0);
+    });
+
+    test("About this card: closed until asked for; opened, it says what New Brunswick's 911 page says and links to that page, with the day it was read", async ({ page }) => {
+      await emergency(page, lang);
+      // The card's first words are that page's: how the operator answers.
+      expect(s(lang, "emergency.ask.first").replace(/\s/g, " ")).toContain(lang === "en" ? "Where is your emergency?" : "Où est votre urgence ?");
+      const toggle = page.getByRole("button", { name: s(lang, "emergency.about"), exact: true });
+      const text = page.locator("#look-about-text");
+      await expect(toggle).toHaveAttribute("aria-expanded", "false");
+      await expect(text).toBeHidden();
+      expect((await toggle.boundingBox())!.height).toBeGreaterThanOrEqual(56);
+      // The last thing on the screen, after Told to leave.
+      const leave = (await page.locator('main a[href="/leave"]').boundingBox())!;
+      expect((await toggle.boundingBox())!.y).toBeGreaterThanOrEqual(leave.y + leave.height - 0.5);
+      await toggle.click();
+      await expect(toggle).toHaveAttribute("aria-expanded", "true");
+      await expect(text.locator("p")).toHaveText(s(lang, "emergency.about.body"));
+      const source = text.locator("a");
+      await expect(source).toHaveText(s(lang, "emergency.about.source"));
+      await expect(source).toHaveAttribute("href", GNB_911[lang]);
+      await expect(source).toHaveAttribute("target", "_blank");
+      await expect(source).toHaveAttribute("rel", /noopener/);
+      expect(s(lang, "emergency.about.source").replace(/\s/g, " ")).toContain(lang === "en" ? "retrieved Oct 5, 2026" : "consulté le 5 octobre 2026");
+      expect((await source.boundingBox())!.height).toBeGreaterThanOrEqual(56);
+      // The note has no Call 911 of its own, and the screen's is still the one to tap.
+      await expect(page.locator('a[href="tel:911"]')).toHaveCount(1);
+      await toggle.click();
+      await expect(text).toBeHidden();
     });
   });
 
@@ -425,14 +505,15 @@ for (const lang of LANGS) {
   });
 
   test.describe(`Call 911 now, with a keyboard (${lang.toUpperCase()})`, () => {
-    test("Tab reaches Show my location, Enter asks, the focus is kept and Tab goes on to Call 911; the block is busy only while the phone answers", async ({ page }) => {
+    test("Tab reaches Call 911, then Show my location; Enter asks, the focus is kept and Tab goes on to Told to leave; the block is busy only while the phone answers", async ({ page }) => {
       await page.addInitScript(slowPhone, { ...MONCTON, accuracy: 20, after: 300 });
       await emergency(page, lang);
       const [box, button] = [whereBox(page), showButton(page)];
       await expect(button).toHaveText(s(lang, "emergency.where.show"));
       await expect(box).toHaveAttribute("role", "status");
       await expect(box).not.toHaveAttribute("aria-busy", "true");
-      await tabTo(page, button);
+      await tabTo(page, callNow(page)); // the first thing under the top bar
+      await tabTo(page, button, 1);
       // From here on, each change of aria-busy is noted, with the button's label at that moment.
       await page.evaluate(() => {
         const w = window as unknown as { __busy: { busy: boolean; label: string }[] };
@@ -450,17 +531,18 @@ for (const lang of LANGS) {
       expect(seen[0].label).toBe(s(lang, "leave.family.locating"));
       await expect(box).toHaveAttribute("role", "status");
       await expect(box).not.toHaveAttribute("aria-busy", "true");
-      // The focus was not dropped (a keyboard or screen reader would start again from the top), and Call 911 comes next.
-      expect(await page.evaluate(() => document.activeElement !== null && document.activeElement !== document.body)).toBe(true);
-      await tabTo(page, callNow(page), 3);
+      // The focus was not dropped (a keyboard or screen reader would start again from the top), and Told to leave comes next.
+      await expect(button).toBeFocused();
+      await tabTo(page, page.locator('main a[href="/leave"]'), 1);
     });
 
-    test("the focus ring is white on the red screen: Back, Listen and Show my location", async ({ page }) => {
+    test("the focus ring is navy on the white page: Back, Listen, Call 911 and Show my location", async ({ page }) => {
       await emergency(page, lang);
       // In the order Tab reaches them.
       const targets: [string, Locator][] = [
         ["Back", page.getByRole("link", { name: s(lang, "nav.back"), exact: true })],
         ["Listen", page.getByRole("button", { name: s(lang, "listen.play"), exact: true })],
+        ["Call 911", callNow(page)],
         ["Show my location", showButton(page)],
       ];
       for (const [name, target] of targets) {
@@ -470,8 +552,46 @@ for (const lang of LANGS) {
           const style = getComputedStyle(el);
           return { color: style.outlineColor, drawn: style.outlineStyle !== "none" && parseFloat(style.outlineWidth) > 0 };
         });
-        expect(ring, name).toEqual({ color: WHITE, drawn: true });
+        expect(ring, name).toEqual({ color: "rgb(27, 42, 74)", drawn: true });
       }
+    });
+  });
+
+  // "Hear it" says the place and the coordinates, with a voice that works on the phone and no other: what is read is
+  // where the person is, and a voice service would be sent it.
+  test.describe(`Call 911 now, Hear it (${lang.toUpperCase()})`, () => {
+    test.use({ geolocation: { ...MONCTON, accuracy: 20 }, permissions: ["geolocation"] });
+
+    test("with a voice on the phone: once the place is shown, Hear it is beside the coordinates, 56 px to tap; a tap reads the place, then each coordinate line, with that voice; nothing is said before", async ({ page }) => {
+      await page.addInitScript(fakeSpeech, VOICES);
+      await emergency(page, lang);
+      const hear = whereBox(page).getByRole("button", { name: s(lang, "emergency.hear"), exact: true });
+      await expect(hear).toHaveCount(0); // nothing to read yet
+      await showButton(page).click();
+      await expect(whereBox(page).locator(".where-name")).toHaveText(nearMoncton(lang));
+      await expect(hear).toBeVisible();
+      const [button, lines, show] = [(await hear.boundingBox())!, (await whereBox(page).locator(".where-coords").boundingBox())!, (await showButton(page).boundingBox())!];
+      expect(button.height).toBeGreaterThanOrEqual(56);
+      expect([button.x >= lines.x + lines.width, button.y + button.height <= show.y + 0.5], "right of the coordinates, above Update").toEqual([true, true]);
+      expect(await spoken(page)).toEqual([]);
+      await hear.click();
+      const say = (text: string) => text.replace(/\s/g, " ");
+      await expect.poll(async () => (await spoken(page)).map(({ text }) => say(text))).toEqual([say(nearMoncton(lang)), ...MONCTON_LINES[lang].map(say)]);
+      expect(new Set((await spoken(page)).map(({ voice }) => voice))).toEqual(new Set([ON_DEVICE[lang]]));
+      // The Call 911 button has not moved, and is still the one to tap.
+      expect((await hit(page)).inMain).toBe(true);
+    });
+
+    test("with only a voice service for the language: no Hear it, before or after the browser has listed its voices", async ({ page }) => {
+      await page.addInitScript(fakeSpeech, VOICES.filter((voice) => !voice.localService));
+      await emergency(page, lang);
+      await showButton(page).click();
+      await expect(whereBox(page).locator(".where-name")).toHaveText(nearMoncton(lang));
+      const hear = page.getByRole("button", { name: s(lang, "emergency.hear"), exact: true });
+      await expect(hear).toHaveCount(0);
+      await page.waitForTimeout(1200);
+      await expect(hear).toHaveCount(0);
+      expect(await spoken(page)).toEqual([]);
     });
   });
 }
@@ -799,28 +919,70 @@ for (const lang of LANGS) {
     });
   });
 
-  // Nothing but a tap on Show my location asks the phone, and nothing takes the person off this screen.
+  // Nothing but a tap on Show my location asks the phone, nothing but a tap on Call 911 dials, and nothing takes the
+  // person off this screen.
   test.describe(`Call 911 now is not disturbed (${lang.toUpperCase()})`, () => {
-    test("a double tap on Not sure opens Call 911 now and does not ask the phone, though its second tap lands on Show my location", async ({ page }) => {
-      await page.addInitScript(phoneAnswers, [{ ...MONCTON, accuracy: 20 }]);
+    // On a short phone the top of Not sure is where Show my location comes up, and the top of Yes is where Call 911 does.
+    test.describe("a double tap on an answer, at 375 × 667", () => {
+      test.use({ viewport: { width: 375, height: 667 } });
+
+      test("on Not sure: Call 911 now opens and the phone is not asked, though the second tap lands on Show my location", async ({ page }) => {
+        await page.addInitScript(phoneAnswers, [{ ...MONCTON, accuracy: 20 }]);
+        await start(page, lang);
+        // Where Show my location comes up on this phone, measured on the screen opened by its address: the tap is aimed
+        // at the part of Not sure that the button covers, whatever the card's words are.
+        await show(page, "/emergency");
+        const place = (await showButton(page).boundingBox())!;
+        await page.goto("/");
+        await page.locator('main a[href="/q1"]').click();
+        const notSure = (await page.locator('main .look-answers[data-ready="true"] a[data-answer="notSure"]').boundingBox())!;
+        const [top, bottom] = [Math.max(notSure.y, place.y), Math.min(notSure.y + notSure.height, place.y + place.height)];
+        expect(bottom - top, JSON.stringify({ notSure, place })).toBeGreaterThan(16); // the two do overlap on this phone
+        const [x, y] = [notSure.x + notSure.width / 2, (top + bottom) / 2];
+        await page.mouse.click(x, y);
+        await page.waitForTimeout(120);
+        await page.mouse.click(x, y);
+        await expect(page).toHaveURL(/\/emergency$/);
+        // The second tap fell on the button.
+        const button = (await showButton(page).boundingBox())!;
+        expect([x >= button.x, x <= button.x + button.width, y >= button.y, y <= button.y + button.height], JSON.stringify({ x, y, button })).toEqual([true, true, true, true]);
+        await page.waitForTimeout(600);
+        expect(await asked(page)).toBe(0);
+        await nothingShown(page);
+        // A tap of its own, once the screen has been up a moment, asks.
+        await tapShow(page, lang);
+        expect(await coordinates(page)).toEqual(MONCTON_LINES[lang]);
+        expect(await asked(page)).toBe(1);
+      });
+
+      test("on Yes: Call 911 now opens and nothing is dialled, though the second tap lands on the Call 911 button; a tap a moment later calls", async ({ page }) => {
+        await start(page, lang);
+        await page.locator('main a[href="/q1"]').click();
+        const yes = (await page.locator('main .look-answers[data-ready="true"] a[data-answer="yes"]').boundingBox())!;
+        const [x, y] = [yes.x + yes.width / 2, yes.y + 8];
+        const went = await navigations(page);
+        const dialled = () => went.filter((url) => url.startsWith("tel:"));
+        await page.mouse.click(x, y);
+        await page.waitForTimeout(120);
+        await page.mouse.click(x, y);
+        await expect(page).toHaveURL(/\/emergency$/);
+        // The second tap fell on the button.
+        const call = (await callNow(page).boundingBox())!;
+        expect([x >= call.x, x <= call.x + call.width, y >= call.y, y <= call.y + call.height], JSON.stringify({ x, y, call })).toEqual([true, true, true, true]);
+        await page.waitForTimeout(600);
+        expect(dialled()).toEqual([]);
+        // A tap of its own, once the screen has been up a moment, calls.
+        await callNow(page).click();
+        await expect.poll(dialled).toEqual(["tel:911"]);
+      });
+    });
+
+    test("opened by its address, the Call 911 button calls at the first tap", async ({ page }) => {
       await start(page, lang);
-      await page.locator('main a[href="/q1"]').click();
-      const notSure = (await page.locator('main .look-answers[data-ready="true"] a[data-answer="notSure"]').boundingBox())!;
-      const [x, y] = [notSure.x + notSure.width / 2, notSure.y + notSure.height / 2];
-      await page.mouse.click(x, y);
-      await page.waitForTimeout(120);
-      await page.mouse.click(x, y);
-      await expect(page).toHaveURL(/\/emergency$/);
-      // The second tap fell on the button: the screens put it where Not sure was.
-      const show = (await showButton(page).boundingBox())!;
-      expect([x >= show.x, x <= show.x + show.width, y >= show.y, y <= show.y + show.height], JSON.stringify({ x, y, show })).toEqual([true, true, true, true]);
-      await page.waitForTimeout(600);
-      expect(await asked(page)).toBe(0);
-      await nothingShown(page);
-      // A tap of its own, once the screen has been up a moment, asks.
-      await tapShow(page, lang);
-      expect(await coordinates(page)).toEqual(MONCTON_LINES[lang]);
-      expect(await asked(page)).toBe(1);
+      await page.goto("/emergency");
+      const went = await navigations(page);
+      await callNow(page).click();
+      await expect.poll(() => went.filter((url) => url.startsWith("tel:"))).toEqual(["tel:911"]);
     });
 
     test("Use my location answering late, after the person went back and on to Call 911 now: remembered, and the screen stays", async ({ page }) => {

@@ -32,7 +32,7 @@ export function Q3Nearby() {
   return (
     <Screen>
       <ReplayBanner />
-      <TopBar back="/q2" listen={q3Voice(lang)}>
+      <TopBar back="/q2" listen={q3Voice(lang)} words>
         <Steps n={3} />
       </TopBar>
       <main className="look-main" style={MAIN}>

@@ -1,7 +1,7 @@
 // The first milestone: the full replay flow for Moncton, in the browser.
 import { expect, test, type Locator, type Page } from "@playwright/test";
 import { answer } from "./look";
-import { openWhy, sheetTo } from "./verdict";
+import { openWhy, sheet } from "./verdict";
 import { toFrench } from "./language";
 
 const NBSP = String.fromCharCode(0xa0);
@@ -41,7 +41,8 @@ test("Moncton replay: Check → Q1 flames → Q2 sky → Q3 nearby → Location 
   expect(await badges.evaluateAll((els) => els.map((el) => el.getAttribute("data-badge")))).toEqual(["fire", "trace", "alert", "burn"]);
   for (const badge of await badges.all()) await expect(badge).toBeHidden();
   await page.getByRole("button", { name: "Sources and why" }).click();
-  await sheetTo(page, "half");
+  // The tap is made: wait for the sheet to say it is at half. Nothing taps its handle again.
+  await expect(sheet(page)).toHaveAttribute("data-detent", "half");
   for (const badge of await badges.all()) await expect(badge).toBeVisible();
   const why = page.getByRole("button", { name: "Why?" });
   await expect(why).toHaveAttribute("aria-expanded", "false");
@@ -137,7 +138,7 @@ test("Three questions, in English and French: No goes on to the sky question, Gr
   await page.goto("/q2");
   await expect(title).toHaveText(FR.q2);
   await expect(page).toHaveURL(/\/q2$/);
-  await page.getByRole("button", { name: "EN", exact: true }).click();
+  await page.getByRole("button", { name: "English", exact: true }).click();
   await expect(title).toHaveText(EN.q2);
 });
 

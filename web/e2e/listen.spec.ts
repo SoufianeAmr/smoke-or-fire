@@ -141,12 +141,12 @@ async function named(locator: Locator, label: string, background?: string) {
 
 /**
  * The answers on the three questions, in the order shown: the answer's name (its data-answer, and its {…} in the
- * script), the strings key of its label, and where it leads. On the first question, its colour too: the script says
- * "the red Yes button", so Yes is red and the other two are not.
+ * script), the strings key of its label, and where it leads. On the first question, its colour too: the three are one
+ * style, white, and the script names none of them by a colour.
  */
 type Answer = { key: string; label: string; to: string; background?: string };
 const Q1: Answer[] = [
-  { key: "yes", label: "q1.yes", to: "/emergency", background: RED },
+  { key: "yes", label: "q1.yes", to: "/emergency", background: WHITE },
   { key: "no", label: "q1.no", to: "/q2", background: WHITE },
   { key: "notSure", label: "look.notSure", to: "/emergency", background: WHITE },
 ];
@@ -446,6 +446,7 @@ const SCREENS: Screen[] = [
   },
   {
     name: "Q1",
+    plainListen: true,
     open: (page) => page.goto("/q1").then(),
     script: async (_, lang) => script(lang, "voice.q1", labelled(lang, Q1)),
     buttons: (page, lang) => answersNamed(page, lang, Q1), // the three answers, top to bottom as the voice gives them
@@ -459,6 +460,7 @@ const SCREENS: Screen[] = [
   },
   {
     name: "Q2",
+    plainListen: true,
     open: (page) => page.goto("/q2").then(),
     script: async (_, lang) => script(lang, "voice.q2", labelled(lang, Q2)),
     buttons: (page, lang) => answersNamed(page, lang, Q2), // the three pictures as the voice counts them, then Not sure
@@ -466,6 +468,7 @@ const SCREENS: Screen[] = [
   },
   {
     name: "Q3",
+    plainListen: true,
     open: (page) => page.goto("/q3").then(),
     script: async (_, lang) => script(lang, "voice.q3", labelled(lang, Q3)),
     buttons: (page, lang) => answersNamed(page, lang, Q3), // the six tiles, in the order the voice reads them
@@ -509,10 +512,13 @@ const SCREENS: Screen[] = [
   ...twoReadings("Verdict 7d (live, no fires in range)", async (page, lang) => { await start(page, lang, "live"); await noFiresVerdict(page); }),
   {
     name: "Emergency",
+    plainListen: true,
     open: (page) => page.goto("/emergency").then(),
     script: async (page, lang) => script(lang, "voice.emergency", { leave: await text(page, 'main a[href="/leave"]') }),
     buttons: async (page, lang) => {
-      await named(page.locator('main a[href="tel:911"]'), STRINGS[lang]["emergency.call"], WHITE); // "the big white button at the bottom"
+      await named(page.locator('main a[href="tel:911"]'), STRINGS[lang]["emergency.call"], RED); // "the big red button at the top"
+      const call = (await page.locator('main a[href="tel:911"]').boundingBox())!;
+      expect(call.y + call.height, "at the top").toBeLessThan(page.viewportSize()!.height / 2);
       await named(page.locator('main a[href="/leave"]'), STRINGS[lang]["leave.entry"]);
     },
     labels: keys("leave.entry"),
@@ -610,7 +616,8 @@ for (const lang of ["en", "fr"] as const) {
         const button = listenButton(page, lang);
         await expect(button).toBeVisible();
         expect((await button.boundingBox())!.height).toBeGreaterThanOrEqual(56);
-        // Outlined navy on white: never red. On Check, navy words with no outline, beside the language link.
+        // Outlined navy on white: never red. On Check, the three questions and Call 911 now, navy words with no outline,
+        // beside the language link.
         const look = await button.evaluate((el) => { const s = getComputedStyle(el); return [s.borderTopWidth, s.borderTopColor, s.color, s.backgroundColor]; });
         expect(look).toEqual(screen.plainListen ? ["0px", NAVY, NAVY, CLEAR] : ["2px", NAVY, NAVY, WHITE]);
         expect(await spoken(page)).toEqual([]); // never plays by itself

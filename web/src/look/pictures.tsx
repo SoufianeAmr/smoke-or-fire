@@ -105,10 +105,10 @@ export function SmellSky({ label }: { label: string }) {
 }
 
 const DISC: CSSProperties = { flexShrink: "0", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" };
-// White with a red flame on the red Yes; pale navy for the plain answers; amber with a near-black mark for Not sure;
+// Pale red with a red flame for Yes; pale navy for the plain answers; amber with a near-black mark for Not sure;
 // navy with a white icon at the head of a screen.
 const TONES = {
-  flame: { background: "#FFFFFF", color: "#D92D20" },
+  flame: { background: "#FEE4E2", color: "#D92D20" },
   navy: { background: "#E9EDF5", color: "#1B2A4A" },
   amber: { background: "#F79009", color: "#1A1D21" },
   ink: { background: "#1B2A4A", color: "#FFFFFF" },

@@ -234,14 +234,18 @@ test.describe("each question: one title, answers in words and pictures, big enou
       });
     }
 
-    test(`${lang.toUpperCase()}: Yes is red with white words; No, Not sure and the sky pictures are white with a navy edge`, async ({ page }) => {
+    test(`${lang.toUpperCase()}: the first question's three answers are one style, white with a navy edge and navy words, and none is filled: colour is the icon's alone; the sky pictures are white with a navy edge too`, async ({ page }) => {
       const [q1, q2] = QUESTIONS;
       await openQuestion(page, lang, q1);
       const fill = (key: string) => answerTo(page, key).evaluate((el) => { const st = getComputedStyle(el); return [st.backgroundColor, st.borderTopWidth, st.borderTopColor]; });
       const ink = (key: string) => answerTo(page, key).locator(".look-label").evaluate((el) => getComputedStyle(el).color);
       for (const a of q1.answers) await expect(answerTo(page, a.key).locator(".look-label")).toHaveText(s(lang, a.words));
-      expect([(await fill("yes"))[0], await ink("yes")]).toEqual([RED, WHITE]);
-      for (const key of ["no", "notSure"]) expect([...(await fill(key)), await ink(key)], key).toEqual([WHITE, "3px", NAVY, NAVY]);
+      for (const { key } of q1.answers) expect([...(await fill(key)), await ink(key)], key).toEqual([WHITE, "3px", NAVY, NAVY]);
+      // A red flame on pale red, a navy cross on pale navy, a near-black question mark on amber: each in a disc of one size.
+      const mark = (key: string) => answerTo(page, key).locator(".look-disc").evaluate((el) => { const st = getComputedStyle(el); const r = el.getBoundingClientRect(); return [st.backgroundColor, st.color, Math.round(r.width), Math.round(r.height)]; });
+      const [yes, no, notSure] = [await mark("yes"), await mark("no"), await mark("notSure")];
+      expect([yes.slice(0, 2), no.slice(0, 2), notSure.slice(0, 2)]).toEqual([["rgb(254, 228, 226)", RED], ["rgb(233, 237, 245)", NAVY], ["rgb(247, 144, 9)", "rgb(26, 29, 33)"]]);
+      expect([no.slice(2), notSure.slice(2)]).toEqual([yes.slice(2), yes.slice(2)]);
 
       await page.goto(q2.route);
       await onQuestion(page, lang, q2);

@@ -9,13 +9,21 @@ export const sheet = (page: Page) => page.locator(".answer-sheet");
 export const handle = (page: Page) => page.locator(".sheet-handle");
 const at = async (page: Page) => (await sheet(page).getAttribute("data-detent")) as Detent;
 
-/** Bring the sheet to a height, by the handle ("Sources and why", "Show the map") and the "Why?" button. */
+/**
+ * Bring the sheet to a height, by the handle ("Sources and why", "Show the map") and the "Why?" button. The handle is
+ * tapped once at most, and the sheet's own word for its height is waited for after each tap, before anything else is
+ * done: on a slow page the height shows a moment after the tap, and a second tap on the handle would send the sheet
+ * back. A test that has tapped the handle itself waits for the height the same way (`sheet`), and does not call this.
+ */
 export async function sheetTo(page: Page, detent: Detent) {
   const from = await at(page);
   if (from === detent) return;
   if (detent === "peek") await handle(page).click();
   else {
-    if (from === "peek") await handle(page).click();
+    if (from === "peek") {
+      await handle(page).click();
+      await expect(sheet(page)).toHaveAttribute("data-detent", "half");
+    }
     if (detent === "full" || from === "full") await page.locator("main .why-toggle").click();
   }
   await expect(sheet(page)).toHaveAttribute("data-detent", detent);

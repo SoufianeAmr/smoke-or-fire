@@ -119,7 +119,7 @@ describe("screens", () => {
       "Let’s start.",
       "Take a look outside, toward the smell.",
       "Do you see flames?",
-      "If you do, tap the red Yes button.",
+      "If you do, tap Yes.",
       "If you don’t, tap No.",
       "If you can’t tell, tap Not sure.",
     ]);
@@ -127,7 +127,7 @@ describe("screens", () => {
       "On commence.",
       "Regardez dehors, du côté de l’odeur.",
       `Voyez-vous des flammes${NBSP}?`,
-      "Si oui, touchez le bouton rouge Oui.",
+      "Si oui, touchez Oui.",
       "Sinon, touchez Non.",
       "Si vous ne pouvez pas le dire, touchez Je ne sais pas.",
     ]);
@@ -213,24 +213,28 @@ describe("screens", () => {
     expect(voice.loadingVoice("en", false)).toEqual(voice.loadingVoice("en"));
   });
 
-  test("Emergency: call nine-one-one now, whatever led here, the big white button, what to tell them, the location on screen, then told to leave, named as on screen", () => {
+  test("Emergency: call nine-one-one now, whatever led here, the big red button at the top, what they will ask, the location on screen, then told to leave, named as on screen", () => {
     expect(voice.emergencyVoice("en")).toEqual([
       "Okay.",
       "Let’s call nine-one-one now.",
-      "Tap the big white button at the bottom.",
-      "When they answer, tell them where you are, what you see, which way it’s moving if you can tell, and if anyone needs help.",
+      "Tap the big red button at the top.",
+      "Nine-one-one will ask first where your emergency is.",
       "If the screen shows your location, you can read it to them.",
-      "Stay on the line, and if the fire is close, move away while you talk.",
+      "They’ll also ask what you see, if anyone is in danger, and your phone number.",
+      "If the fire is close, move away while you talk.",
+      "Stay on the line, and keep your phone on after the call.",
       "You’re doing the right thing.",
       "If officials told you to leave, tap: Told to leave your home? What to do.",
     ]);
     expect(voice.emergencyVoice("fr")).toEqual([
       "D’accord.",
       "Appelons le neuf-un-un maintenant.",
-      "Touchez le grand bouton blanc, en bas.",
-      "Quand on vous répond, dites où vous êtes, ce que vous voyez, dans quelle direction ça se déplace si vous pouvez le dire, et si quelqu’un a besoin d’aide.",
+      "Touchez le grand bouton rouge, en haut.",
+      "Le neuf-un-un vous demandera d’abord où est votre urgence.",
       "Si l’écran affiche votre position, vous pouvez la lire au répartiteur.",
-      "Restez en ligne, et si le feu est proche, éloignez-vous pendant l’appel.",
+      "On vous demandera aussi ce que vous voyez, si quelqu’un est en danger, et votre numéro de téléphone.",
+      "Si le feu est proche, éloignez-vous pendant l’appel.",
+      "Restez en ligne, et gardez votre téléphone allumé après l’appel.",
       "Vous faites ce qu’il faut.",
       `Si les autorités vous ont demandé de partir, touchez${NBSP}: On vous demande de partir${NBSP}? Que faire.`,
     ]);

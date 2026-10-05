@@ -17,7 +17,7 @@ input::placeholder{color:#6B6F76}
 /* 01 Check, the home screen (DESIGN-LOCK, "Amendment: the home screen"): a layout of its own, in the app's colours
    and Inter. Every size is a minimum but the drawing's height, so the screen holds at twice the text size and at
    320 px wide. Nothing moves. Red is on this screen for Call 911 and nothing else. */
-.home{--navy:#1B2A4A;--red:#D92D20;--ink:#1A1D21;--page:#FAF6F0;--card:#FFFFFF;--field:#EDE6DA;--hairline:rgba(26,29,33,0.12)}
+.home,.home-top{--navy:#1B2A4A;--red:#D92D20;--ink:#1A1D21;--page:#FAF6F0;--card:#FFFFFF;--field:#EDE6DA;--hairline:rgba(26,29,33,0.12)}
 
 /* The top tenth: the app's mark and name, small (the name is the screen's title); then Listen and the other language,
    as words on one line. Where the two sides do not fit on one row (a narrow phone, or large text), Listen and the
@@ -29,6 +29,9 @@ input::placeholder{color:#6B6F76}
 .home-tools svg{width:20px;height:20px}
 .home-lang{position:relative;min-height:56px;padding:0 0 0 13px;border:0;border-radius:4px;background:transparent;color:var(--navy);font-family:inherit;font-size:16px;font-weight:700;line-height:1.2;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
 .home-tools button + .home-lang::before{content:"";position:absolute;left:0;top:50%;width:1px;height:18px;margin-top:-9px;background:var(--hairline)}
+/* The same bar on the three questions and on Call 911 now, with Back where the name is: 56 px to tap, its arrow in
+   line with the edge of what is under it. */
+.home-back{flex:0 0 auto;width:56px;height:56px;margin-left:-16px;display:flex;align-items:center;justify-content:center;color:#1A1D21;border-radius:14px}
 
 /* The middle: one card that says what the app is for, in a drawing and a line, and is no taller than what it holds.
    The drawing is as wide as the card. Its height goes by the room the screen has left once everything else is on it
@@ -115,14 +118,12 @@ input::placeholder{color:#6B6F76}
   .sticky-call{flex-grow:1;max-width:none !important;justify-content:center}
 }
 
-/* 04 Emergency */
-body.emergency{background:#D92D20}
-.emergency a{color:#FFFFFF}.emergency a:hover{color:#FFFFFF}
-/* The focus ring on the red screen: white, with navy inside it and a white hairline against the element, so it shows on
-   the red page, on the white card and around the white button. */
-.emergency a:focus-visible,.emergency button:focus-visible{outline:3px solid #FFFFFF;outline-offset:5px;box-shadow:0 0 0 2px #FFFFFF,0 0 0 5px #1B2A4A !important}
-/* The big Call 911 button stays at the bottom of the screen, on its red strip: a focused link scrolls clear of it. */
-html:has(body.emergency){scroll-padding-bottom:calc(140px + env(safe-area-inset-bottom))}
+/* 04 Emergency: Call 911 now, a call card on a calm white page. Red is the Call 911 button's alone. */
+body.emergency{background:#FFFFFF}
+.emergency .emergency-call,.emergency .emergency-call:hover{color:#FFFFFF}
+/* The big Call 911 button stays at the top of the screen, on its white strip: a focused button or link scrolls clear
+   of it. */
+html:has(body.emergency){scroll-padding-top:136px;scroll-padding-bottom:24px}
 /* Where the phone is: what there is to read sits in the middle of the room kept above the button. With nothing in it
    (a browser with no geolocation), no block. */
 .where-box > :first-child{margin-top:auto !important}
@@ -137,7 +138,7 @@ html:has(body.emergency){scroll-padding-bottom:calc(140px + env(safe-area-inset-
 @media (max-width: 359px){
   .emergency-call,.nearby-call{gap:10px !important;font-size:28px !important}
   .emergency-call svg,.nearby-call svg{width:30px;height:30px}
-  .where-name{font-size:18px !important}
+  .where-name{font-size:22px !important}
 }
 
 /* Maps (05, 06, 07*) */
@@ -404,15 +405,11 @@ html:has(.verdict-screen),html:has(.verdict-screen) body{overscroll-behavior-y:n
 .how .arr{fill:#1B2A4A;stroke:#F3EEE6;stroke-width:1.5;stroke-linejoin:round}
 
 /* Short phones (375 × 667): tighter spacing so the main action clears the 911 bar.
-   Emergency: the Call 911 button stays on screen when the page is taller than the phone; a smaller mark and title and
-   less space between the blocks, so "Show my location" is whole above it as the screen opens, in English and French. */
+   Emergency: the Call 911 button stays at the top of the screen when the page is taller than the phone; a shorter
+   button and less space between the blocks, so "Show my location" is on the screen as it opens, in English and French. */
 @media (max-height: 740px){
   .emergency-main{gap:12px !important}
-  .emergency-head{gap:8px !important}
-  .emergency-disc{width:44px !important;height:44px !important}
-  .emergency-disc svg{width:24px;height:24px}
-  .emergency-title{margin-top:0 !important;font-size:30px !important}
-  .emergency-card{padding:16px 20px !important;gap:10px !important}
+  .emergency-card{padding:12px 16px !important;gap:8px !important}
   .nodata-main{gap:8px !important}
   .nodata-head{gap:6px !important}
   .nodata-callout{padding:12px 20px !important}

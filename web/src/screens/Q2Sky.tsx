@@ -33,7 +33,7 @@ export function Q2Sky() {
   return (
     <Screen>
       <ReplayBanner />
-      <TopBar back="/q1" listen={q2Voice(lang)}>
+      <TopBar back="/q1" listen={q2Voice(lang)} words>
         <Steps n={2} />
       </TopBar>
       <main className="look-main" style={MAIN}>
