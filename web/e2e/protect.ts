@@ -4,6 +4,7 @@ import { expect as playwrightExpect, type Page, type Route } from "@playwright/t
 import { readFileSync } from "node:fs";
 import { TEST_ENGINE_URL } from "./engine";
 import { sheetTo } from "./verdict";
+import { toFrench } from "./language";
 
 /** A slow machine (other test runs at the same time) is not a failure: waits are generous. */
 export const expect = playwrightExpect.configure({ timeout: 15_000 });
@@ -22,7 +23,7 @@ export async function start(page: Page, lang: Lang, mode: "replay" | "live" = "r
   await page.goto(`/?mode=${mode}`);
   await page.waitForFunction((m) => sessionStorage.getItem("smoke-or-fire")?.includes(`"mode":"${m}"`), mode);
   if (lang === "fr") {
-    await page.getByRole("button", { name: "Français" }).click();
+    await toFrench(page);
     await page.waitForFunction(() => sessionStorage.getItem("smoke-or-fire")?.includes('"lang":"fr"'));
   }
 }

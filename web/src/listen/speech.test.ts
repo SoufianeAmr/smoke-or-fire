@@ -86,7 +86,7 @@ describe("screens", () => {
       "Right now, I’m showing you a replay of August 25, 2025.",
       "Hi.",
       "I’m here to help you figure out where the smoke is coming from.",
-      "It only takes a minute.",
+      "A few quick questions first.",
       "If you smell smoke, tap the big blue button: I smell smoke.",
       "And if you ever see flames, call nine-one-one right away.",
       "To keep me on your phone, tap: Add to home screen.",
@@ -96,7 +96,7 @@ describe("screens", () => {
       "En ce moment, je vous montre une reprise du 25 août 2025.",
       "Bonjour.",
       "Je suis là pour vous aider à savoir d’où vient la fumée.",
-      "Ça ne prend qu’une minute.",
+      "D’abord quelques questions rapides.",
       `Si vous sentez de la fumée, touchez le grand bouton bleu${NBSP}: Je sens de la fumée.`,
       "Et si vous voyez des flammes, appelez le neuf-un-un tout de suite.",
     ]);
@@ -203,13 +203,13 @@ describe("screens", () => {
       "Le plus simple, c’est de toucher le bouton bleu, Utiliser ma position, puis de dire oui quand votre téléphone le demande.",
       "Ou tapez le nom de votre ville dans la case, et touchez-le dans la liste.",
     ]);
-    expect(voice.loadingVoice("en")).toEqual(["Thanks.", "Give me a few seconds.", "I’m following the wind backward, hour by hour, to see where your air came from."]);
-    expect(voice.loadingVoice("fr")).toEqual(["Merci.", "Donnez-moi quelques secondes.", "Je suis le vent à rebours, heure par heure, pour voir d’où vient votre air."]);
+    expect(voice.loadingVoice("en")).toEqual(["Thanks.", "This usually takes a few seconds.", "I’m following the wind backward, hour by hour, to see where your air came from."]);
+    expect(voice.loadingVoice("fr")).toEqual(["Merci.", "Cela prend habituellement quelques secondes.", "Je suis le vent à rebours, heure par heure, pour voir d’où vient votre air."]);
   });
 
-  test("Loading while the engine wakes up: the same, then that it is waking and can take a minute", () => {
-    expect(voice.loadingVoice("en", true)).toEqual([...voice.loadingVoice("en"), "The smoke engine is waking up.", "This can take a minute."]);
-    expect(voice.loadingVoice("fr", true)).toEqual([...voice.loadingVoice("fr"), "Le moteur de fumée se réveille.", "Cela peut prendre une minute."]);
+  test("Loading while the engine wakes up: the same, then that it is waking and can take a few minutes", () => {
+    expect(voice.loadingVoice("en", true)).toEqual([...voice.loadingVoice("en"), "The smoke engine is waking up.", "This can take a few minutes."]);
+    expect(voice.loadingVoice("fr", true)).toEqual([...voice.loadingVoice("fr"), "Le moteur de fumée se réveille.", "Cela peut prendre quelques minutes."]);
     expect(voice.loadingVoice("en", false)).toEqual(voice.loadingVoice("en"));
   });
 

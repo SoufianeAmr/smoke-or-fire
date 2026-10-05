@@ -9,6 +9,7 @@ import { readFileSync } from "node:fs";
 import { TEST_ENGINE_URL } from "./engine";
 import { answer } from "./look";
 import { openWhy, sheetTo } from "./verdict";
+import { toFrench } from "./language";
 
 type Lang = "en" | "fr";
 type Spoken = { text: string; lang: string; rate: number; pitch: number; volume: number; voice: string | null; at: number; end: number };
@@ -27,6 +28,7 @@ const SERVICES_ONLY = [{ lang: "en-US", name: SERVICE.en, localService: false },
 const NAVY = "rgb(27, 42, 74)";
 const RED = "rgb(217, 45, 32)";
 const WHITE = "rgb(255, 255, 255)";
+const CLEAR = "rgba(0, 0, 0, 0)";
 const SPELLED = { en: { "911": "nine-one-one", "811": "eight-one-one", "211": "two-one-one" }, fr: { "911": "neuf-un-un", "811": "huit-un-un", "211": "deux-un-un" } };
 
 /** A string from the strings file. A key that is not in the file fails the test that asks for it, by name. */
@@ -102,7 +104,7 @@ const listenButton = (page: Page, lang: Lang) => page.getByRole("button", { name
 async function start(page: Page, lang: Lang, mode: "replay" | "live" = "replay") {
   await page.goto(`/?mode=${mode}`);
   await page.waitForFunction((m) => sessionStorage.getItem("smoke-or-fire")?.includes(`"mode":"${m}"`), mode);
-  if (lang === "fr") await page.getByRole("button", { name: "Français" }).click();
+  if (lang === "fr") await toFrench(page);
 }
 async function search(page: Page, town: string, input = "input[type=search]") {
   await page.locator(input).fill(town);
@@ -404,10 +406,11 @@ async function verdictLabels(page: Page, lang: Lang) {
 /**
  * A screen: how to open it, its script as read from the screen, the buttons it names (on screen, with that label and
  * colour), and those buttons' on-screen labels, which the voice must say (numbers spelled out). `heard`: anything more
- * about what was said, given whole, in lower case with plain spaces.
+ * about what was said, given whole, in lower case with plain spaces. `plainListen`: Listen is words with no outline.
  */
 type Screen = {
   name: string;
+  plainListen?: boolean;
   open: (page: Page, lang: Lang) => Promise<void>;
   script: (page: Page, lang: Lang) => Promise<string[]>;
   buttons?: (page: Page, lang: Lang) => Promise<void>;
@@ -427,6 +430,7 @@ const twoReadings = (name: string, open: Screen["open"]): Screen[] => [
 const SCREENS: Screen[] = [
   {
     name: "Check (replay)",
+    plainListen: true,
     open: async () => {},
     script: async (page, lang) => [
       ...script(lang, "voice.check.replay"),
@@ -606,8 +610,9 @@ for (const lang of ["en", "fr"] as const) {
         const button = listenButton(page, lang);
         await expect(button).toBeVisible();
         expect((await button.boundingBox())!.height).toBeGreaterThanOrEqual(56);
-        // Outlined navy on white: never red.
-        expect(await button.evaluate((el) => { const s = getComputedStyle(el); return [s.borderTopColor, s.color, s.backgroundColor]; })).toEqual([NAVY, NAVY, WHITE]);
+        // Outlined navy on white: never red. On Check, navy words with no outline, beside the language link.
+        const look = await button.evaluate((el) => { const s = getComputedStyle(el); return [s.borderTopWidth, s.borderTopColor, s.color, s.backgroundColor]; });
+        expect(look).toEqual(screen.plainListen ? ["0px", NAVY, NAVY, CLEAR] : ["2px", NAVY, NAVY, WHITE]);
         expect(await spoken(page)).toEqual([]); // never plays by itself
 
         const expected = await screen.script(page, lang); // read from the screen before the voice starts

@@ -91,8 +91,8 @@ const CALL: CSSProperties = { marginTop: "4px", marginRight: "14px", minHeight: 
 /**
  * How to add the app to the home screen, when the browser offers no prompt: the iPhone's steps on an iPhone or iPad, the
  * Android steps on Android, and both elsewhere (a computer, setting it up for someone's phone). A modal sheet at the
- * bottom of the screen; Close, Escape or a tap outside closes it. The sheet covers the 911 bar, so it ends with its own
- * Call 911 button; Close stays the first thing in it, and so has the focus when it opens.
+ * bottom of the screen; Close, Escape or a tap outside closes it. The sheet covers the screen's Call 911, so it ends with
+ * its own Call 911 button; Close stays the first thing in it, and so has the focus when it opens.
  */
 function StepsSheet({ platform, onClose }: { platform: Platform; onClose: () => void }) {
   const t = useT();

@@ -9,6 +9,7 @@ import { gzipSync } from "node:zlib";
 import { PNG } from "pngjs";
 import { TEST_ENGINE_URL } from "./engine";
 import { handle, openWhy, sheet, sheetTo } from "./verdict";
+import { toFrench } from "./language";
 
 type Lang = "en" | "fr";
 const LANGS = ["en", "fr"] as const;
@@ -25,7 +26,7 @@ async function start(page: Page, lang: Lang, mode: "replay" | "live") {
   await page.goto(`/?mode=${mode}`);
   await page.waitForFunction((m) => sessionStorage.getItem("smoke-or-fire")?.includes(`"mode":"${m}"`), mode);
   if (lang === "fr") {
-    await page.getByRole("button", { name: "Français" }).click();
+    await toFrench(page);
     await page.waitForFunction(() => sessionStorage.getItem("smoke-or-fire")?.includes('"lang":"fr"'));
   }
 }

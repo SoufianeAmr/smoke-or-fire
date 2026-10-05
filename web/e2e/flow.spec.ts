@@ -2,6 +2,7 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
 import { answer } from "./look";
 import { openWhy, sheetTo } from "./verdict";
+import { toFrench } from "./language";
 
 const NBSP = String.fromCharCode(0xa0);
 // Health Canada, "Wildfire smoke with extreme heat".
@@ -183,7 +184,7 @@ test.describe("What to do: Health Canada’s break from the smoke", () => {
   async function replayVerdict(page: Page, town: string, lang: "en" | "fr" = "en") {
     await page.goto("/?mode=replay");
     await page.waitForFunction(() => sessionStorage.getItem("smoke-or-fire")?.includes('"mode":"replay"'));
-    if (lang === "fr") await page.getByRole("button", { name: "Français" }).click();
+    if (lang === "fr") await toFrench(page);
     await page.goto("/location");
     await page.locator("input[type=search]").fill(town);
     await page.getByRole("option", { name: new RegExp(`^${town}`) }).first().click();

@@ -1,12 +1,13 @@
 // Small phones: on every screen the main action and the 911 bar are visible without scrolling,
 // and the main action is not hidden behind the 911 bar.
-// The 911 bar: one line of text and the red Call 911 button, about 72 px tall, on every screen but Call 911 now and
-// Nearby fire, which have their own Call 911 button, and the verdict that nothing explains, whose bar is the taller
+// The 911 bar: one line of text and the red Call 911 button, about 72 px tall, on every screen but Check, Call 911 now
+// and Nearby fire, which have their own Call 911 button, and the verdict that nothing explains, whose bar is the taller
 // one: "Look outside. See flames or a smoke column?" above a Call 911 button as wide as the bar.
 // The verdict: the glance card (its shape, Listen, its line) is whole as the screen opens, in the sheet at the foot of
 // the map. The source badges are one tap up (e2e/glance.spec.ts, e2e/map.spec.ts).
 import { expect, test, type Locator, type Page } from "@playwright/test";
 import { readFileSync } from "node:fs";
+import { toFrench } from "./language";
 
 const STRINGS: Record<"en" | "fr", Record<string, string>> = {
   en: JSON.parse(readFileSync(new URL("../src/i18n/en.json", import.meta.url), "utf8")),
@@ -112,8 +113,8 @@ const verdictAndHandle = (page: Page) => [...verdictMain(page), page.locator(".s
 const answers = (page: Page) => [page.locator("main a[data-answer]")];
 
 const SCREENS: Check[] = [
-  // Check: I smell smoke; and from 667 px tall, the Live/Replay toggle too.
-  { name: "01 Check", open: (p) => p.goto("/").then(), main: (p) => [p.locator('a[href="/q1"]'), ...(p.viewportSize()!.height >= 667 ? [p.locator("main [role=group]")] : [])], bar: true },
+  // Check: I smell smoke and, under it, the screen's own Call 911 (no bar); from 667 px tall, the Live / Replay switch too.
+  { name: "01 Check", open: (p) => p.goto("/").then(), main: (p) => [p.locator('a[href="/q1"]'), p.locator('main a[href="tel:911"]'), ...(p.viewportSize()!.height >= 667 ? [p.locator("main [role=group]")] : [])], bar: false },
   { name: "02 Q1", open: (p) => p.goto("/q1").then(), main: answers, bar: true, answers: 3 },
   { name: "03a Q2", open: (p) => p.goto("/q2").then(), main: answers, bar: true, answers: 4 },
   { name: "03b Q3", open: (p) => p.goto("/q3").then(), main: answers, bar: true, answers: 6 },
@@ -188,7 +189,7 @@ for (const { viewport, screens } of RUNS) {
         test(check.name, async ({ page }) => {
           await page.goto("/?mode=replay");
           await modeStored(page, "replay");
-          if (lang === "fr") await page.getByRole("button", { name: "Français" }).click();
+          if (lang === "fr") await toFrench(page);
           await check.open(page);
           for (const group of check.main(page)) await expect(group.first()).toBeVisible();
           if (check.answers) await expect(page.locator("main a[data-answer]")).toHaveCount(check.answers); // all of them are checked below
@@ -199,7 +200,7 @@ for (const { viewport, screens } of RUNS) {
           if (check.callFirst) await callFirstBar(page, lang);
           else if (check.bar) await slimBar(page, lang);
           else {
-            // Call 911 now and Nearby fire: no bar. Their own Call 911 button is the only one, in the screen itself.
+            // Check, Call 911 now and Nearby fire: no bar. Their own Call 911 button is the only one, in the screen itself.
             expect(await bars(page)).toHaveLength(0);
             await expect(page.locator('a[href="tel:911"]')).toHaveCount(1);
             await expect(page.locator('main a[href="tel:911"]')).toHaveCount(1);

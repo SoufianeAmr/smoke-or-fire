@@ -6,6 +6,7 @@ import { expect, test, type Locator, type Page, type Route } from "@playwright/t
 import { readFileSync } from "node:fs";
 import { TEST_ENGINE_URL } from "./engine";
 import { openBadge, openWhy, sheetTo, type Detent } from "./verdict";
+import { toFrench } from "./language";
 
 // Several of these tests open the verdict more than once: slow on a busy machine.
 test.describe.configure({ timeout: 90_000 });
@@ -54,7 +55,7 @@ async function start(page: Page, lang: Lang, mode: "replay" | "live") {
   await page.goto(`/?mode=${mode}`);
   await page.waitForFunction((m) => sessionStorage.getItem("smoke-or-fire")?.includes(`"mode":"${m}"`), mode);
   if (lang === "fr") {
-    await page.getByRole("button", { name: "Français" }).click();
+    await toFrench(page);
     await page.waitForFunction(() => sessionStorage.getItem("smoke-or-fire")?.includes('"lang":"fr"'));
   }
 }

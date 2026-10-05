@@ -14,12 +14,96 @@ a:focus-visible,button:focus-visible{outline:3px solid #1B2A4A;outline-offset:3p
 .row:active{background-color:#F3EEE6}
 input::placeholder{color:#6B6F76}
 
-/* 01 Check */
-.haze{position:absolute;border-radius:50%;filter:blur(46px);animation:drift 22s ease-in-out infinite alternate}
-.haze2{animation-duration:28s;animation-delay:-9s}
-.haze3{animation-duration:34s;animation-delay:-4s}
-@keyframes drift{0%{transform:translate(-30px,0) scale(1)}100%{transform:translate(40px,-18px) scale(1.08)}}
-@media (prefers-reduced-motion: reduce){.haze{animation:none}}
+/* 01 Check, the home screen (DESIGN-LOCK, "Amendment: the home screen"): a layout of its own, in the app's colours
+   and Inter. Every size is a minimum but the drawing's height, so the screen holds at twice the text size and at
+   320 px wide. Nothing moves. Red is on this screen for Call 911 and nothing else. */
+.home{--navy:#1B2A4A;--red:#D92D20;--ink:#1A1D21;--page:#FAF6F0;--card:#FFFFFF;--field:#EDE6DA;--hairline:rgba(26,29,33,0.12)}
+
+/* The top tenth: the app's mark and name, small (the name is the screen's title); then Listen and the other language,
+   as words on one line. Where the two sides do not fit on one row (a narrow phone, or large text), Listen and the
+   language go under the name. */
+.home-top{flex:0 0 auto;min-height:max(56px,10dvh);display:flex;flex-wrap:wrap;align-items:center;align-content:center;justify-content:space-between;column-gap:12px;padding:0 20px}
+.home-brand{display:flex;align-items:center;gap:8px;margin:0;padding:8px 0;font-size:14px;font-weight:700;line-height:1.25}
+.home-logo{flex:0 0 auto;width:24px;height:24px}
+.home-tools{flex:0 0 auto;display:flex;align-items:center;margin-left:auto}
+.home-tools svg{width:20px;height:20px}
+.home-lang{position:relative;min-height:56px;padding:0 0 0 13px;border:0;border-radius:4px;background:transparent;color:var(--navy);font-family:inherit;font-size:16px;font-weight:700;line-height:1.2;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.home-tools button + .home-lang::before{content:"";position:absolute;left:0;top:50%;width:1px;height:18px;margin-top:-9px;background:var(--hairline)}
+
+/* The middle: one card that says what the app is for, in a drawing and a line, and is no taller than what it holds.
+   The drawing is as wide as the card. Its height goes by the room the screen has left once everything else is on it
+   (the top is a tenth of the screen; the rest is 520 px at most, in French, with the replay's line and the two links
+   one under the other): the whole drawing, half as tall as it is wide, on a tall phone; on a short one the strip at
+   its foot, where the story is. 96 px where a browser cannot work that out. */
+.home-main{flex:1 1 auto;display:flex;flex-direction:column;padding:0 20px calc(8px + env(safe-area-inset-bottom))}
+.home-status{flex:0 0 auto;display:flex;flex-direction:column;border-radius:18px;background:var(--card);box-shadow:0 1px 2px rgba(26,29,33,0.06),0 8px 24px rgba(26,29,33,0.07)}
+.home-picture{flex:0 0 auto;display:block;width:100%;height:96px;height:clamp(80px,calc(90dvh - 520px),min(220px,calc(50vw - 20px)));border-radius:18px 18px 0 0}
+.home-status-text{margin:0;padding:12px 16px 0;font-size:18px;line-height:1.5;text-align:center;text-wrap:balance}
+/* In English the rest takes less from 375 px wide (the two links share a row there), so the drawing is taller. Under
+   375 px wide it takes more in both languages (the links, and in French the top, take two rows). */
+@media (min-width: 375px){.home:lang(en) .home-picture{height:clamp(80px,calc(90dvh - 490px),min(220px,calc(50vw - 20px)))}}
+@media (max-width: 374px){.home-picture{height:clamp(80px,calc(90dvh - 560px),min(220px,calc(50vw - 20px)))}}
+/* The drawing's colours: the app's navy and beiges, light greys for the haze, and for the fire the map's ember orange
+   with its dark edge (never the red of Call 911). */
+.pic-hill{fill:#E4DCCC}
+.pic-ground{fill:var(--field)}
+.pic-haze{fill:#E7E9ED}
+.pic-smoke{fill:#D6DAE0}
+.pic-trees{fill:var(--navy);opacity:.5}
+.pic-fire{fill:#E8590C;stroke:#7A2E06;stroke-width:1.6;stroke-linejoin:round}
+.pic-wind{fill:none;stroke:var(--navy);stroke-width:4.5;stroke-linecap:round;stroke-linejoin:round}
+.pic-gust{stroke-width:3;opacity:.45}
+.pic-house{fill:var(--navy)}
+.pic-wall,.pic-roof{stroke:var(--navy);stroke-width:3;stroke-linejoin:round}
+.pic-wall{fill:var(--card)}
+
+/* Under them, which data the check reads: one switch of two options the same size. The one in use is filled navy and
+   ticked (and pressed, for a screen reader). The replay's name and its day sit one over the other, their dot out of
+   sight (a screen reader still has it); from 480 px wide they fit on one line, dot and all. In the replay, one line
+   under the switch says what that is. The focus ring is inside an option: white on the filled one. */
+.home-data{padding:12px 12px 14px}
+.home-switch{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:3px;border:1.5px solid var(--navy);border-radius:14px}
+.home-option{min-width:0;min-height:48px;display:flex;align-items:center;justify-content:center;gap:6px;padding:4px 8px;border:0;border-radius:9px;background:transparent;color:var(--navy);font-family:inherit;font-size:14px;font-weight:700;line-height:1.3;cursor:pointer}
+.home-option[aria-pressed="true"]{background:var(--navy);color:#FFFFFF;cursor:default}
+.home .home-option:focus-visible{outline-offset:-5px}
+.home .home-option[aria-pressed="true"]:focus-visible{outline-color:#FFFFFF}
+.home-option-words{display:flex;flex-direction:column;align-items:center}
+.home-option-dot{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.home-option-day{font-weight:500}
+@media (min-width: 480px){
+  .home-option-words{display:block;text-align:center}
+  .home-option-dot{position:static;width:auto;height:auto;overflow:visible;clip-path:none;white-space:normal}
+}
+.home-recorded{margin:8px 0 0;font-size:14px;line-height:1.4;text-align:center;text-wrap:balance}
+
+/* The two actions, 64 px or more to tap. The check is filled navy. Call 911 is outlined red on white: the two are
+   never taken for each other. Call 911 is this screen's own, so it stays on the screen however short the window is (as
+   the 911 bar does on the others), with an edge of the page's colour so nothing shows through. */
+.home .home-action{min-height:64px;display:flex;align-items:center;justify-content:center;gap:12px;padding:8px 16px;border:2px solid;border-radius:18px;font-size:22px;font-weight:700;line-height:1.2;text-decoration:none}
+.home .home-check,.home .home-check:hover{margin-top:16px;border-color:var(--navy);background:var(--navy);color:#FFFFFF}
+.home-note{margin:8px 0 0;font-size:14px;line-height:1.4;text-align:center;text-wrap:balance}
+.home .home-call,.home .home-call:hover{position:sticky;bottom:calc(8px + env(safe-area-inset-bottom));z-index:2;margin-top:12px;border-color:var(--red);background:var(--card);color:var(--red);box-shadow:0 0 0 8px var(--page)}
+.home-call-words{display:flex;flex-direction:column;gap:1px;font-size:20px}
+.home-call-number{font-size:18px;font-weight:800}
+
+/* Under them, quiet links: how it works, and keeping the app on the phone (KeepOnPhone). */
+.home .home-how,.home .home-how:hover{align-self:center;min-height:56px;display:flex;align-items:center;gap:4px;margin-top:4px;padding:0 12px;color:var(--navy);font-size:16px;font-weight:700;text-underline-offset:3px}
+
+/* Short phones (up to 740 px tall): less room around the line and the switch, so both actions and the links under
+   them are on the screen as it opens, the French links (one under the other) too. Same words, same tap targets. */
+@media (max-height: 740px){
+  .home-status-text{padding-top:8px}
+  .home-data{padding:8px 12px 10px}
+  .home-recorded{margin-top:6px}
+  .home .home-check{margin-top:12px}
+}
+@media (max-height: 740px) and (min-width: 375px){.home:lang(en) .home-picture{height:clamp(80px,calc(90dvh - 472px),min(220px,calc(50vw - 20px)))}}
+@media (max-width: 359px){
+  .home-top{padding:0 16px}
+  .home-main{padding-left:16px;padding-right:16px}
+  .home .home-action{font-size:20px}
+}
+
 /* "Add to home screen" steps: a sheet at the bottom of the 480 px column, over a dimmed screen. */
 .sheet{position:fixed;inset:auto 0 0;margin:0 auto;width:100%;max-width:480px;max-height:100%;padding:0;border:0;background:transparent;color:#1A1D21;font-family:Inter,'Helvetica Neue',Arial,sans-serif}
 .sheet::backdrop{background:rgba(26,29,33,0.45)}
@@ -332,16 +416,6 @@ html:has(.verdict-screen),html:has(.verdict-screen) body{overscroll-behavior-y:n
   .nodata-main{gap:8px !important}
   .nodata-head{gap:6px !important}
   .nodata-callout{padding:12px 20px !important}
-}
-
-/* 01 Check on short phones (375 × 667): the logo is smaller and sits beside the title, with less space between the
-   blocks, so the whole screen fits above the 911 bar, the French links (one under the other) too. Same text, type sizes
-   and tap targets. */
-@media (max-height: 740px){
-  .check-head{margin-top:4px !important;flex-direction:row !important;align-items:center;gap:12px !important}
-  .check-head svg{width:44px;height:44px;flex-shrink:0}
-  .check-tagline{margin-top:16px !important}
-  .check-modes{margin-top:8px !important}
 }
 
 /* Q3 in French: the words on the tiles are longer, so they are 16 px on every phone; "Des gens dehors, peut-être en

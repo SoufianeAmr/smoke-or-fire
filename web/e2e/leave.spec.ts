@@ -6,6 +6,7 @@ import { expect, test, type Page } from "@playwright/test";
 import { answer as tap } from "./look";
 import { navigations, texts } from "./navigations";
 import { openWhy } from "./verdict";
+import { toFrench } from "./language";
 
 const NBSP = String.fromCharCode(0xa0);
 const SOURCE = "https://annapoliscounty.ca/government/news-media-releases/2204-west-dalhousie-wildfires-evacuees-registration";
@@ -36,7 +37,7 @@ const L = {
 async function start(page: Page, mode: "replay" | "live", lang: "en" | "fr" = "en") {
   await page.goto(`/?mode=${mode}`);
   await page.waitForFunction((m) => sessionStorage.getItem("smoke-or-fire")?.includes(`"mode":"${m}"`), mode);
-  if (lang === "fr") await page.getByRole("button", { name: "Français" }).click();
+  if (lang === "fr") await toFrench(page);
 }
 
 /** Answer "Where are you?" on the screen by searching a town. */

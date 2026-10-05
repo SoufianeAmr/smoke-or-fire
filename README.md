@@ -1,6 +1,6 @@
 # Smoke or Fire? / Fumée ou feu ?
 
-**Smell wildfire smoke? Find out in 60 seconds whether it's drifting from a known fire or something new, traced with real wind and satellite data.**
+**Smell wildfire smoke? Find out where it's coming from, traced with real wind and satellite data.**
 Bilingual (English/French), built for seniors, nothing to install.
 
 **Live app:** https://smoke-or-fire.vercel.app · **Replay of the Aug 25, 2025 event:** https://smoke-or-fire.vercel.app/?mode=replay
@@ -192,7 +192,7 @@ See `web/package.json` for all scripts. Current test counts are in [TECH-FACTS.m
 - **Never** the word "safe", and nothing that discourages calling 911.
 - 911 is visible on every screen, the first included.
 - No green about the smoke: it is never "all clear". The one green in the app is the province's "burning permitted", on the burn badge only: its outline, its flame and its word, never a fill, never on the verdict card. Every status uses colour + icon + word.
-- Body text 18 px or more, touch targets 56 px or more, fully bilingual.
+- Body text 18 px or more, touch targets 56 px or more, fully bilingual. The home screen has a layout of its own, with some smaller print ([design/DESIGN-LOCK.md](design/DESIGN-LOCK.md), "The home screen"); its two actions are 64 px.
 - Every number on screen comes from the engine. Every place and phone number comes from an official, cited source.
 
 ## Known limitations

@@ -4,8 +4,8 @@ import { APP_URL, platformOf, shareData, shareSms } from "./keep";
 
 const NBSP = String.fromCharCode(0xa0);
 const TEXT = {
-  en: "Smoke or Fire? tells you in 60 seconds if the smoke you smell is from a known fire. Nothing to install:",
-  fr: `Fumée ou feu${NBSP}? vous dit en 60 secondes si la fumée que vous sentez vient d’un feu connu. Rien à installer${NBSP}:`,
+  en: "Smoke or Fire? tells you where the smoke is coming from. Nothing to install:",
+  fr: `Fumée ou feu${NBSP}? vous dit d’où vient la fumée. Rien à installer${NBSP}:`,
 };
 
 describe("Send to someone", () => {

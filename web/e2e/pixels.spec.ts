@@ -1,5 +1,6 @@
 // Screens with no engine data, compared pixel by pixel with design/screens/*.html at 390 × 844.
 // A small difference is allowed. These are reported, never blocking: run with `npm run e2e:pixels`.
+// Check is not among them: its screen file is no longer its reference (DESIGN-LOCK, "Amendment: the home screen").
 import { expect, test, type Page } from "@playwright/test";
 import { writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -10,7 +11,6 @@ const TOLERANCE = 0.02; // at most 2% of pixels may differ
 const design = (file: string) => new URL(`../../design/screens/${file}`, import.meta.url).href;
 
 const SCREENS: { name: string; file: string; route: string; setup?: (page: Page) => Promise<void> }[] = [
-  { name: "01 Check", file: "01-check.html", route: "/?mode=replay" },
   { name: "02 Q1", file: "02-q1-flames.html", route: "/q1" },
   { name: "04 Emergency", file: "04-emergency.html", route: "/emergency" },
   { name: "08 How it works", file: "08-how-it-works.html", route: "/how-it-works" },

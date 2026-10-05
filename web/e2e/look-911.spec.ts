@@ -7,6 +7,7 @@ import { expect, test, type Locator, type Page } from "@playwright/test";
 import { readFileSync } from "node:fs";
 import { answer } from "./look";
 import { openBadge, openWhy } from "./verdict";
+import { toFrench } from "./language";
 
 type Lang = "en" | "fr";
 type Box = { x: number; y: number; width: number; height: number };
@@ -55,7 +56,7 @@ async function start(page: Page, lang: Lang, mode: "replay" | "live" = "replay")
   await page.goto(`/?mode=${mode}`);
   await page.waitForFunction((m) => sessionStorage.getItem("smoke-or-fire")?.includes(`"mode":"${m}"`), mode);
   if (lang === "fr") {
-    await page.getByRole("button", { name: "Français" }).click();
+    await toFrench(page);
     await page.waitForFunction(() => sessionStorage.getItem("smoke-or-fire")?.includes('"lang":"fr"'));
   }
 }
@@ -597,7 +598,7 @@ for (const viewport of PHONES) {
         expect((await hit(page)).inBar).toBe(true);
       });
 
-      test("Check with the Add to home screen steps open: the sheet covers the bar, so the one Call 911 to tap is the sheet's own, red; Close has the focus", async ({ page }) => {
+      test("Check with the Add to home screen steps open: the sheet covers the screen's Call 911, so the one Call 911 to tap is the sheet's own, red; Close has the focus", async ({ page }) => {
         await start(page, lang);
         await page.getByRole("button", { name: s(lang, "keep.add"), exact: true }).click();
         const sheet = page.locator("dialog.sheet");
@@ -638,7 +639,7 @@ const NARROW = [
 ];
 /** `answers`: on a question, how many answers there are. `bar`: the 911 bar, or else the screen's own big Call 911. */
 const REFLOW: { name: string; route: string; bar: boolean; answers: number }[] = [
-  { name: "Check", route: "/", bar: true, answers: 0 },
+  { name: "Check", route: "/", bar: false, answers: 0 },
   { name: "Q1, three answers", route: "/q1", bar: true, answers: 3 },
   { name: "Q2, four answers", route: "/q2", bar: true, answers: 4 },
   { name: "Q3, six answers", route: "/q3", bar: true, answers: 6 },

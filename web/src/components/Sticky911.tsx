@@ -17,8 +17,8 @@ const BAR_FIRST: CSSProperties = { ...BAR, flexDirection: "column", alignItems: 
 const CALL_FIRST: CSSProperties = { minHeight: "72px", display: "flex", alignItems: "center", justifyContent: "center", gap: "12px", borderRadius: "18px", background: "#D92D20", color: "#FFFFFF", textDecoration: "none", fontSize: "28px", fontWeight: "800", lineHeight: "1.1" };
 
 /**
- * "See flames or a smoke column?" and the red Call 911 button, at the bottom of every screen but Call 911 now and Nearby
- * fire, whose own big button is their Call 911. Under 360 px wide, the button alone, filling the bar (styles.css).
+ * "See flames or a smoke column?" and the red Call 911 button, at the bottom of every screen but Check, Call 911 now and
+ * Nearby fire, whose own button is their Call 911. Under 360 px wide, the button alone, filling the bar (styles.css).
  * `callFirst` (a verdict that nothing explains): "Look outside. See flames or a smoke column?" above a Call 911 button
  * as wide as the bar. Still the one Call 911 button of the screen.
  */

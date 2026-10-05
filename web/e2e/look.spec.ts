@@ -5,6 +5,7 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
 import { readFileSync } from "node:fs";
 import { PATHS, answer } from "./look";
+import { toFrench } from "./language";
 
 // Short tests that share nothing: they run side by side.
 test.describe.configure({ mode: "parallel" });
@@ -90,7 +91,7 @@ async function start(page: Page, lang: Lang) {
   await page.goto("/?mode=replay");
   await page.waitForFunction(() => sessionStorage.getItem("smoke-or-fire")?.includes('"mode":"replay"'));
   if (lang === "fr") {
-    await page.getByRole("button", { name: "Français" }).click();
+    await toFrench(page);
     await page.waitForFunction(() => sessionStorage.getItem("smoke-or-fire")?.includes('"lang":"fr"'));
   }
 }

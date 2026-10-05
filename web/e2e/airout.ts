@@ -4,6 +4,7 @@ import type { Page, Route } from "@playwright/test";
 import { readFileSync } from "node:fs";
 import { TEST_ENGINE_URL } from "./engine";
 import { sheetTo } from "./verdict";
+import { toFrench } from "./language";
 
 export type Lang = "en" | "fr";
 // The shared tables, and this feature's own words (src/airout/strings.*.json: they ship with its files).
@@ -76,7 +77,7 @@ export async function start(page: Page, lang: Lang, mode: "replay" | "live") {
   await page.goto(`/?mode=${mode}`);
   await page.waitForFunction((m) => sessionStorage.getItem("smoke-or-fire")?.includes(`"mode":"${m}"`), mode);
   if (lang === "fr") {
-    await page.getByRole("button", { name: "Français" }).click();
+    await toFrench(page);
     await page.waitForFunction(() => sessionStorage.getItem("smoke-or-fire")?.includes('"lang":"fr"'));
   }
 }

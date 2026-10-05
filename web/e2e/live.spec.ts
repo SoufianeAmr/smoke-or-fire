@@ -109,7 +109,7 @@ async function checkMoncton(page: Page) {
   await expect(page).toHaveURL(/\/loading$/);
 }
 
-const WAKING = { en: "Waking up the smoke engine… this can take a minute.", fr: "Réveil du moteur de fumée… cela peut prendre une minute." };
+const WAKING = { en: "Waking up the smoke engine… this can take a few minutes.", fr: "Réveil du moteur de fumée… cela peut prendre quelques minutes." };
 
 test("Live: the engine's own no-data answer (a 503 with its error) ends the check on screen 9b at once, asked once", async ({ page }) => {
   const asked = await engine(page, (route) => route.fulfill({ status: 503, json: { error: "wind_data_unavailable" }, headers: CORS }));

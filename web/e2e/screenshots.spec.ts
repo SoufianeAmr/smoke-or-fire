@@ -11,6 +11,7 @@ import { fileURLToPath } from "node:url";
 import { TEST_ENGINE_URL } from "./engine";
 import { answer } from "./look";
 import { openBadge, openWhy, sheetTo } from "./verdict";
+import { toFrench } from "./language";
 
 type Lang = "en" | "fr";
 const STRINGS: Record<Lang, Record<string, string>> = {
@@ -27,7 +28,7 @@ async function start(page: Page, lang: Lang) {
   await page.goto("/?mode=replay");
   await page.waitForFunction(() => sessionStorage.getItem("smoke-or-fire")?.includes('"mode":"replay"'));
   if (lang === "fr") {
-    await page.getByRole("button", { name: "Français" }).click();
+    await toFrench(page);
     await page.waitForFunction(() => sessionStorage.getItem("smoke-or-fire")?.includes('"lang":"fr"'));
   }
 }
@@ -92,7 +93,7 @@ const SHOTS: Shot[] = [
   {
     name: "01 Check",
     file: "01-check",
-    // Already open after the start: I smell smoke, and the 911 bar under it.
+    // Already open after the start: I smell smoke, and the screen's own Call 911 under it.
     open: async (page) => {
       await expect(page.locator('main a[href="/q1"]')).toBeVisible();
       await expect(page.locator('a[href="tel:911"]')).toBeVisible();
