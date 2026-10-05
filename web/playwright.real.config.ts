@@ -6,6 +6,8 @@ export default defineConfig({
   testDir: "e2e",
   testMatch: /real-engine\.spec\.ts/,
   outputDir: "test-results",
-  timeout: 150_000, // a sleeping free Render service takes about a minute to wake
+  // A sleeping engine can take about three minutes to wake, and the app keeps asking it for 180 s: a test is given
+  // that, and time for the screens before and after.
+  timeout: 240_000,
   use: { baseURL: process.env.SITE_URL ?? "https://smoke-or-fire.vercel.app", viewport: { width: 390, height: 844 } },
 });
