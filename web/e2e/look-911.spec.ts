@@ -24,9 +24,11 @@ const NBSP = String.fromCharCode(0xa0);
 const RED = "rgb(217, 45, 32)";
 const WHITE = "rgb(255, 255, 255)";
 
-// The line under the title gives no reason any more: Yes, Not sure, a rising column and something burning all lead here.
+// The line under the title gives no reason any more: Yes, Not sure, thick smoke rising and something burning all lead here.
 // New Brunswick's own 911 page, in each language: where the card's words come from.
 const GNB_911 = { en: "https://www.gnb.ca/en/topic/laws-safety/community-safety/911.html", fr: "https://www.gnb.ca/fr/sujet/lois-securite/securite-communautaire/911.html" };
+// The University of New Brunswick's page on calling 911 from its Fredericton campus (in English only).
+const UNB_911 = "https://www.unb.ca/fredericton/environmental-safety/emergencies/index.html";
 const OLD_SUB = { en: "Flames or a smoke column can mean", fr: "Des flammes ou une colonne de fumée peuvent" };
 
 // The phone, in Moncton: at the city's own point in the community list (NRCan CGNDB), so the nearest community is Moncton.
@@ -279,41 +281,70 @@ for (const lang of LANGS) {
       await expect(page.locator("main .where-box")).toHaveCount(1);
       const also = page.locator("section[aria-labelledby=also-h]");
       await expect(also.getByRole("heading")).toHaveText(s(lang, "emergency.ask.also"));
-      await expect(also.locator("li")).toHaveText([s(lang, "emergency.ask.see"), s(lang, "emergency.ask.danger"), s(lang, "emergency.ask.phone")]);
+      await expect(also.locator("li")).toHaveText([s(lang, "emergency.ask.see"), s(lang, "emergency.ask.name"), s(lang, "emergency.ask.phone")]);
       await expect(also.locator("li svg")).toHaveCount(3);
       expect(new Set(await also.locator("li").evaluateAll((els) => els.map((el) => Math.round(el.getBoundingClientRect().top)))).size, "one row").toBe(1);
       await expect(page.locator("main .emergency-close")).toHaveText(s(lang, "emergency.close"));
       await expect(page.locator("main .emergency-close svg")).toHaveCount(1);
       await expect(page.locator("main .emergency-lead")).toHaveText(s(lang, "emergency.lead"));
-      await expect(page.locator('main a[href="/leave"]')).toHaveText(s(lang, "leave.entry"));
+      // Told to leave: a button as wide as the page, with a door and its words, navy on white. Not a text link.
+      const leave = page.locator('main a[href="/leave"]');
+      await expect(leave).toHaveText(s(lang, "leave.entry"));
+      await expect(leave.locator("svg")).toHaveCount(1);
+      expect(await leave.evaluate((el) => { const st = getComputedStyle(el); return [st.backgroundColor, `${st.borderTopWidth} ${st.borderTopColor}`, st.color, st.textDecorationLine]; })).toEqual([WHITE, "2px rgb(27, 42, 74)", "rgb(27, 42, 74)", "none"]);
+      const leaveBox = (await leave.boundingBox())!;
+      expect(Math.round(leaveBox.width)).toBe(Math.round(main.width - 40));
+      expect(leaveBox.height).toBeGreaterThanOrEqual(56);
 
       // No 911 bar: the big button is this screen's Call 911.
       expect(await fixedBars(page)).toBe(0);
       await expect(page.locator("a.sticky-call")).toHaveCount(0);
     });
 
-    test("About this card: closed until asked for; opened, it says what New Brunswick's 911 page says and links to that page, with the day it was read", async ({ page }) => {
+    test("About this card: a small info button, closed until asked for; opened, it gives New Brunswick's own words and the university's, and each source is a row that opens its page, with the day it was read", async ({ page }) => {
       await emergency(page, lang);
-      // The card's first words are that page's: how the operator answers.
-      expect(s(lang, "emergency.ask.first").replace(/\s/g, " ")).toContain(lang === "en" ? "Where is your emergency?" : "Où est votre urgence ?");
+      // The card's heading says it plainly; the operator's exact words are in the note.
+      expect(s(lang, "emergency.ask.first")).toBe(lang === "en" ? "911 will ask first where you are." : "Le 911 vous demandera d’abord où vous êtes.");
       const toggle = page.getByRole("button", { name: s(lang, "emergency.about"), exact: true });
       const text = page.locator("#look-about-text");
       await expect(toggle).toHaveAttribute("aria-expanded", "false");
       await expect(text).toBeHidden();
-      expect((await toggle.boundingBox())!.height).toBeGreaterThanOrEqual(56);
+      // An "i" and its words in a navy outline, 48 px tall: the one thing to tap here that is under 56 px, and it is a note to read.
+      expect((await toggle.boundingBox())!.height).toBe(48);
+      expect(await toggle.evaluate((el) => { const st = getComputedStyle(el); return [st.textDecorationLine, `${st.borderTopStyle} ${st.borderTopColor}`, parseFloat(st.borderTopWidth) >= 1, el.querySelectorAll("svg").length]; })).toEqual(["none", "solid rgb(27, 42, 74)", true, 1]);
       // The last thing on the screen, after Told to leave.
       const leave = (await page.locator('main a[href="/leave"]').boundingBox())!;
       expect((await toggle.boundingBox())!.y).toBeGreaterThanOrEqual(leave.y + leave.height - 0.5);
       await toggle.click();
       await expect(toggle).toHaveAttribute("aria-expanded", "true");
-      await expect(text.locator("p")).toHaveText(s(lang, "emergency.about.body"));
-      const source = text.locator("a");
-      await expect(source).toHaveText(s(lang, "emergency.about.source"));
-      await expect(source).toHaveAttribute("href", GNB_911[lang]);
-      await expect(source).toHaveAttribute("target", "_blank");
-      await expect(source).toHaveAttribute("rel", /noopener/);
-      expect(s(lang, "emergency.about.source").replace(/\s/g, " ")).toContain(lang === "en" ? "retrieved Oct 5, 2026" : "consulté le 5 octobre 2026");
-      expect((await source.boundingBox())!.height).toBeGreaterThanOrEqual(56);
+      const body = text.locator("p");
+      await expect(body).toHaveText(s(lang, "emergency.about.body"));
+      // New Brunswick's exact words, and what the university's page says about staying on the line.
+      const said = ((await body.textContent()) ?? "").replace(/\s/g, " ");
+      for (const words of lang === "en"
+        ? ["“911 Where is your emergency?”", "“will ask what your emergency is, your location and your full 10-digit phone number.”", "“Keep your phone on after you hang up in case the 911 operator needs to call you back”", "“Provide your name, telephone number and location”", "“what you have observed”", "“Do not hang up until the operator tells you to do so.”"]
+        : ["« 911 où est votre urgence »", "« Gardez votre téléphone allumé après avoir raccroché au cas où le téléphoniste du 911 devrait vous téléphoner de nouveau »", "de donner votre nom, votre numéro de téléphone et l’endroit où vous êtes", "ne pas raccrocher avant que le ou la téléphoniste vous le dise"]) expect(said).toContain(words);
+      // Each of the three things the card says 911 will also ask is in the note: what you see, your name, your phone number.
+      expect([s(lang, "emergency.ask.see"), s(lang, "emergency.ask.name"), s(lang, "emergency.ask.phone")]).toEqual(lang === "en" ? ["What you see", "Your name", "Your phone number"] : ["Ce que vous voyez", "Votre nom", "Votre numéro de téléphone"]);
+      // It does not say the pages say what they do not: nothing about danger, which is on the card no more.
+      expect(said).not.toMatch(/danger/i);
+      expect(await page.locator("main").innerText()).not.toMatch(/danger/i);
+
+      // Two sources, each a row to tap that opens its page: New Brunswick's 911 page, then the university's.
+      const sources = text.locator("a");
+      await expect(sources).toHaveCount(2);
+      await expect(sources).toHaveText([s(lang, "emergency.about.source"), s(lang, "emergency.about.source2")]);
+      await expect(sources.nth(0)).toHaveAttribute("href", GNB_911[lang]);
+      await expect(sources.nth(1)).toHaveAttribute("href", UNB_911);
+      for (const [i, key] of ["emergency.about.source", "emergency.about.source2"].entries()) {
+        const source = sources.nth(i);
+        await expect(source).toHaveAttribute("target", "_blank");
+        await expect(source).toHaveAttribute("rel", /noopener/);
+        expect(s(lang, key).replace(/\s/g, " ")).toContain(lang === "en" ? "retrieved Oct 5, 2026" : "consulté le 5 octobre 2026");
+        expect((await source.boundingBox())!.height).toBeGreaterThanOrEqual(56);
+        expect(await source.evaluate((el) => [getComputedStyle(el).textDecorationLine, el.querySelectorAll("svg").length])).toEqual(["none", 1]);
+      }
+      expect(s(lang, "emergency.about.source2")).toContain("unb.ca");
       // The note has no Call 911 of its own, and the screen's is still the one to tap.
       await expect(page.locator('a[href="tel:911"]')).toHaveCount(1);
       await toggle.click();

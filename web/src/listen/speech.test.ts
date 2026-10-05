@@ -17,7 +17,7 @@ const json = (data: unknown) => data as VerdictJson;
 const NBSP = String.fromCharCode(0xa0);
 const LANGS = ["en", "fr"] as const;
 const VOICE_KEYS = Object.keys(en).filter((key) => key.startsWith("voice.")) as StringKey[];
-const NEAR = { kind: "near", name: "NSCC Annapolis Valley Campus", address: "295 Commercial St., Middleton" } as const;
+const NEAR = { kind: "near", name: "NSCC Annapolis Valley Campus", address: "295 Commercial St., Middleton", call211: true } as const;
 const noFires = { ...json(halifax), noFiresInRange: true, nearestFire: null, closestApproach: null } as VerdictJson;
 // Low confidence because the wind shifted overnight, the three heights agreeing.
 const unsteady = json({ ...miramichi, heights: { ...miramichi.heights, agree: true }, wind: { ...miramichi.wind, steady: false, biggestShift: null } });
@@ -133,21 +133,21 @@ describe("screens", () => {
     ]);
   });
 
-  test("Q2, the sky: what each picture shows, then its caption as on screen; the third is for no smoke to see, or the dark", () => {
+  test("Q2, the sky: what each picture shows, in words that are not its caption, then its caption as on screen; the third is for no smoke to see, or too dark to see", () => {
     expect(voice.q2Voice("en")).toEqual([
       "Now look at the sky.",
       "Which picture looks like your sky?",
-      "The first picture is dark smoke rising from one spot: Rising column.",
+      "The first picture shows smoke climbing from one spot on the ground: Thick smoke rising.",
       "The second is grey haze hanging everywhere: Grey haze.",
-      "The third is for when you can’t see any smoke, or it’s dark out: I only smell it.",
+      "The third is for when you can’t see any smoke, or it’s too dark to see: I only smell it.",
       "If you can’t tell, tap Not sure.",
     ]);
     expect(voice.q2Voice("fr")).toEqual([
       "Maintenant, regardez le ciel.",
       `Quelle image ressemble à votre ciel${NBSP}?`,
-      `La première image montre de la fumée sombre qui monte d’un seul endroit${NBSP}: Colonne de fumée.`,
+      `La première image montre de la fumée qui s’élève d’un seul endroit${NBSP}: Fumée épaisse qui monte.`,
       `La deuxième montre un voile de fumée grise partout${NBSP}: Voile de fumée.`,
-      `La troisième, c’est quand vous ne voyez pas de fumée, ou qu’il fait noir${NBSP}: Je la sens seulement.`,
+      `La troisième, c’est quand vous ne voyez pas de fumée, ou qu’il fait trop noir pour voir${NBSP}: Je la sens seulement.`,
       "Si vous ne pouvez pas le dire, touchez Je ne sais pas.",
     ]);
   });
@@ -218,9 +218,9 @@ describe("screens", () => {
       "Okay.",
       "Let’s call nine-one-one now.",
       "Tap the big red button at the top.",
-      "Nine-one-one will ask first where your emergency is.",
+      "Nine-one-one will ask first where you are.",
       "If the screen shows your location, you can read it to them.",
-      "They’ll also ask what you see, if anyone is in danger, and your phone number.",
+      "They’ll also ask what you see, your name, and your phone number.",
       "If the fire is close, move away while you talk.",
       "Stay on the line, and keep your phone on after the call.",
       "You’re doing the right thing.",
@@ -230,9 +230,9 @@ describe("screens", () => {
       "D’accord.",
       "Appelons le neuf-un-un maintenant.",
       "Touchez le grand bouton rouge, en haut.",
-      "Le neuf-un-un vous demandera d’abord où est votre urgence.",
+      "Le neuf-un-un vous demandera d’abord où vous êtes.",
       "Si l’écran affiche votre position, vous pouvez la lire au répartiteur.",
-      "On vous demandera aussi ce que vous voyez, si quelqu’un est en danger, et votre numéro de téléphone.",
+      "On vous demandera aussi ce que vous voyez, votre nom, et votre numéro de téléphone.",
       "Si le feu est proche, éloignez-vous pendant l’appel.",
       "Restez en ligne, et gardez votre téléphone allumé après l’appel.",
       "Vous faites ce qu’il faut.",
@@ -253,7 +253,7 @@ describe("verdicts", () => {
       "If the air inside gets uncomfortable, a library or community centre with filtered air can help.",
       "Tap: Find a library near me.",
       "If you feel unwell but it’s not an emergency, you can call eight-one-one to talk to a nurse.",
-      "And if you ever see flames or a smoke column, tap the red button at the bottom to call nine-one-one.",
+      "And if you ever see flames or thick smoke rising, tap the red button at the bottom to call nine-one-one.",
     ]);
   });
 
@@ -268,7 +268,7 @@ describe("verdicts", () => {
       "Si l’air devient inconfortable chez vous, une bibliothèque ou un centre communautaire à l’air filtré peut aider.",
       `Touchez${NBSP}: Trouver une bibliothèque près de moi.`,
       "Si vous vous sentez mal mais que ce n’est pas une urgence, vous pouvez appeler le huit-un-un pour parler à du personnel infirmier.",
-      "Et si vous voyez des flammes ou une colonne de fumée, touchez le bouton rouge en bas pour appeler le neuf-un-un.",
+      "Et si vous voyez des flammes ou de la fumée épaisse qui monte, touchez le bouton rouge en bas pour appeler le neuf-un-un.",
     ]);
   });
 
@@ -283,7 +283,7 @@ describe("verdicts", () => {
       "Air quality right now: low risk.",
       "Here’s the official advice: Ideal air quality for outdoor activities.",
       "If you feel unwell but it’s not an emergency, you can call eight-one-one to talk to a nurse.",
-      "And if you ever see flames or a smoke column, tap the red button at the bottom to call nine-one-one.",
+      "And if you ever see flames or thick smoke rising, tap the red button at the bottom to call nine-one-one.",
     ]);
     expect(verdictView(json(bridgetown), "fr").voice.slice(3, 6)).toEqual(["Le feu est près de vous.", "Suivez les consignes des autorités.", `Si on vous a demandé de partir, touchez${NBSP}: On vous demande de partir${NBSP}? Que faire.`]);
     expect(verdictView(json(moncton), "en").voice.join(" ")).not.toContain("The fire is close to you.");
@@ -370,27 +370,34 @@ describe("verdicts", () => {
 });
 
 describe("the leave screen", () => {
-  test("near the event: where to go, register, directions, what to take, then tell family", () => {
+  test("near the event: where to go, register, the route officials give, what to take, tell family, then 211 when its button is shown", () => {
     expect(voice.leaveVoice("en", NEAR)).toEqual([
       "I’m here to help you leave.",
       "Please leave right away when officials tell you to, and keep listening to emergency alerts and local radio.",
       "Here’s where to go: the reception centre is NSCC Annapolis Valley Campus, at 295 Commercial St., Middleton.",
       "When you get there, register first, so officials know you’re accounted for.",
-      "Tap: Get directions, and your phone’s map will guide you.",
+      "Follow the route officials give.",
+      "Roads may be closed.",
       "If you have time, take your medication, wallet and ID, keys, phone and charger, glasses, and your pets.",
       "Don’t delay for anything else.",
       "Once you’re on your way, tap: Tell family you’re OK, and I’ll help you send them a message with your location.",
+      "You can also call two-one-one for shelters and help.",
     ]);
     expect(voice.leaveVoice("fr", NEAR)).toEqual([
       "Je suis là pour vous aider à partir.",
       "Partez tout de suite quand les autorités vous le demandent, et continuez d’écouter les alertes d’urgence et la radio locale.",
       `Voici où aller${NBSP}: le centre d’accueil est NSCC Annapolis Valley Campus, au 295 Commercial St., Middleton.`,
       "En arrivant, inscrivez-vous d’abord, pour que les autorités sachent où vous êtes.",
-      `Touchez${NBSP}: Itinéraire, et la carte de votre téléphone vous guidera.`,
+      "Suivez l’itinéraire donné par les autorités.",
+      "Des routes peuvent être fermées.",
       "Si vous avez le temps, prenez vos médicaments, votre portefeuille et vos pièces d’identité, vos clés, votre téléphone et son chargeur, vos lunettes, et vos animaux.",
       "Ne tardez pas pour le reste.",
       `Une fois en route, touchez${NBSP}: Dites à vos proches que vous allez bien, et je vous aide à leur envoyer un message avec votre position.`,
+      "Vous pouvez aussi appeler le deux-un-un pour l’hébergement et l’aide.",
     ]);
+    // Where 211 does not answer, its button is not on the screen and the voice does not name it.
+    expect(voice.leaveVoice("en", { ...NEAR, call211: false }).join(" ")).not.toContain("two-one-one");
+    expect(voice.leaveVoice("en", { ...NEAR, call211: false })).toEqual(voice.leaveVoice("en", NEAR).slice(0, -1));
   });
 
   test("far: doesn’t apply, the links and 211 only when shown; French elides “de” (d’Edmundston)", () => {

@@ -3,7 +3,7 @@ import halifax from "../../../data/demo/halifax.json";
 import moncton from "../../../data/demo/moncton.json";
 import fireNames from "../../../data/places/fire-names.json";
 import data from "./evacuation-events.json";
-import { EVENTS, REPLAY_DATE, activeEvent, clockTime, directionsUrl, eventFor, familyMessage, isNear, kmBetween, mapLink, monthName, smsUrl, telUrl, todayAtlantic } from "./evacuation";
+import { COMPASS_8, EVENTS, REPLAY_DATE, activeEvent, awayFrom, bearingTo, clockTime, eventFor, familyMessage, isNear, kmBetween, mapLink, monthName, smsUrl, telUrl, todayAtlantic } from "./evacuation";
 
 const SOURCE_2204 = "https://annapoliscounty.ca/government/news-media-releases/2204-west-dalhousie-wildfires-evacuees-registration";
 
@@ -78,21 +78,43 @@ describe("which event shows", () => {
   });
 });
 
+// No route is planned or handed to a maps app: a centre's card says how far it is in a straight line, and which way.
+describe("how far a centre is, and which way", () => {
+  const [reception, comfort] = EVENTS[0].centres;
+  const bridgetown = { lat: 44.84158, lon: -65.29121 }; // CGNDB
+  const westDalhousie = { lat: 44.71904, lon: -65.22563 };
+
+  test("from Bridgetown: the reception centre in Middleton is 21 km to the northeast; the comfort centre, in Bridgetown itself, is under 1 km away and has no direction", () => {
+    expect(awayFrom(bridgetown, reception)).toEqual({ km: 21, point: "NE", deg: 45 });
+    expect(kmBetween(bridgetown, comfort)).toBeLessThan(1);
+    expect(awayFrom(bridgetown, comfort)).toBeNull();
+  });
+
+  test("from West Dalhousie: 29 km to the northeast, and 15 km to the north", () => {
+    expect(awayFrom(westDalhousie, reception)).toEqual({ km: 29, point: "NE", deg: 45 });
+    expect(awayFrom(westDalhousie, comfort)).toEqual({ km: 15, point: "N", deg: 0 });
+  });
+
+  test("the eight compass points, clockwise from north, each with the angle its arrow turns to", () => {
+    const from = { lat: 45, lon: -65 };
+    // A degree of longitude is about 0.7 of a degree of latitude here: these eight are 45° apart, near enough.
+    const around = [[1, 0], [1, 1.41], [0, 1], [-1, 1.41], [-1, 0], [-1, -1.41], [0, -1], [1, -1.41]].map(([north, east]) => ({ lat: 45 + north * 0.2, lon: -65 + east * 0.2 }));
+    expect(around.map((to) => awayFrom(from, to)!.point)).toEqual([...COMPASS_8]);
+    expect(around.map((to) => awayFrom(from, to)!.deg)).toEqual([0, 45, 90, 135, 180, 225, 270, 315]);
+    expect(COMPASS_8).toEqual(["N", "NE", "E", "SE", "S", "SW", "W", "NW"]);
+  });
+
+  test("a bearing is from 0 to 360, clockwise from north; just west of north is north again", () => {
+    const from = { lat: 45, lon: -65 };
+    expect(Math.round(bearingTo(from, { lat: 46, lon: -65 }))).toBe(0);
+    expect(Math.round(bearingTo(from, { lat: 45, lon: -64 }))).toBe(90);
+    expect(Math.round(bearingTo(from, { lat: 44, lon: -65 }))).toBe(180);
+    expect(Math.round(bearingTo(from, { lat: 45, lon: -66 }))).toBe(270);
+    expect(awayFrom(from, { lat: 46, lon: -65.05 })).toMatchObject({ point: "N", deg: 0 });
+  });
+});
+
 describe("links", () => {
-  test("Get directions hands the encoded address to Google Maps, which plans the route", () => {
-    expect(EVENTS[0].centres.map((c) => directionsUrl(c))).toEqual([
-      "https://www.google.com/maps/dir/?api=1&destination=295%20Commercial%20St.%2C%20Middleton%2C%20NS",
-      "https://www.google.com/maps/dir/?api=1&destination=31%20Bay%20Rd.%2C%20Bridgetown%2C%20NS",
-    ]);
-  });
-
-  test("in replay the route starts at the chosen town", () => {
-    const bridgetown = { lat: 44.84158, lon: -65.29121 };
-    expect(directionsUrl(EVENTS[0].centres[0], bridgetown)).toBe(
-      "https://www.google.com/maps/dir/?api=1&destination=295%20Commercial%20St.%2C%20Middleton%2C%20NS&origin=44.84158,-65.29121",
-    );
-  });
-
   test("phone numbers dial as digits", () => {
     expect([telUrl("1-833-806-1515"), telUrl("1-800-222-9597")]).toEqual(["tel:18338061515", "tel:18002229597"]);
   });

@@ -1,18 +1,31 @@
 // "If you’re told to leave": it asks where you are (unless a place was chosen this session), then shows the Long Lake
 // centres within 40 km of the fire (replay, Aug 25, 2025), says the evacuation doesn't apply farther away, and in live
 // mode says where officials announce centres. Entry points on Emergency and the near-fire verdict notice. The two demo
-// scenarios, EN and FR.
-import { expect, test, type Page } from "@playwright/test";
+// scenarios, EN and FR. Everything to act on is a large button with an icon and words; near the fire nothing opens a
+// web page or a maps app; "What to take" is a list to tick, kept on the phone until the page is closed.
+import { expect, test, type Locator, type Page } from "@playwright/test";
 import { answer as tap } from "./look";
 import { navigations, texts } from "./navigations";
 import { openWhy } from "./verdict";
 import { toFrench } from "./language";
 
 const NBSP = String.fromCharCode(0xa0);
-const SOURCE = "https://annapoliscounty.ca/government/news-media-releases/2204-west-dalhousie-wildfires-evacuees-registration";
+const NAVY = "rgb(27, 42, 74)";
+const WHITE = "rgb(255, 255, 255)";
 const BRIDGETOWN = "44.84158,-65.29121"; // NRCan CGNDB
-const directions = (address: string, origin?: string) => `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(address)}${origin ? `&origin=${origin}` : ""}`;
 const sms = (body: string) => `sms:?&body=${encodeURIComponent(body)}`;
+/** "Call 211 · Shelters and help", whatever the kind of space before its dot. */
+const CALL_211 = { en: /^Call 211\s· Shelters and help$/, fr: /^Appeler le\s211\s· Hébergement et aide$/ };
+/** The phone numbers the page tried to dial. */
+const calls = (urls: string[]) => urls.filter((url) => url.startsWith("tel:"));
+/** Every link in main that opens a web page or a maps app: all but a phone call, a text message, and the app's own screens. */
+const linksOut = (page: Page) => page.locator('main a:not([href^="tel:"]):not([href^="sms:"]):not([href^="/"])');
+/** A button: its background, its edge, its height, and how many drawings it holds. */
+const look = (locator: Locator) =>
+  locator.evaluate((el) => {
+    const st = getComputedStyle(el);
+    return { background: st.backgroundColor, edge: `${st.borderTopWidth} ${st.borderTopColor}`, height: Math.round(el.getBoundingClientRect().height), icons: el.querySelectorAll("svg").length };
+  });
 const OK_EN = "I’m OK. There’s a fire near me and I’m following official instructions.";
 const OK_FR = "Je vais bien. Il y a un feu près de moi et je suis les consignes officielles.";
 
@@ -20,14 +33,16 @@ const L = {
   en: {
     cta: "I smell smoke", q1: "Do you see flames?", q2: "Which looks like your sky?", q3: "Is anything burning nearby?", emergency: "Call 911 now",
     entry: "Told to leave your home? What to do", where: "Where are you?", town: "Town or city", title: "If you’re told to leave",
-    near: "Evacuation centres for the Long Lake fire (Annapolis County)", directions: "Get directions",
+    near: "Evacuation centres for the Long Lake fire (Annapolis County)", route: "Follow the route officials give. Roads may be closed.",
+    away: ["About 21 km northeast of you", "Less than 1 km from you"],
     line: `Drifting smoke${NBSP}· Long Lake fire${NBSP}· 159 km SSW`,
     drifting: "DRIFTING SMOKE", headline: "Likely from the Long Lake fire", banner: `Replay${NBSP}· Bridgetown${NBSP}·`,
   },
   fr: {
     cta: "Je sens de la fumée", q1: /^Voyez-vous des flammes\s\?$/, q2: /^Quelle image ressemble à votre ciel\s\?$/, q3: /^Est-ce que quelque chose brûle près de vous\s\?$/, emergency: "Appelez le 911 maintenant",
     entry: /^On vous demande de partir\s\? Que faire$/, where: /^Où êtes-vous\s\?$/, town: "Ville ou village", title: "Si on vous demande de partir",
-    near: "Centres d’évacuation pour le feu de Long Lake (comté d’Annapolis)", directions: "Itinéraire",
+    near: "Centres d’évacuation pour le feu de Long Lake (comté d’Annapolis)", route: "Suivez l’itinéraire donné par les autorités. Des routes peuvent être fermées.",
+    away: ["À environ 21 km au nord-est de vous", "À moins de 1 km de vous"],
     line: `Fumée qui dérive${NBSP}· Feu de Long${NBSP}Lake${NBSP}· 159 km SSO`,
     drifting: "FUMÉE QUI DÉRIVE", headline: "Elle vient probablement du feu de Long Lake", banner: `Reprise${NBSP}· Bridgetown${NBSP}·`,
   },
@@ -113,12 +128,14 @@ async function scenario2(page: Page, lang: "en" | "fr") {
   await expect(page.getByText(l.banner)).toBeVisible();
   await expect(page.getByRole("heading", { name: l.where })).toHaveCount(0);
   await listen(page, lang);
-  // In replay the phone is not in Bridgetown: the route starts there.
-  const reception = page.locator("section[aria-labelledby=reception-h]").getByRole("link", { name: l.directions });
-  const comfort = page.locator("section[aria-labelledby=comfort-h]").getByRole("link", { name: l.directions });
-  await expect(reception).toHaveAttribute("href", directions("295 Commercial St., Middleton, NS", BRIDGETOWN));
-  await expect(comfort).toHaveAttribute("href", directions("31 Bay Rd., Bridgetown, NS", BRIDGETOWN));
-  await expect(reception).toHaveAttribute("target", "_blank");
+  // Where each centre is from Bridgetown, in words beside an arrow; and the line that stands where "Get directions"
+  // was. No route is handed to a maps app, and nothing here opens a web page.
+  await expect(page.locator("main .leave-route")).toHaveText(l.route);
+  await expect(page.locator("section[aria-labelledby=reception-h] .leave-away")).toHaveText(l.away[0]);
+  await expect(page.locator("section[aria-labelledby=comfort-h] .leave-away")).toHaveText(l.away[1]);
+  await expect(linksOut(page)).toHaveCount(0);
+  await expect(page.getByRole("link", { name: CALL_211[lang] })).toHaveAttribute("href", "tel:211");
+  const reception = page.locator("section[aria-labelledby=reception-h] .leave-away");
   await reception.scrollIntoViewIfNeeded();
   await expect(reception).toBeVisible();
 
@@ -130,7 +147,7 @@ async function scenario2(page: Page, lang: "en" | "fr") {
 
 for (const lang of ["en", "fr"] as const) {
   test(`Scenario 1 (${lang.toUpperCase()}): Replay → I smell smoke → No flames → Grey haze → Nothing nearby → Moncton → drifting verdict`, ({ page }) => scenario1(page, lang));
-  test(`Scenario 2 (${lang.toUpperCase()}): Replay → I smell smoke → Yes → Emergency → Told to leave → Bridgetown → centres → Get directions`, ({ page }) => scenario2(page, lang));
+  test(`Scenario 2 (${lang.toUpperCase()}): Replay → I smell smoke → Yes → Emergency → Told to leave → Bridgetown → centres, how far and which way, and no link out`, ({ page }) => scenario2(page, lang));
 }
 
 test.describe("the demo scenarios on a small phone, 375 × 667", () => {
@@ -147,8 +164,8 @@ for (const [town, lang] of [["Bridgetown", "en"], ["West Dalhousie", "en"], ["Br
     await replayCheck(page, town, lang);
     const notice = page.locator("main > section").first(); // first under the card, in front of the badges and "Why?"
     await expect(notice).toContainText(lang === "en"
-      ? "The fire is close to you. Follow official instructions, and call 911 if you see flames or a smoke column."
-      : "Le feu est près de vous. Suivez les consignes des autorités et appelez le 911 si vous voyez des flammes ou une colonne de fumée.");
+      ? "The fire is close to you. Follow official instructions, and call 911 if you see flames or thick smoke rising."
+      : "Le feu est près de vous. Suivez les consignes des autorités et appelez le 911 si vous voyez des flammes ou de la fumée épaisse qui monte.");
     // Shown as the screen opens, with nothing tapped.
     await expect(notice).toBeVisible();
     await expect(page.locator("main .why-toggle")).toHaveAttribute("aria-expanded", "false");
@@ -167,7 +184,7 @@ test("a verdict is never shown under another town's name: Change on the leave sc
   await page.locator("main > section").first().getByRole("link", { name: L.en.entry }).click();
   await page.getByRole("button", { name: "Not in Bridgetown? Change" }).click();
   await answer(page, "Moncton");
-  await expect(page.getByText(/It doesn’t apply to you\.$/)).toBeVisible();
+  await expect(page.getByText(/doesn’t apply to you\.$/)).toBeVisible();
   await page.getByRole("link", { name: "Back" }).click(); // to /verdict, whose result was Bridgetown's
   await expect(page.getByText("You (Moncton)")).toHaveCount(0);
   await expect(page.getByText("The fire is close to you.", { exact: false })).toHaveCount(0);
@@ -205,7 +222,7 @@ test.describe("375 × 667, verdict notice", () => {
 test("replay, Halifax, French: “à 128 km d’Halifax”", async ({ page }) => {
   await replayCheck(page, "Halifax", "fr");
   await page.goto("/leave");
-  await expect(page.getByText("Cette évacuation visait les personnes près du feu de Long Lake, dans le comté d’Annapolis, à 128 km d’Halifax. Elle ne s’applique pas à vous.")).toBeVisible();
+  await expect(page.getByText("L’évacuation liée au feu de Long Lake, à 128 km d’Halifax, ne s’applique pas à vous.")).toBeVisible();
 });
 
 test("verdict, Moncton: no fire-is-close notice (the fire is 159 km away)", async ({ page }) => {
@@ -228,20 +245,47 @@ test("a place chosen this session skips the question; Change asks again", async 
   await replayCheck(page, "Moncton");
   await page.goto("/leave");
   await expect(page.getByRole("heading", { name: "Where are you?" })).toHaveCount(0);
-  await expect(page.getByText(/It doesn’t apply to you\.$/)).toBeVisible();
-  await page.getByRole("button", { name: "Not in Moncton? Change" }).click();
+  await expect(page.getByText(/doesn’t apply to you\.$/)).toBeVisible();
+  // Change is a button with a drawing, 56 px to tap: not a text link.
+  const change = page.getByRole("button", { name: "Not in Moncton? Change" });
+  expect(await look(change)).toEqual({ background: WHITE, edge: `2px ${NAVY}`, height: 56, icons: 1 });
+  expect(await change.evaluate((el) => getComputedStyle(el).textDecorationLine)).toBe("none");
+  await change.click();
   await expect(page.getByRole("heading", { name: "Where are you?" })).toBeVisible();
   await answer(page, "Bridgetown");
   await expect(page.getByRole("heading", { name: L.en.near })).toBeVisible();
 });
 
-test("replay, Moncton: the evacuation doesn’t apply, no centres, New Brunswick’s links", async ({ page }) => {
+test("replay, Moncton: the evacuation doesn’t apply, said in one line; no centres; New Brunswick’s page as an outlined button, and Call 211 as a button that dials", async ({ page }) => {
   await replayCheck(page, "Moncton");
   await page.goto("/leave");
-  await expect(page.getByText("This evacuation was for people near the Long Lake fire in Annapolis County, 159 km from Moncton. It doesn’t apply to you.")).toBeVisible();
+  // One sentence where there were two.
+  await expect(page.locator("main .leave-far")).toHaveText("The evacuation for the Long Lake fire, 159 km from Moncton, doesn’t apply to you.");
+  await expect(page.getByText(/This evacuation was for people|in Annapolis County/)).toHaveCount(0);
   await expect(page.getByText("For your area, officials announce where to go here:", { exact: true })).toBeVisible();
-  await expect(page.getByRole("link", { name: /^New Brunswick Fire Watch/ })).toHaveAttribute("href", "https://www.gnb.ca/en/emergency/fire-watch.html");
-  await expect(page.getByRole("link", { name: "Shelters and help: call 211" })).toHaveAttribute("href", "tel:211");
+
+  // The province's page: white with a navy edge, 64 px or taller, the mark of a page that opens outside, its name and its site.
+  const official = page.getByRole("link", { name: /^New Brunswick Fire Watch/ });
+  await expect(official).toHaveAttribute("href", "https://www.gnb.ca/en/emergency/fire-watch.html");
+  await expect(official).toHaveAttribute("target", "_blank");
+  await expect(official).toContainText("gnb.ca");
+  const page1 = await look(official);
+  expect([page1.background, page1.edge, page1.icons]).toEqual([WHITE, `3px ${NAVY}`, 1]);
+  expect(page1.height).toBeGreaterThanOrEqual(64);
+  expect(await official.evaluate((el) => getComputedStyle(el).textDecorationLine)).toBe("none");
+  // The one link out on the screen.
+  await expect(linksOut(page)).toHaveCount(1);
+
+  // Call 211: filled navy, a phone and its words, under the province's page. It dials 211.
+  const call = page.getByRole("link", { name: CALL_211.en });
+  await expect(call).toHaveAttribute("href", "tel:211");
+  const call1 = await look(call);
+  expect([call1.background, call1.icons]).toEqual([NAVY, 1]);
+  expect(call1.height).toBeGreaterThanOrEqual(64);
+  expect((await call.boundingBox())!.y).toBeGreaterThan((await official.boundingBox())!.y);
+  const asked = await navigations(page);
+  await call.click();
+  await expect.poll(() => calls(asked)).toEqual(["tel:211"]);
 
   // No centres, map or event phone lines; no other province's page; Moncton Alerts is for live mode.
   await expect(page.locator("section[aria-labelledby=reception-h], section[aria-labelledby=comfort-h]")).toHaveCount(0);
@@ -252,28 +296,30 @@ test("replay, Moncton: the evacuation doesn’t apply, no centres, New Brunswick
   await expect(page.getByText(/Officials asked/)).toHaveCount(0);
   await expect(page.locator("section[aria-labelledby=take-h] li")).toHaveCount(6);
   await expect(page.getByRole("link", { name: "Tell family you’re OK" })).toHaveAttribute("href", sms(OK_EN));
-  await expect(page.getByRole("link", { name: /^Centres announced/ })).toHaveCount(0);
+  await expect(page.getByText(/^Centres announced/)).toHaveCount(0);
 });
 
 test("replay, Moncton, French", async ({ page }) => {
   await replayCheck(page, "Moncton", "fr");
   await page.goto("/leave");
-  await expect(page.getByText("Cette évacuation visait les personnes près du feu de Long Lake, dans le comté d’Annapolis, à 159 km de Moncton. Elle ne s’applique pas à vous.")).toBeVisible();
+  await expect(page.locator("main .leave-far")).toHaveText("L’évacuation liée au feu de Long Lake, à 159 km de Moncton, ne s’applique pas à vous.");
   await expect(page.getByText(`Pour votre région, les autorités annoncent où aller ici${NBSP}:`, { exact: true })).toBeVisible();
   await expect(page.getByRole("link", { name: /^Indice des feux du Nouveau-Brunswick/ })).toHaveAttribute("href", "https://www.gnb.ca/fr/urgence/indice-des-feux.html");
-  await expect(page.getByRole("link", { name: /^Hébergement et aide\s: composez le 211$/ })).toHaveAttribute("href", "tel:211"); // 211 NB is bilingual
+  await expect(page.getByRole("link", { name: CALL_211.fr })).toHaveAttribute("href", "tel:211"); // 211 NB is bilingual
   await expect(page.getByRole("link", { name: "Itinéraire" })).toHaveCount(0);
+  await expect(linksOut(page)).toHaveCount(1);
 });
 
-test("replay, Charlottetown (P.E.I.): doesn’t apply; no provincial page could be confirmed, so 211 only", async ({ page }) => {
+test("replay, Charlottetown (P.E.I.): doesn’t apply; no provincial page could be confirmed, so the Call 211 button only", async ({ page }) => {
   await replayCheck(page, "Charlottetown");
   await page.goto("/leave");
-  await expect(page.getByText("This evacuation was for people near the Long Lake fire in Annapolis County, 235 km from Charlottetown. It doesn’t apply to you.")).toBeVisible();
+  await expect(page.locator("main .leave-far")).toHaveText("The evacuation for the Long Lake fire, 235 km from Charlottetown, doesn’t apply to you.");
   await expect(page.locator("main section a[target=_blank]")).toHaveCount(0);
-  await expect(page.getByRole("link", { name: "Shelters and help: call 211" })).toHaveAttribute("href", "tel:211");
+  await expect(linksOut(page)).toHaveCount(0);
+  await expect(page.getByRole("link", { name: CALL_211.en })).toHaveAttribute("href", "tel:211");
 });
 
-test("replay, Bridgetown, English: map, both centres, directions from Bridgetown, phone lines, grab list, text, source", async ({ page }) => {
+test("replay, Bridgetown, English: map, the route line, both centres with how far and which way, phone lines as buttons, the list to tick, text, the source in plain words, and no link out", async ({ page }) => {
   await openLeave(page, "replay", "en", "Bridgetown");
   await expect(page.getByRole("heading", { name: L.en.near })).toBeVisible();
 
@@ -290,32 +336,70 @@ test("replay, Bridgetown, English: map, both centres, directions from Bridgetown
   await expect(reception).toContainText("295 Commercial St., Middleton");
   await expect(reception).toContainText("Showers and laundry, Wi-Fi, light food, overnight accommodation");
   await expect(reception).toContainText("Register here so officials know you’re accounted for.");
-  await expect(reception.getByRole("link", { name: "Get directions" })).toHaveAttribute("href", directions("295 Commercial St., Middleton, NS", BRIDGETOWN));
+  // How far, and which way: 21 km to the northeast of Bridgetown, with an arrow turned that way (north is up, as on the map).
+  const away = reception.locator(".leave-away");
+  await expect(away).toHaveText("About 21 km northeast of you");
+  await expect(away).toHaveAttribute("data-point", "NE");
+  expect(await away.locator("svg").evaluate((el) => el.style.transform)).toBe("rotate(45deg)");
+  await expect(reception.locator(".leave-announced")).toHaveText("As announced in August 2025.");
 
   const comfort = page.locator("section[aria-labelledby=comfort-h]");
   await expect(comfort.getByRole("heading")).toHaveText("Comfort centre");
   await expect(comfort).toContainText("Bridgetown Fire Hall");
   await expect(comfort).toContainText("31 Bay Rd., Bridgetown");
   await expect(comfort).toContainText(`Charging, Wi-Fi, light food${NBSP}· 10${NBSP}a.m. to 4${NBSP}p.m. daily`);
-  await expect(comfort.getByRole("link", { name: "Get directions" })).toHaveAttribute("href", directions("31 Bay Rd., Bridgetown, NS", BRIDGETOWN));
+  // In Bridgetown itself: under a kilometre, and no direction is given (both points are approximate).
+  await expect(comfort.locator(".leave-away")).toHaveText("Less than 1 km from you");
+  await expect(comfort.locator(".leave-away")).toHaveAttribute("data-point", "near");
+  await expect(comfort.locator(".leave-announced")).toHaveText("As announced in August 2025.");
 
-  await expect(page.getByText("Roads near the fire may be closed. Follow officials’ directions.")).toBeVisible();
+  // No route is handed to a maps app: one line instead, between the map and the centres.
+  await expect(page.getByRole("link", { name: "Get directions" })).toHaveCount(0);
+  const route = page.locator("main .leave-route");
+  await expect(route).toHaveText("Follow the route officials give. Roads may be closed.");
+  await expect(route.locator("svg")).toHaveCount(1);
+  const [mapBox, routeBox, receptionBox] = [(await map.boundingBox())!, (await route.boundingBox())!, (await reception.boundingBox())!];
+  expect(routeBox.y).toBeGreaterThan(mapBox.y + mapBox.height - 1);
+  expect(routeBox.y + routeBox.height).toBeLessThanOrEqual(receptionBox.y);
+  await expect(page.getByText("Roads near the fire may be closed. Follow officials’ directions.")).toHaveCount(0);
+
+  // Three phone lines, each a button with a phone and its words: 211 first (filled), then the event's own (outlined).
+  const call = page.getByRole("link", { name: CALL_211.en });
+  await expect(call).toHaveAttribute("href", "tel:211");
   const info = page.getByRole("link", { name: /^For updates: public information line/ });
   await expect(info).toHaveAttribute("href", "tel:18338061515");
   await expect(info).toContainText(`1-833-806-1515${NBSP}· 11${NBSP}a.m. to 7${NBSP}p.m. daily`);
-  await expect(page.getByRole("link", { name: /^Overnight accommodation: Canadian Red Cross/ })).toHaveAttribute("href", "tel:18002229597");
+  const overnight = page.getByRole("link", { name: /^Overnight accommodation: Canadian Red Cross/ });
+  await expect(overnight).toHaveAttribute("href", "tel:18002229597");
+  expect((await look(call)).background).toBe(NAVY);
+  for (const line of [info, overnight]) {
+    const shown = await look(line);
+    expect([shown.background, shown.edge, shown.icons]).toEqual([WHITE, `3px ${NAVY}`, 1]);
+    expect(shown.height).toBeGreaterThanOrEqual(64);
+    expect(await line.evaluate((el) => getComputedStyle(el).textDecorationLine)).toBe("none");
+  }
+  const order = await Promise.all([call, info, overnight].map(async (line) => (await line.boundingBox())!.y));
+  expect(order).toEqual([...order].sort((a, b) => a - b));
 
   const take = page.locator("section[aria-labelledby=take-h]");
   await expect(take).toContainText("Officials asked evacuees to take their 72-hour kit and critical items (meds, wallet, keys).");
   await expect(take.locator("li")).toHaveText(["Medication", "Wallet and ID", "Keys", "Phone and charger", "Glasses and hearing aids", "Pets"]);
-  await expect(take.locator("li svg")).toHaveCount(6);
+  await expect(take.locator("li .take-drawing svg")).toHaveCount(6);
   await expect(take.locator("p", { hasText: "Do not delay for non-essential items." })).toHaveCSS("font-weight", "700");
 
   // No location shared this session: the message has no last sentence.
   await expect(page.getByRole("link", { name: "Tell family you’re OK" })).toHaveAttribute("href", sms(OK_EN));
-  await expect(page.getByRole("link", { name: "Centres announced by the Municipality of the County of Annapolis, August 2025." })).toHaveAttribute("href", SOURCE);
-  // Only the event's lines: no province links, no 211.
-  await expect(page.getByRole("link", { name: /Fire Watch|Emergency Info|call 211/ })).toHaveCount(0);
+  // Who announced the centres, and when: plain words, at the end. Not a link.
+  const source = page.locator("main .leave-source");
+  await expect(source).toHaveText("Centres announced by the Municipality of the County of Annapolis, August 2025.");
+  expect(await source.evaluate((el) => [el.tagName, el.querySelectorAll("a").length])).toEqual(["P", 0]);
+  await expect(page.getByRole("link", { name: /^Centres announced/ })).toHaveCount(0);
+  // Near the fire nothing opens a web page or a maps app: no province's page, no source page, no route.
+  await expect(linksOut(page)).toHaveCount(0);
+  await expect(page.locator("main a[target=_blank]")).toHaveCount(0);
+  await expect(page.getByRole("link", { name: /Fire Watch|Emergency Info/ })).toHaveCount(0);
+  // Everything to tap in main is a call, a text, the town's Change button or a tick.
+  expect(await page.locator("main a").evaluateAll((links) => links.map((link) => link.getAttribute("href")!.split(":")[0]))).toEqual(["tel", "tel", "tel", "sms"]);
 });
 
 test("replay, Bridgetown, French", async ({ page }) => {
@@ -327,14 +411,17 @@ test("replay, Bridgetown, French", async ({ page }) => {
   await expect(reception.getByRole("heading")).toHaveText("Centre d’accueil des personnes évacuées et hébergement");
   await expect(reception).toContainText("Douches et buanderie, Wi-Fi, collations, hébergement pour la nuit");
   await expect(reception).toContainText("Inscrivez-vous ici pour que les autorités sachent où vous êtes.");
-  await expect(reception.getByRole("link", { name: "Itinéraire" })).toHaveAttribute("href", directions("295 Commercial St., Middleton, NS", BRIDGETOWN));
+  await expect(reception.locator(".leave-away")).toHaveText("À environ 21 km au nord-est de vous");
+  await expect(reception.locator(".leave-announced")).toHaveText("Tel qu’annoncé en août 2025.");
 
   const comfort = page.locator("section[aria-labelledby=comfort-h]");
   await expect(comfort.getByRole("heading")).toHaveText("Centre de réconfort");
   await expect(comfort).toContainText(`Recharge, Wi-Fi, collations${NBSP}· tous les jours de 10${NBSP}h à 16${NBSP}h`);
-  await expect(comfort.getByRole("link", { name: "Itinéraire" })).toHaveAttribute("href", directions("31 Bay Rd., Bridgetown, NS", BRIDGETOWN));
+  await expect(comfort.locator(".leave-away")).toHaveText("À moins de 1 km de vous");
 
-  await expect(page.getByText("Des routes près du feu peuvent être fermées. Suivez les consignes des autorités.")).toBeVisible();
+  await expect(page.getByRole("link", { name: "Itinéraire" })).toHaveCount(0);
+  await expect(page.locator("main .leave-route")).toHaveText("Suivez l’itinéraire donné par les autorités. Des routes peuvent être fermées.");
+  await expect(page.getByRole("link", { name: CALL_211.fr })).toHaveAttribute("href", "tel:211"); // the Nova Scotia line answers in French too
   await expect(page.getByRole("link", { name: /^Pour des mises à jour\s: ligne d’information publique/ })).toHaveAttribute("href", "tel:18338061515");
   await expect(page.getByRole("link", { name: /^Hébergement pour la nuit\s: Croix-Rouge canadienne/ })).toHaveAttribute("href", "tel:18002229597");
 
@@ -345,7 +432,19 @@ test("replay, Bridgetown, French", async ({ page }) => {
   await expect(take.locator("p", { hasText: "Ne tardez pas pour des objets non essentiels." })).toHaveCSS("font-weight", "700");
 
   await expect(page.getByRole("link", { name: "Dites à vos proches que vous allez bien" })).toHaveAttribute("href", sms(OK_FR));
-  await expect(page.getByRole("link", { name: "Centres annoncés par la Municipalité du comté d’Annapolis, août 2025." })).toHaveAttribute("href", SOURCE);
+  await expect(page.locator("main .leave-source")).toHaveText("Centres annoncés par la Municipalité du comté d’Annapolis, août 2025.");
+  await expect(linksOut(page)).toHaveCount(0);
+});
+
+test("replay, West Dalhousie: the reception centre is 29 km to the northeast and the comfort centre 15 km to the north, each with its arrow", async ({ page }) => {
+  await openLeave(page, "replay", "en", "West Dalhousie");
+  await expect(page.getByRole("heading", { name: L.en.near })).toBeVisible();
+  const [reception, comfort] = [page.locator("section[aria-labelledby=reception-h] .leave-away"), page.locator("section[aria-labelledby=comfort-h] .leave-away")];
+  await expect(reception).toHaveText("About 29 km northeast of you");
+  await expect(comfort).toHaveText("About 15 km north of you");
+  expect(await Promise.all([reception, comfort].map((line) => line.locator("svg").evaluate((el) => el.style.transform)))).toEqual(["rotate(45deg)", "rotate(0deg)"]);
+  // The arrow is a drawing beside the words, which say the same: a screen reader is given the words alone.
+  expect(await reception.locator("svg").evaluate((el) => el.closest("[aria-hidden]")?.getAttribute("aria-hidden"))).toBe("true");
 });
 
 test("replay, West Dalhousie (3 km from the fire): the centres, and your dot beside the fire marker, not on it", async ({ page }) => {
@@ -367,9 +466,15 @@ test("live, Moncton: Moncton Alerts first, then New Brunswick’s page and 211",
   await expect(links.nth(0)).toHaveAttribute("href", "https://www.monctonalerts.ca/");
   await expect(links.nth(0)).toContainText("Moncton reception centres appear here when the City opens them: Moncton Alerts");
   await expect(links.nth(1)).toHaveAttribute("href", "https://www.gnb.ca/en/emergency/fire-watch.html");
-  await expect(page.getByRole("link", { name: "Shelters and help: call 211" })).toHaveAttribute("href", "tel:211");
+  // Both are outlined buttons with the mark of a page that opens outside; Call 211 comes after them.
+  for (const link of await links.all()) {
+    const shown = await look(link);
+    expect([shown.background, shown.edge, shown.icons]).toEqual([WHITE, `3px ${NAVY}`, 1]);
+    expect(shown.height).toBeGreaterThanOrEqual(64);
+  }
+  await expect(page.getByRole("link", { name: CALL_211.en })).toHaveAttribute("href", "tel:211");
   // Nothing from the replay's event.
-  await expect(page.getByText(/It doesn’t apply|Officials asked/)).toHaveCount(0);
+  await expect(page.getByText(/doesn’t apply|Officials asked/)).toHaveCount(0);
   await expect(page.getByRole("img", { name: /^Map/ })).toHaveCount(0);
   await expect(page.locator('a[href^="tel:1"]')).toHaveCount(0);
 });
@@ -386,14 +491,19 @@ test("live, Moncton, French", async ({ page }) => {
 
 test.describe("375 × 667, live, Halifax", () => {
   test.use({ viewport: { width: 375, height: 667 } });
-  test("Nova Scotia’s page only, 211, and the link's icon inside the card", async ({ page }) => {
+  test("Nova Scotia’s page only, 211, and the button's icon and its long site name inside the button", async ({ page }) => {
     await openLeave(page, "live", "fr", "Halifax");
     const links = page.locator("main section a[target=_blank]");
     await expect(links).toHaveCount(1);
     await expect(links.first()).toHaveAttribute("href", "https://emergencyinfo.novascotia.ca/fr");
-    await expect(page.getByRole("link", { name: /^Hébergement et aide\s: composez le 211$/ })).toHaveAttribute("href", "tel:211"); // English or French by phone
+    await expect(page.getByRole("link", { name: CALL_211.fr })).toHaveAttribute("href", "tel:211"); // English or French by phone
     const [box, icon] = [(await links.first().boundingBox())!, (await links.first().locator("svg").boundingBox())!];
+    expect(icon.x).toBeGreaterThanOrEqual(box.x + 12);
     expect(icon.x + icon.width).toBeLessThanOrEqual(box.x + box.width - 12);
+    // "emergencyinfo.novascotia.ca" wraps inside the button: nothing is wider than the screen.
+    const words = await links.first().locator("span").evaluateAll((spans) => Math.max(...spans.map((span) => span.getBoundingClientRect().right)));
+    expect(words).toBeLessThanOrEqual(box.x + box.width - 12);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)).toBeLessThanOrEqual(0);
   });
 });
 
@@ -593,6 +703,184 @@ test("opened directly (a link or bookmark), Back goes to Check", async ({ page }
   await page.getByRole("link", { name: "Back" }).click();
   await expect(page).toHaveURL(/\/$/);
   await expect(page.getByRole("link", { name: "I smell smoke" })).toBeVisible();
+});
+
+// The home screen's top bar, as on the three questions and Call 911 now.
+for (const lang of ["en", "fr"] as const) {
+  test(`the top bar is the home screen's (${lang.toUpperCase()}): Back, Listen as words with no outline, and one link that names the other language`, async ({ page }) => {
+    await openLeave(page, "replay", lang, "Moncton");
+    const bar = page.locator("header.home-top");
+    await expect(bar).toHaveCount(1);
+    await expect(bar.getByRole("link", { name: lang === "en" ? "Back" : "Retour", exact: true })).toBeVisible();
+    const listenTo = bar.getByRole("button", { name: lang === "en" ? "Listen" : "Écouter", exact: true });
+    expect(await listenTo.evaluate((el) => { const st = getComputedStyle(el); return [st.borderTopWidth, st.color]; })).toEqual(["0px", NAVY]);
+    expect((await listenTo.boundingBox())!.height).toBeGreaterThanOrEqual(56);
+    const other = bar.getByRole("button", { name: lang === "en" ? "Français" : "English", exact: true });
+    await expect(other).toHaveAttribute("lang", lang === "en" ? "fr" : "en");
+    // The pair of EN and FR pills is gone from this screen.
+    await expect(page.getByRole("button", { name: "EN", exact: true })).toHaveCount(0);
+    await expect(page.locator("[aria-pressed]")).toHaveCount(0);
+    // Under the replay banner, above the title; and the link switches the language.
+    const [banner, top, title] = [(await page.getByText(lang === "en" ? /^Replay/ : /^Reprise/).boundingBox())!, (await bar.boundingBox())!, (await page.getByRole("heading", { level: 1 }).boundingBox())!];
+    expect(top.y).toBeGreaterThanOrEqual(banner.y + banner.height - 1);
+    expect(title.y).toBeGreaterThanOrEqual(top.y + top.height - 1);
+    await other.click();
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText(lang === "en" ? L.fr.title : L.en.title);
+  });
+
+  test(`no small text links (${lang.toUpperCase()}): near the fire, far from it and with no event, everything to tap is 56 px or taller, with a drawing and its words, and nothing is underlined`, async ({ page }) => {
+    for (const [mode, town] of [["replay", "Bridgetown"], ["replay", "Moncton"], ["live", "Moncton"]] as const) {
+      await start(page, mode, lang);
+      await page.goto("/leave");
+      await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+      // The town from the case before is still the session's: ask again.
+      const change = page.locator("main .leave-change");
+      if (await change.count()) await change.click();
+      await answer(page, town);
+      await expect(page.getByRole("link", { name: /Tell family|Dites à vos proches/ })).toBeVisible();
+      const found = await page.locator("main a, main button").evaluateAll((els) =>
+        els.map((el) => {
+          const st = getComputedStyle(el);
+          return { words: (el.textContent ?? "").trim().slice(0, 24), height: Math.round(el.getBoundingClientRect().height), icons: el.querySelectorAll("svg").length, underline: st.textDecorationLine, edged: st.borderTopWidth !== "0px" || st.backgroundColor === "rgb(27, 42, 74)" };
+        }),
+      );
+      expect(found.length, `${mode} ${town}`).toBeGreaterThanOrEqual(3);
+      expect(found.filter((one) => one.height < 56 || one.icons < 1 || one.words === "" || one.underline !== "none" || !one.edged), `${mode} ${town}`).toEqual([]);
+    }
+  });
+}
+
+test("the replay's explanation is one sentence, in English and French", async ({ page }) => {
+  await openLeave(page, "replay", "en", "Moncton");
+  const far = page.locator("main .leave-far");
+  await expect(far).toHaveText(/^The evacuation for the Long Lake fire, 159 km from Moncton, doesn’t apply to you\.$/);
+  expect(((await far.textContent()) ?? "").match(/[.!?]/g)).toHaveLength(1);
+  await page.getByRole("button", { name: "Français", exact: true }).click();
+  await expect(far).toHaveText(/^L’évacuation liée au feu de Long Lake, à 159 km de Moncton, ne s’applique pas à vous\.$/);
+  expect(((await far.textContent()) ?? "").match(/[.!?]/g)).toHaveLength(1);
+});
+
+// "What to take" is a list to tick. What is ticked stays on the phone, in the page's own session, under its own name.
+test.describe("What to take: a list to tick, with large boxes", () => {
+  const TAKE = {
+    en: ["Medication", "Wallet and ID", "Keys", "Phone and charger", "Glasses and hearing aids", "Pets"],
+    fr: ["Médicaments", "Portefeuille et pièces d’identité", "Clés", "Téléphone et chargeur", "Lunettes et appareils auditifs", "Animaux de compagnie"],
+  };
+  const boxes = (page: Page) => page.locator("section[aria-labelledby=take-h]").getByRole("checkbox");
+  const ticked = (page: Page) => boxes(page).evaluateAll((els) => els.map((el) => (el as HTMLInputElement).checked));
+  /** What the browser holds: the ticks, every name in the session's storage, and anything kept longer. */
+  const kept = (page: Page) => page.evaluate(() => ({ ticks: sessionStorage.getItem("smoke-or-fire-take"), names: Object.keys(sessionStorage).sort(), local: localStorage.length, cookie: document.cookie }));
+  /** A box's square: its size, its edge and fill, and whether its tick shows. */
+  const square = (page: Page, n: number) =>
+    page.locator(".take-box").nth(n).evaluate((el) => {
+      const st = getComputedStyle(el);
+      const r = el.getBoundingClientRect();
+      return { size: [Math.round(r.width), Math.round(r.height)], edge: `${st.borderTopWidth} ${st.borderTopColor}`, fill: st.backgroundColor, tick: getComputedStyle(el.querySelector("svg")!).opacity };
+    });
+
+  for (const lang of ["en", "fr"] as const) {
+    test(`${lang.toUpperCase()}: six boxes, none ticked, each named by its words, 56 px or taller to tap; the square is 40 px, white with a navy edge`, async ({ page }) => {
+      await openLeave(page, "replay", lang, "Bridgetown");
+      await expect(boxes(page)).toHaveCount(6);
+      for (const [i, name] of TAKE[lang].entries()) {
+        await expect(boxes(page).nth(i)).toHaveAccessibleName(name);
+        await expect(boxes(page).nth(i)).not.toBeChecked();
+        const row = (await boxes(page).nth(i).boundingBox())!;
+        expect(row.height, name).toBeGreaterThanOrEqual(56);
+        expect(row.width, name).toBeGreaterThanOrEqual(250); // the whole row is the box to tap
+        expect(await square(page, i), name).toEqual({ size: [40, 40], edge: `3px ${NAVY}`, fill: WHITE, tick: "0" });
+      }
+      // The list is named by its title, and each thing keeps its drawing.
+      await expect(page.locator("section[aria-labelledby=take-h]").getByRole("heading")).toHaveText(lang === "en" ? "What to take" : "Ce qu’il faut emporter");
+      await expect(page.locator("section[aria-labelledby=take-h] .take-drawing svg")).toHaveCount(6);
+    });
+  }
+
+  test("a tap on the words ticks the box: the square fills navy and shows a white tick (a shape, not colour alone); a second tap unticks it", async ({ page }) => {
+    await openLeave(page, "replay", "en", "Bridgetown");
+    // A finger on the words, well to the right of the square: the whole row is the box.
+    const words = page.locator("section[aria-labelledby=take-h]").getByText("Keys", { exact: true });
+    await words.scrollIntoViewIfNeeded();
+    const tapWords = async () => {
+      const at = (await words.boundingBox())!;
+      await page.mouse.click(at.x + at.width / 2, at.y + at.height / 2);
+    };
+    await tapWords();
+    await expect(boxes(page).nth(2)).toBeChecked();
+    expect(await ticked(page)).toEqual([false, false, true, false, false, false]);
+    expect(await square(page, 2)).toEqual({ size: [40, 40], edge: `3px ${NAVY}`, fill: NAVY, tick: "1" });
+    expect(await page.locator(".take-box").nth(2).evaluate((el) => getComputedStyle(el.querySelector("svg")!).stroke)).toBe(WHITE);
+    expect(await square(page, 1)).toMatchObject({ fill: WHITE, tick: "0" });
+    await tapWords();
+    await expect(boxes(page).nth(2)).not.toBeChecked();
+    expect(await ticked(page)).toEqual([false, false, false, false, false, false]);
+    expect(await square(page, 2)).toMatchObject({ fill: WHITE, tick: "0" });
+  });
+
+  test("with a keyboard: Tab goes from Call 211 to the first box and on down the list, Space ticks, and the square shows the focus ring", async ({ page }) => {
+    await openLeave(page, "replay", "en", "Moncton");
+    await page.getByRole("link", { name: CALL_211.en }).focus();
+    await page.keyboard.press("Tab");
+    await expect(boxes(page).nth(0)).toBeFocused();
+    const ring = await page.locator(".take-box").nth(0).evaluate((el) => { const st = getComputedStyle(el); return [st.outlineStyle, st.outlineWidth, st.outlineColor]; });
+    expect(ring).toEqual(["solid", "3px", NAVY]);
+    await page.keyboard.press("Space");
+    await page.keyboard.press("Tab");
+    await expect(boxes(page).nth(1)).toBeFocused();
+    await page.keyboard.press("Tab");
+    await page.keyboard.press("Space");
+    expect(await ticked(page)).toEqual([true, false, true, false, false, false]);
+    // After the last box, Tell family is the next stop.
+    for (let i = 0; i < 4; i++) await page.keyboard.press("Tab");
+    await expect(page.getByRole("link", { name: "Tell family you’re OK" })).toBeFocused();
+  });
+
+  test("the ticks are kept on the phone until the page is closed: there after a reload, another town and another screen; under their own name; nothing is written before a tick, nothing is sent, and a new page has none", async ({ page, context }) => {
+    await openLeave(page, "replay", "en", "Moncton");
+    await expect(boxes(page)).toHaveCount(6);
+    // Nothing is kept for the list until a box is ticked.
+    expect(await kept(page)).toMatchObject({ ticks: null, names: ["smoke-or-fire"], local: 0, cookie: "" });
+    const sent: string[] = [];
+    page.on("request", (request) => sent.push(`${request.method()} ${request.url()}`));
+    await boxes(page).nth(0).check();
+    await boxes(page).nth(2).check();
+    expect(await kept(page)).toEqual({ ticks: JSON.stringify(["medication", "keys"]), names: ["smoke-or-fire", "smoke-or-fire-take"], local: 0, cookie: "" });
+    // The app's own entry holds none of it.
+    expect(await page.evaluate(() => sessionStorage.getItem("smoke-or-fire"))).not.toMatch(/medication|keys|take/);
+    await page.waitForTimeout(300);
+    expect(sent, "a tick sends nothing").toEqual([]);
+
+    await page.reload();
+    await expect(boxes(page)).toHaveCount(6);
+    expect(await ticked(page)).toEqual([true, false, true, false, false, false]);
+    // Another town: the same list, as ticked.
+    await page.getByRole("button", { name: "Not in Moncton? Change" }).click();
+    await answer(page, "Bridgetown");
+    await expect(page.getByRole("heading", { name: L.en.near })).toBeVisible();
+    expect(await ticked(page)).toEqual([true, false, true, false, false, false]);
+    // Another screen and back.
+    await page.goto("/q1");
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText(L.en.q1);
+    await page.goto("/leave");
+    await expect(boxes(page)).toHaveCount(6);
+    expect(await ticked(page)).toEqual([true, false, true, false, false, false]);
+
+    // Unticked again, nothing is left behind.
+    await boxes(page).nth(0).uncheck();
+    await boxes(page).nth(2).uncheck();
+    expect(await kept(page)).toMatchObject({ ticks: null, names: ["smoke-or-fire"] });
+
+    // The page is closed with two boxes ticked: a new page starts with none.
+    await boxes(page).nth(1).check();
+    await boxes(page).nth(5).check();
+    expect((await kept(page)).ticks).toBe(JSON.stringify(["wallet", "pets"]));
+    await page.close();
+    const fresh = await context.newPage();
+    await openLeave(fresh, "replay", "en", "Moncton");
+    await expect(boxes(fresh)).toHaveCount(6);
+    expect(await ticked(fresh)).toEqual([false, false, false, false, false, false]);
+    expect((await kept(fresh)).ticks).toBeNull();
+  });
 });
 
 // The hard rules, on every version of the screen.

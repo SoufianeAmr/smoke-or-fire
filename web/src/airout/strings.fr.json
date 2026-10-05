@@ -76,7 +76,7 @@
   "airout.list.numbers": "Les niveaux sont les classes de la légende d’ECCC\u00a0: les particules fines de la fumée des feux de forêt dans l’air près du sol (PM2,5), en microgrammes par mètre cube (µg/m³). Sous 1, la carte d’ECCC ne montre aucune fumée.",
   "airout.rule": "Comment le meilleur moment est choisi\u00a0: les {min} premières heures de suite, ou plus, où la prévision d’ECCC montre le moins de fumée. C’est la lecture que fait cette application de la prévision, pas un conseil d’ECCC.",
   "airout.advice": "Lorsque l’air extérieur s’améliore, Santé Canada conseille d’ouvrir les portes et les fenêtres pour remplacer l’air intérieur par de l’air frais.",
-  "airout.limits": "La prévision ne compte que la fumée des feux de forêt déjà détectés. La fumée d’un nouveau feu ou d’une source toute proche n’y figure pas. Si vous voyez des flammes ou une colonne de fumée, appelez le 911.",
+  "airout.limits": "La prévision ne compte que la fumée des feux de forêt déjà détectés. La fumée d’un nouveau feu ou d’une source toute proche n’y figure pas. Si vous voyez des flammes ou de la fumée épaisse qui monte, appelez le 911.",
   "airout.link.maps": "Cartes de prévision de fumée d’ECCC",
   "airout.link.maps.host": "meteo.gc.ca",
   "airout.link.maps.url": "https://meteo.gc.ca/firework/index_f.html",

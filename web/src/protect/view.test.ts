@@ -362,7 +362,7 @@ describe("the view, from the engine’s answer", () => {
 
   test("a fire close by (Bridgetown, 17 km): the verdict’s notice and its link come with the advice, in both languages", () => {
     expect(protectView(json(bridgetown), "en").notice).toEqual({
-      text: "The fire is close to you. Follow official instructions, and call 911 if you see flames or a smoke column.",
+      text: "The fire is close to you. Follow official instructions, and call 911 if you see flames or thick smoke rising.",
       link: "Told to leave your home? What to do",
     });
     expect(protectView(json(bridgetown), "fr").notice).toEqual({ text: fr["verdict.notice"], link: fr["leave.entry"] });

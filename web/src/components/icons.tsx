@@ -87,6 +87,33 @@ export const ChevronDownIcon = ({ size, style }: IconProps) => svg(size, <path d
 
 export const ChevronUpIcon = ({ size, style }: IconProps) => svg(size, <path d="M6 15l6-6 6 6" />, style);
 
+// Drawn here, from plain shapes: an "i" in a ring (a note to read), a tick, an arrow that points up (turned to point
+// any way), and a road sign on its post.
+export const InfoIcon = ({ size, style }: IconProps) =>
+  svg(
+    size,
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 11v6" />
+      <path d="M12 7.5h.01" />
+    </>,
+    style,
+  );
+
+export const TickIcon = ({ size, style }: IconProps) => svg(size, <path d="M5 12.5l4.5 4.5L19 7.5" />, style);
+
+export const ArrowUpIcon = ({ size, style }: IconProps) => svg(size, <path d="M12 20V5M6 11l6-6 6 6" />, style);
+
+export const RoadSignIcon = ({ size, style }: IconProps) =>
+  svg(
+    size,
+    <>
+      <path d="M12 2.5l6.5 6.5-6.5 6.5L5.5 9z" />
+      <path d="M12 15.5v6" />
+    </>,
+    style,
+  );
+
 // "If you’re told to leave": path data from Lucide (ISC licence): door-open, house, coffee, navigation,
 // message-circle, pill, wallet, key-round, smartphone, glasses, paw-print.
 export const DoorOpenIcon = ({ size, style }: IconProps) =>

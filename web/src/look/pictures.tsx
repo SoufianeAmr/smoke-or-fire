@@ -12,7 +12,16 @@ const sky = (label: string, children: ReactNode) => (
   </svg>
 );
 
-/** The same small house in all three pictures, so only the sky differs: walls, roof and door, and a window. */
+// A lower picture, for the answer with a second line of words under it: the same house at the same size, with less sky
+// above it and less ground below, so its tile is no taller than the others. Its shape is its own on every phone
+// (styles.css, .look-strip).
+const strip = (label: string, children: ReactNode) => (
+  <svg className="look-picture look-strip" role="img" aria-label={label} viewBox="0 45 160 64" preserveAspectRatio="xMidYMax slice" style={{ ...PICTURE, aspectRatio: "5 / 2" }}>
+    {children}
+  </svg>
+);
+
+/** The same small house in all three pictures, so only the sky and the air differ: walls, roof and door, and a window. */
 const house = (walls: string, roof: string, glass: string) => (
   <>
     <rect x="23" y="75" width="32" height="21" style={{ fill: walls, stroke: roof, strokeWidth: "2" }} />
@@ -78,27 +87,22 @@ export function HazeSky({ label }: { label: string }) {
   );
 }
 
-/** Night: a moon, a few stars, a lit window, no smoke to see. Three small wavy lines stand for the smell. */
+/** A clear day: the sun out, the house plain to see, no smoke anywhere. Three small wavy lines by the house stand for
+ *  the smell. A lower picture than the other two: the words under it have a second line (the same answer is for when
+ *  it is too dark to see). */
 export function SmellSky({ label }: { label: string }) {
-  return sky(
+  return strip(
     label,
     <>
-      <rect width="160" height="120" style={{ fill: "#1B2A4A" }} />
-      <circle cx="124" cy="36" r="13" style={{ fill: "#F3EEE6" }} />
-      <circle cx="130" cy="31" r="11" style={{ fill: "#1B2A4A" }} />
-      <g style={{ fill: "#FFFFFF" }}>
-        <circle cx="24" cy="30" r="1.6" />
-        <circle cx="52" cy="46" r="1.3" />
-        <circle cx="78" cy="24" r="1.6" />
-        <circle cx="96" cy="52" r="1.3" />
-        <circle cx="146" cy="62" r="1.6" />
-      </g>
-      <rect y="96" width="160" height="24" style={{ fill: "#2D2926" }} />
-      {house("#4F5561", "#8A8F98", "#F79009")}
-      <g style={{ fill: "none", stroke: "#E9EDF5", strokeWidth: "2.5", strokeLinecap: "round" }}>
-        <path d="M84 88c-5-4 5-8 0-12s5-8 0-12" />
-        <path d="M100 82c-5-4 5-8 0-12s5-8 0-12" />
-        <path d="M116 88c-5-4 5-8 0-12s5-8 0-12" />
+      <rect y="45" width="160" height="64" style={{ fill: "#E9EDF5" }} />
+      <circle cx="130" cy="64" r="9" style={{ fill: "#F79009" }} />
+      <rect y="96" width="160" height="13" style={{ fill: "#E6DFD3" }} />
+      <path d="M0 96h160" style={{ fill: "none", stroke: "#8A8F98", strokeWidth: "2" }} />
+      {house("#FFFFFF", "#1B2A4A", "#E9EDF5")}
+      <g style={{ fill: "none", stroke: "#1B2A4A", strokeWidth: "2.5", strokeLinecap: "round" }}>
+        <path d="M76 90c-5-4 5-8 0-12s5-8 0-12" />
+        <path d="M90 86c-5-4 5-8 0-12s5-8 0-12" />
+        <path d="M104 90c-5-4 5-8 0-12s5-8 0-12" />
       </g>
     </>,
   );

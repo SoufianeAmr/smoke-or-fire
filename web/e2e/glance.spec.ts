@@ -456,8 +456,16 @@ test.describe("“Why?”: everything the verdict said, unchanged, one tap away"
     await replay(page, "en", "Bridgetown", false);
 
     const notice = page.locator("main > section").first();
-    await expect(notice).toContainText("The fire is close to you. Follow official instructions, and call 911 if you see flames or a smoke column.");
-    await expect(notice.getByRole("link", { name: "Told to leave your home? What to do" })).toBeVisible();
+    await expect(notice).toContainText("The fire is close to you. Follow official instructions, and call 911 if you see flames or thick smoke rising.");
+    const leave = notice.getByRole("link", { name: "Told to leave your home? What to do" });
+    await expect(leave).toBeVisible();
+    // Told to leave is a button, as on Call 911 now: a door and its words, navy on white, as wide as the notice, 56 px
+    // or taller. Not a text link.
+    expect(await leave.evaluate((el) => { const st = getComputedStyle(el); return [st.backgroundColor, `${st.borderTopWidth} ${st.borderTopColor}`, st.color, st.textDecorationLine, el.querySelectorAll("svg").length]; })).toEqual(["rgb(255, 255, 255)", "2px rgb(27, 42, 74)", "rgb(27, 42, 74)", "none", 1]);
+    const [leaveBox, around] = [(await leave.boundingBox())!, (await notice.boundingBox())!];
+    expect(leaveBox.height).toBeGreaterThanOrEqual(56);
+    expect(Math.round(leaveBox.width)).toBe(Math.round(around.width - 40));
+    await expect(leave).toHaveAttribute("href", "/leave");
     await sheetTo(page, "half");
     await expect(notice.getByRole("link", { name: "Told to leave your home? What to do" })).toBeVisible();
     const [noticeBox, firstBadge] = [await notice.boundingBox(), await badge(page, "fire").boundingBox()];
@@ -513,7 +521,7 @@ test.describe("Call 911", () => {
   test("no fire in range (live): the same main action", async ({ page }) => {
     await live(page, "en", noFires(), "Halifax");
 
-    await expect(page.locator(".sticky-first p")).toHaveText("Look outside. See flames or a smoke column?");
+    await expect(page.locator(".sticky-first p")).toHaveText("Look outside. See flames or thick smoke rising?");
     await expect(call(page)).toHaveCount(1);
     expect((await call(page).boundingBox())!.height).toBeGreaterThanOrEqual(72);
   });
@@ -522,7 +530,7 @@ test.describe("Call 911", () => {
     for (const town of ["Moncton", "Miramichi"]) {
       await replay(page, "en", town);
       await expect(page.locator(".sticky-first")).toHaveCount(0);
-      await expect(page.locator(".sticky-title")).toHaveText("See flames or a smoke column?");
+      await expect(page.locator(".sticky-title")).toHaveText("See flames or thick smoke rising?");
       await expect(call(page)).toHaveCount(1);
       expect(await call(page).evaluate((el) => getComputedStyle(el).backgroundColor)).toBe(RED);
     }

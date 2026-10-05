@@ -76,7 +76,7 @@
   "airout.list.numbers": "The levels are the classes of ECCC’s own legend: fine particles from wildfire smoke in the air near the ground (PM2.5), in micrograms per cubic metre (µg/m³). Under 1, ECCC’s map shows no smoke.",
   "airout.rule": "How the best time is chosen: the first {min} hours or more in a row with the least smoke in ECCC’s forecast. It is this app’s reading of the forecast, not advice from ECCC.",
   "airout.advice": "Once the air outside is better, Health Canada advises opening doors and windows to replace the air inside with fresh air.",
-  "airout.limits": "The forecast only includes smoke from wildfires already detected. Smoke from a new fire or from close by is not in it. If you see flames or a smoke column, call 911.",
+  "airout.limits": "The forecast only includes smoke from wildfires already detected. Smoke from a new fire or from close by is not in it. If you see flames or thick smoke rising, call 911.",
   "airout.link.maps": "ECCC’s smoke forecast maps",
   "airout.link.maps.host": "weather.gc.ca",
   "airout.link.maps.url": "https://weather.gc.ca/firework/index_e.html",

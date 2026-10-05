@@ -402,7 +402,7 @@ describe("what Listen says of the card", () => {
       "Wind trace.",
       "ECCC air quality alert: active.",
       "For the details and what to do, tap the Why button.",
-      "And if you ever see flames or a smoke column, tap the red button at the bottom to call nine-one-one.",
+      "And if you ever see flames or thick smoke rising, tap the red button at the bottom to call nine-one-one.",
     ]);
   });
 
@@ -414,7 +414,7 @@ describe("what Listen says of the card", () => {
       "Trajet du vent.",
       `Alerte de qualité de l’air d’ECCC${NBSP}: en vigueur.`,
       "Pour les détails et quoi faire, touchez le bouton Pourquoi.",
-      "Et si vous voyez des flammes ou une colonne de fumée, touchez le bouton rouge en bas pour appeler le neuf-un-un.",
+      "Et si vous voyez des flammes ou de la fumée épaisse qui monte, touchez le bouton rouge en bas pour appeler le neuf-un-un.",
     ]);
   });
 
@@ -446,9 +446,9 @@ describe("what Listen says of the card", () => {
     const fr = verdictView(json(halifax), "fr").card.voice;
     expect([en.slice(0, 3), en.at(-1), fr.slice(0, 3), fr.at(-1)]).toEqual([
       ["Unexplained smoke.", "I found no known fire where your air came from.", "Please take a look outside."],
-      "If you see flames or a smoke column, tap the big red button at the bottom to call nine-one-one.",
+      "If you see flames or thick smoke rising, tap the big red button at the bottom to call nine-one-one.",
       ["De la fumée inexpliquée.", "Je n’ai trouvé aucun feu connu là d’où vient votre air.", "Regardez dehors."],
-      "Si vous voyez des flammes ou une colonne de fumée, touchez le grand bouton rouge en bas pour appeler le neuf-un-un.",
+      "Si vous voyez des flammes ou de la fumée épaisse qui monte, touchez le grand bouton rouge en bas pour appeler le neuf-un-un.",
     ]);
   });
 

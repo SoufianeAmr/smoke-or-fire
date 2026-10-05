@@ -523,13 +523,16 @@ const SCREENS: Screen[] = [
     },
     labels: keys("leave.entry"),
     heard: async (_, __, all) => {
-      // The voice gives no reason: the screen is reached from every question, not only from flames or a smoke column.
+      // The voice gives no reason: the screen is reached from every question, not only from flames or thick smoke rising.
       expect(all).not.toContain("smoke column");
       expect(all).not.toContain("colonne de fumée");
+      expect(all).not.toContain("thick smoke");
+      expect(all).not.toContain("fumée épaisse");
     },
   },
   {
     name: "Told to leave, no place yet",
+    plainListen: true,
     open: (page) => page.goto("/leave").then(),
     script: async (_, lang) => script(lang, "voice.leave.where"),
     buttons: async (page, lang) => {
@@ -540,23 +543,29 @@ const SCREENS: Screen[] = [
   },
   {
     name: "Told to leave, near the fire (Bridgetown replay)",
+    plainListen: true,
     open: (page) => leaveFor(page, "Bridgetown"),
     script: async (page, lang) => {
       const [name, address] = (await page.locator("section[aria-labelledby=reception-h] > p").first().innerText()).split("\n");
-      return script(lang, "voice.leave.near", { name, address });
+      // The Call 211 button is named last, and only when it is on the screen.
+      return [...script(lang, "voice.leave.near", { name, address }), ...((await page.locator('a[href="tel:211"]').count()) > 0 ? script(lang, "voice.leave.211") : [])];
     },
     buttons: async (page, lang) => {
-      await named(page.locator("section[aria-labelledby=reception-h]").getByRole("link", { name: STRINGS[lang]["leave.directions"] }), STRINGS[lang]["leave.directions"]);
+      // "Follow the route officials give": the line is on the screen, and no button hands a route to a maps app.
+      await expect(page.locator("main .leave-route")).toHaveText(STRINGS[lang]["leave.route"]);
+      await expect(page.locator('main a[href*="maps"]')).toHaveCount(0);
+      await named(page.locator('a[href="tel:211"]'), "211");
       await named(page.locator('main a[href^="sms:"]'), STRINGS[lang]["leave.family"]);
     },
-    labels: keys("leave.directions", "leave.family"),
+    labels: keys("leave.route", "leave.family"),
   },
   {
     name: "Told to leave, far from the fire (Moncton replay)",
+    plainListen: true,
     open: (page) => leaveFor(page, "Moncton"),
     script: async (page, lang) => {
       const far = await text(page, "main section p");
-      const [, name, km, town] = far.match(lang === "en" ? /near the (.+) fire in .+, (\d+) km from (.+)\. It/ : /près du feu de (.+?), dans .+, à (\d+) km (.+)\. Elle/)!;
+      const [, name, km, town] = far.match(lang === "en" ? /for the (.+) fire, (\d+) km from (.+), doesn/ : /au feu de (.+?), à (\d+) km (.+), ne s/)!;
       const fire = STRINGS[lang]["fire.the.named"].replace("{name}", name);
       const links = await page.locator('main section a[target="_blank"]').count();
       const call211 = await page.locator('a[href="tel:211"]').count();
@@ -573,6 +582,7 @@ const SCREENS: Screen[] = [
   },
   {
     name: "Told to leave, no event (live, Moncton)",
+    plainListen: true,
     open: async (page, lang) => { await start(page, lang, "live"); await leaveFor(page, "Moncton"); },
     script: async (page, lang) => [
       ...script(lang, "voice.leave.intro"),

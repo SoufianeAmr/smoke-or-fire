@@ -1,13 +1,14 @@
 // 04 · Emergency — Call 911 now, as a call card (design/DESIGN-LOCK.md, "Amendment: the questions' top bar, the first
 // question's answers, and Call 911 now as a call card"): the Call 911 button first, then what the dispatcher will ask,
-// with where the phone is to read out. A calm white page: red is the button's alone.
+// with where the phone is to read out. A calm white page: red is the button's alone. Everything to act on is a button
+// with an icon and words; the one small thing is the info button that says where the card's words come from.
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { Link } from "react-router";
 import { useApp, useT } from "../app/state";
 import type { StringKey } from "../i18n";
 import { Screen } from "../components/Screen";
 import { TopBar } from "../components/TopBar";
-import { ChevronRightIcon, FlameIcon, MapPinIcon } from "../components/icons";
+import { DoorOpenIcon, FlameIcon, MapPinIcon } from "../components/icons";
 import { loadCommunities } from "../data/places";
 import { ListenButton } from "../listen/ListenButton";
 import { emergencyVoice } from "../listen/speech";
@@ -34,11 +35,18 @@ const hint = (children: ReactNode) => (
 // What 911 will also ask, each with a small drawing: an eye, a person, a phone.
 const ALSO: [StringKey, ReactNode][] = [
   ["emergency.ask.see", hint(<><path d="M2.5 12c2.6-4.4 5.8-6.6 9.5-6.6s6.9 2.2 9.5 6.6c-2.6 4.4-5.8 6.6-9.5 6.6S5.1 16.4 2.5 12z" /><circle cx="12" cy="12" r="3" /></>)],
-  ["emergency.ask.danger", hint(<><circle cx="12" cy="7.5" r="3.5" /><path d="M5 20.5c.6-4 3.2-6 7-6s6.4 2 7 6" /></>)],
+  ["emergency.ask.name", hint(<><circle cx="12" cy="7.5" r="3.5" /><path d="M5 20.5c.6-4 3.2-6 7-6s6.4 2 7 6" /></>)],
   ["emergency.ask.phone", hint(<path d={PHONE} />)],
 ];
-// Where the card's words come from: New Brunswick's own 911 page, and the day it was read.
-const ABOUT: AboutWords = { label: "emergency.about", body: "emergency.about.body", source: "emergency.about.source", url: "emergency.about.source.url" };
+// Where the card's words come from, and the day each was read: New Brunswick's own 911 page, and the University of
+// New Brunswick's page on calling 911 from its Fredericton campus.
+const ABOUT: AboutWords = {
+  label: "emergency.about",
+  body: "emergency.about.body",
+  sources: [["emergency.about.source", "emergency.about.source.url"], ["emergency.about.source2", "emergency.about.source2.url"]],
+};
+// Told to leave: a button as wide as the page, with a door and its words. Navy on white: red stays Call 911's alone.
+const LEAVE: CSSProperties = { minHeight: "64px", display: "flex", alignItems: "center", justifyContent: "center", gap: "12px", padding: "10px 16px", borderRadius: "14px", border: "2px solid #1B2A4A", background: "#FFFFFF", color: NAVY, textDecoration: "none", fontSize: "18px", fontWeight: "700", lineHeight: "1.25", textAlign: "center" };
 
 export function Emergency() {
   const { lang } = useApp();
@@ -85,9 +93,9 @@ export function Emergency() {
             <span>{t("emergency.close")}</span>
           </p>
           <p className="emergency-lead" style={{ ...LINE, padding: "0 4px" }}>{t("emergency.lead")}</p>
-          <Link to="/leave" style={{ alignSelf: "flex-start", minHeight: "56px", display: "flex", alignItems: "center", gap: "6px", padding: "0 4px", fontSize: "18px", fontWeight: "700", lineHeight: "1.3" }}>
+          <Link to="/leave" className="press emergency-leave" style={LEAVE}>
+            <DoorOpenIcon size={26} />
             <span style={{ textWrap: "balance" }}>{t("leave.entry")}</span>
-            <ChevronRightIcon size={20} />
           </Link>
           <About words={ABOUT} />
         </main>

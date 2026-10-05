@@ -1,4 +1,4 @@
-// 03a · The second question: Which looks like your sky? A rising column or Not sure goes to Call 911 now; grey haze
+// 03a · The second question: Which looks like your sky? Thick smoke rising or Not sure goes to Call 911 now; grey haze
 // or only a smell goes on to what is burning nearby.
 import type { CSSProperties, ReactNode } from "react";
 import { useApp, useT } from "../app/state";
@@ -12,18 +12,21 @@ import { About, Answer, Answers, GRID, ICON_TILE, MAIN, Steps, TILE, TILE_LABEL,
 import { ColumnSky, Disc, HazeSky, QuestionMark, SmellSky } from "../look/pictures";
 import { Q2_ANSWERS, ROUTES, type Q2Answer } from "../look/routing";
 
-// The words under a picture, in the middle of what is left of the tile. Two words a line at most: not evened out.
-const CAPTION: CSSProperties = { ...TILE_LABEL, margin: "auto 0", padding: "8px 8px 10px", textWrap: "pretty" };
-// The night picture runs to the tile's rounded corners: navy under its top, so no white shows along their curve.
-const NIGHT: CSSProperties = { ...TILE, backgroundImage: "linear-gradient(#1B2A4A, #1B2A4A)", backgroundSize: "100% 40px", backgroundRepeat: "no-repeat" };
+// The words under a picture, in the middle of what is left of the tile.
+const WORDS: CSSProperties = { margin: "auto 0", padding: "8px 8px 10px", display: "flex", flexDirection: "column", alignItems: "center", gap: "2px" };
+// Two words a line at most: not evened out.
+const CAPTION: CSSProperties = { ...TILE_LABEL, textWrap: "pretty" };
+// A small second line under a caption: when else the answer is the one to pick.
+const OR: CSSProperties = { fontSize: "16px", fontWeight: "500", lineHeight: "1.2", textAlign: "center", textWrap: "balance", color: "#4F5561" };
 // Not sure has no picture: the question mark and its words, in a tile of the same size.
 const UNSURE: CSSProperties = { ...ICON_TILE, gap: "10px", padding: "12px 8px" };
 
-/** The three sky pictures: what each shows (said by a screen reader before its caption), and the words under it. */
-const SKIES: Partial<Record<Q2Answer, { picture: (label: string) => ReactNode; alt: StringKey; caption: StringKey; tile?: CSSProperties }>> = {
+/** The three sky pictures: what each shows (said by a screen reader before its caption), the words under it, and for
+ *  the third a small line more (the same answer when it is too dark to see the sky). */
+const SKIES: Partial<Record<Q2Answer, { picture: (label: string) => ReactNode; alt: StringKey; caption: StringKey; or?: StringKey }>> = {
   column: { picture: (label) => <ColumnSky label={label} />, alt: "q2.column.alt", caption: "q2.column" },
   haze: { picture: (label) => <HazeSky label={label} />, alt: "q2.haze.alt", caption: "q2.haze" },
-  smell: { picture: (label) => <SmellSky label={label} />, alt: "q2.smell.alt", caption: "q2.smell", tile: NIGHT },
+  smell: { picture: (label) => <SmellSky label={label} />, alt: "q2.smell.alt", caption: "q2.smell", or: "q2.smell.or" },
 };
 
 export function Q2Sky() {
@@ -42,9 +45,14 @@ export function Q2Sky() {
           {Q2_ANSWERS.map((answer) => {
             const sky = SKIES[answer];
             return sky ? (
-              <Answer key={answer} answer={answer} to={ROUTES.q2[answer]} shape="tile" style={sky.tile ?? TILE}>
+              <Answer key={answer} answer={answer} to={ROUTES.q2[answer]} shape="tile" style={TILE}>
                 {sky.picture(t(sky.alt))}
-                <span className="look-caption" style={CAPTION}>{t(sky.caption)}</span>
+                <span className="look-words" style={WORDS}>
+                  <span className="look-caption" style={CAPTION}>{t(sky.caption)}</span>
+                  {/* The space is for a screen reader, which says the two as one name. */}
+                  {sky.or && " "}
+                  {sky.or && <span className="look-or" style={OR}>{t(sky.or)}</span>}
+                </span>
               </Answer>
             ) : (
               <Answer key={answer} answer={answer} to={ROUTES.q2[answer]} shape="tile" style={UNSURE}>

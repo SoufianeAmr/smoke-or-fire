@@ -117,6 +117,12 @@ input::placeholder{color:#6B6F76}
   .sticky-title{display:none}
   .sticky-call{flex-grow:1;max-width:none !important;justify-content:center}
 }
+/* In French the bar's question, "Des flammes ou de la fumée épaisse qui monte ?", is longer than the room beside the
+   button on a phone under 430 px wide: at 18 px it takes three lines there, and the bar grows past the 76 px every
+   screen allows it. On those phones it is 16 px and closer set, so the bar keeps its height on three lines. */
+@media (min-width: 360px) and (max-width: 429px){
+  html[lang="fr"] .sticky-title{font-size:16px !important;line-height:1.2 !important}
+}
 
 /* 04 Emergency: Call 911 now, a call card on a calm white page. Red is the Call 911 button's alone. */
 body.emergency{background:#FFFFFF}
@@ -140,6 +146,28 @@ html:has(body.emergency){scroll-padding-top:136px;scroll-padding-bottom:24px}
   .emergency-call svg,.nearby-call svg{width:30px;height:30px}
   .where-name{font-size:22px !important}
 }
+
+/* If you're told to leave. Everything to act on is a button, 56 px or more, with an icon and its words.
+   "Call 211 · Shelters and help": two lines on a phone, with the dot between them kept for a screen reader; one line,
+   dot and all, where the button is wide enough. */
+.leave-211-words{display:flex;flex-direction:column;align-items:flex-start;text-align:left}
+.leave-211-dot{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:pre}
+.leave-211-what{font-size:18px;font-weight:600}
+@media (min-width: 480px){
+  .leave-211-words{flex-direction:row;align-items:baseline}
+  .leave-211-dot{position:static;width:auto;height:auto;overflow:visible;clip-path:none}
+  .leave-211-what{font-size:inherit;font-weight:inherit}
+}
+/* What to take, to tick: the whole row is the box to tap (its checkbox lies over it, unseen), 56 px tall or more. The
+   square at its left shows the tick: navy edge, then navy with a white tick. Colour is not alone: the tick is a shape. */
+.take-row{position:relative;display:flex;align-items:center;gap:12px;min-height:56px;padding:6px 0;font-size:18px;line-height:1.35;cursor:pointer}
+.take-input{position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:pointer}
+.take-box{flex:0 0 auto;width:40px;height:40px;display:flex;align-items:center;justify-content:center;border:3px solid #1B2A4A;border-radius:10px;background:#FFFFFF;color:#FFFFFF}
+.take-box svg{stroke-width:3;opacity:0}
+.take-input:checked + .take-box{background:#1B2A4A}
+.take-input:checked + .take-box svg{opacity:1}
+.take-input:focus-visible + .take-box{outline:3px solid #1B2A4A;outline-offset:3px}
+.take-drawing{flex:0 0 auto;display:flex;color:#1B2A4A}
 
 /* Maps (05, 06, 07*) */
 .water{fill:#D8E3EE;stroke:#BCCADA;stroke-width:1}
@@ -215,6 +243,11 @@ html:has(.sticky-first){scroll-padding-bottom:calc(176px + env(safe-area-inset-b
 .verdict-tight .glance-shape{width:56px;height:56px}
 .verdict-tight .glance-line{margin-top:6px !important;font-size:26px !important}
 .verdict-tight .verdict-main{gap:10px !important;padding-top:10px !important}
+/* The fire-is-close notice, closer set, with its Told to leave button: in French its words are six lines on a 375 px
+   phone ("de la fumée épaisse qui monte"), and the notice is whole above the 911 bar as the screen opens. */
+.verdict-tight .verdict-notice{padding:10px 20px !important;gap:8px !important}
+.verdict-tight .verdict-notice p{line-height:1.3 !important}
+.verdict-tight .verdict-leave{padding:5px 12px !important}
 .verdict-tight .why-toggle{min-height:56px !important}
 .verdict-tight .sticky-first{gap:6px !important;padding-top:8px !important;padding-bottom:calc(8px + env(safe-area-inset-bottom)) !important}
 .verdict-tight .sticky-look{font-size:16px !important}
@@ -415,6 +448,15 @@ html:has(.verdict-screen),html:has(.verdict-screen) body{overscroll-behavior-y:n
   .nodata-callout{padding:12px 20px !important}
 }
 
+/* Q2: the picture over "I only smell it" is lower than the other two on every phone, short ones too: the room goes to
+   the second line of words under it ("or it's too dark to see"), and its tile stays the others' height. */
+.look-picture.look-strip{aspect-ratio:5 / 2 !important}
+/* Q2 in French on a phone under 360 px wide: the captions are 16 px, so "Fumée épaisse qui monte" keeps to two lines
+   in its narrow tile and the four answers stay as high on the screen as they were. */
+@media (max-width: 359px){
+  html[lang="fr"] .look-caption{font-size:16px !important}
+}
+
 /* Q3 in French: the words on the tiles are longer, so they are 16 px on every phone; "Des gens dehors, peut-être en
    danger" then keeps to three lines, with "peut-être" whole. */
 html[lang="fr"] .look-icon + .look-label{font-size:16px !important}
@@ -430,7 +472,7 @@ html[lang="fr"] .look-icon + .look-label{font-size:16px !important}
   .look-answers{gap:8px !important}
   .look-row{min-height:108px !important}
   .look-picture{aspect-ratio:3 / 2 !important}
-  .look-caption{padding-top:6px !important;padding-bottom:6px !important}
+  .look-words{padding-top:6px !important;padding-bottom:6px !important}
   .look-icon{margin:6px 0 4px !important}
   .look-icon .look-disc{width:38px !important;height:38px !important}
   .look-icon + .look-label{margin-bottom:6px !important;font-size:16px !important}

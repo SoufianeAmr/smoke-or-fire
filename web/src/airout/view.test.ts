@@ -337,7 +337,7 @@ describe("Listen", () => {
       "Taller bars mean more smoke.",
       "A sun marks the day, and a moon the night.",
       "The forecast comes from Environment and Climate Change Canada.",
-      "And if you ever see flames or a smoke column, tap the red button at the bottom to call nine-one-one.",
+      "And if you ever see flames or thick smoke rising, tap the red button at the bottom to call nine-one-one.",
     ]);
   });
 
@@ -371,12 +371,12 @@ describe("Listen", () => {
         "I couldn’t read the smoke forecast just now.",
         "That doesn’t mean the air is clear.",
         "You can check again in a little while.",
-        "And if you ever see flames or a smoke column, tap the red button at the bottom to call nine-one-one.",
+        "And if you ever see flames or thick smoke rising, tap the red button at the bottom to call nine-one-one.",
       ],
       [
         "This is a replay of August 25, 2025.",
         "There’s no smoke forecast for that day: forecasts are kept for only about two days.",
-        "And if you ever see flames or a smoke column, tap the red button at the bottom to call nine-one-one.",
+        "And if you ever see flames or thick smoke rising, tap the red button at the bottom to call nine-one-one.",
       ],
     ]);
   });

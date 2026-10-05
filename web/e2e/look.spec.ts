@@ -38,9 +38,10 @@ function s(lang: Lang, key: string, vars: Record<string, string | number> = {}) 
 
 /**
  * A question: its address, its title, the screen Back opens, how its answers are laid out, and the answers in the
- * order they are on the page, each with its words and the screen it opens.
+ * order they are on the page, each with its words and the screen it opens. `more`: a small second line under the words
+ * (one answer has one: "I only smell it", "or it's too dark to see").
  */
-type Question = { n: 1 | 2 | 3; route: string; title: string; back: string; across: number; down: number; answers: { key: string; words: string; to: string }[] };
+type Question = { n: 1 | 2 | 3; route: string; title: string; back: string; across: number; down: number; answers: { key: string; words: string; more?: string; to: string }[] };
 const QUESTIONS: Question[] = [
   {
     n: 1, route: "/q1", title: "q1.title", back: "/", across: 1, down: 3,
@@ -55,7 +56,7 @@ const QUESTIONS: Question[] = [
     answers: [
       { key: "column", words: "q2.column", to: "/emergency" },
       { key: "haze", words: "q2.haze", to: "/q3" },
-      { key: "smell", words: "q2.smell", to: "/q3" },
+      { key: "smell", words: "q2.smell", more: "q2.smell.or", to: "/q3" },
       { key: "notSure", words: "look.notSure", to: "/emergency" },
     ],
   },
@@ -73,12 +74,14 @@ const QUESTIONS: Question[] = [
 ];
 /** The title of each screen the questions end on. */
 const END_TITLE = { "/emergency": "emergency.title", "/nearby-fire": "nearby.title", "/location": "location.title" };
-/** The three sky pictures: what each shows, and the words under it. */
-const PICTURES = [
+/** The three sky pictures: what each shows, the words under it, and for the third a small second line. */
+const PICTURES: { key: string; alt: string; caption: string; or?: string }[] = [
   { key: "column", alt: "q2.column.alt", caption: "q2.column" },
   { key: "haze", alt: "q2.haze.alt", caption: "q2.haze" },
-  { key: "smell", alt: "q2.smell.alt", caption: "q2.smell" },
+  { key: "smell", alt: "q2.smell.alt", caption: "q2.smell", or: "q2.smell.or" },
 ];
+/** A picture's name for a screen reader: what it shows, its caption, then its second line if it has one. */
+const pictureName = (lang: Lang, picture: { alt: string; caption: string; or?: string }) => [picture.alt, picture.caption, ...(picture.or ? [picture.or] : [])].map((key) => s(lang, key)).join(" ");
 
 const title = (page: Page) => page.locator("h1");
 const group = (page: Page) => page.locator("main .look-answers");
@@ -194,21 +197,25 @@ test.describe("each question: one title, answers in words and pictures, big enou
         await openQuestion(page, lang, q);
         await expect(page.locator("h1, h2, h3")).toHaveCount(1);
         await expect(page.locator("main h1#look-q.look-title")).toHaveText(s(lang, q.title));
-        // No hint under the title, no line under an answer, no counter: no paragraph outside the closed About line.
+        // No hint under the title, no counter: no paragraph outside the closed About line. The one line under an
+        // answer is inside that answer ("or it's too dark to see", under "I only smell it").
         expect(await page.locator("main").evaluate((main) => [...main.querySelectorAll("p")].filter((p) => !p.closest("#look-about-text")).map((p) => p.textContent))).toEqual([]);
         expect(await otherText(page)).toEqual([]);
 
         // The answers: a group named by the question, in order, each with its words and nothing more.
         await expect(group(page)).toHaveAttribute("role", "group");
         await expect(group(page)).toHaveAccessibleName(s(lang, q.title));
-        expect(await words(page)).toEqual(q.answers.map((a) => s(lang, a.words)));
+        expect(await words(page)).toEqual(q.answers.map((a) => [a.words, ...(a.more ? [a.more] : [])].map((key) => s(lang, key)).join(" ")));
+        await expect(page.locator("main .look-or")).toHaveCount(q.answers.filter((a) => a.more).length);
         // Never colour alone: a picture or an icon, and the words.
         for (const a of q.answers) {
           await expect(answerTo(page, a.key).locator("svg").first()).toBeVisible();
           await expect(answerTo(page, a.key).getByText(s(lang, a.words), { exact: true })).toBeVisible();
-          // Read aloud, an answer is its words and no more; a sky picture is what it shows, then its caption.
+          if (a.more) await expect(answerTo(page, a.key).getByText(s(lang, a.more), { exact: true })).toBeVisible();
+          // Read aloud, an answer is its words and no more; a sky picture is what it shows, then its caption (and its
+          // second line, if it has one).
           const picture = q.n === 2 ? PICTURES.find((p) => p.key === a.key) : undefined;
-          await expect(answerTo(page, a.key)).toHaveAccessibleName(picture ? `${s(lang, picture.alt)} ${s(lang, picture.caption)}` : s(lang, a.words));
+          await expect(answerTo(page, a.key)).toHaveAccessibleName(picture ? pictureName(lang, picture) : s(lang, a.words));
         }
         await expect(page.getByRole("link", { name: s(lang, "nav.back"), exact: true })).toHaveAttribute("href", q.back);
       });
@@ -270,9 +277,10 @@ test.describe("the sky pictures", () => {
     });
 
   for (const lang of LANGS) {
-    test(`${lang.toUpperCase()}: each picture says what it shows, has a caption of four words at most, and the two are read together`, async ({ page }) => {
+    test(`${lang.toUpperCase()}: each picture says what it shows, has a caption of four words at most, and the two are read together; “I only smell it” has a small second line, for the dark`, async ({ page }) => {
       await openQuestion(page, lang, QUESTIONS[1]);
-      for (const { key, alt, caption } of PICTURES) {
+      for (const picture1 of PICTURES) {
+        const { key, alt, caption, or } = picture1;
         const tile = answerTo(page, key);
         const picture = tile.locator("svg[role=img]");
         await expect(tile.locator("[role=img]")).toHaveCount(1);
@@ -282,8 +290,36 @@ test.describe("the sky pictures", () => {
         await expect(under).toBeVisible();
         await expect(under).toHaveText(s(lang, caption));
         expect(((await under.textContent()) ?? "").trim().split(/\s+/).length, key).toBeLessThanOrEqual(4);
-        await expect(tile).toHaveAccessibleName(`${s(lang, alt)} ${s(lang, caption)}`);
+        await expect(tile).toHaveAccessibleName(pictureName(lang, picture1));
+        // The second line: under the caption, smaller and lighter than it, 16 px or more, and inside the tile.
+        const second = tile.locator(".look-or");
+        await expect(second).toHaveCount(or ? 1 : 0);
+        if (!or) continue;
+        await expect(second).toHaveText(s(lang, or));
+        const [big, small] = await Promise.all([under, second].map((line) => line.evaluate((el) => { const st = getComputedStyle(el); return { size: parseFloat(st.fontSize), weight: Number(st.fontWeight) }; })));
+        expect(small.size).toBeGreaterThanOrEqual(16);
+        expect(small.size).toBeLessThan(big.size);
+        expect(small.weight).toBeLessThan(big.weight);
+        const [tileBox, captionBox, secondBox] = [(await tile.boundingBox())!, (await under.boundingBox())!, (await second.boundingBox())!];
+        expect(secondBox.y).toBeGreaterThanOrEqual(captionBox.y + captionBox.height - 0.5);
+        expect(secondBox.y + secondBox.height).toBeLessThanOrEqual(tileBox.y + tileBox.height);
+        expect(secondBox.x).toBeGreaterThanOrEqual(tileBox.x);
+        expect(secondBox.x + secondBox.width).toBeLessThanOrEqual(tileBox.x + tileBox.width);
       }
+      // "I only smell it" is drawn as a clear day: the same pale sky as the first picture (not a night's navy), a sun,
+      // and three wavy lines by the house for the smell. No smoke in it: nothing grey or black.
+      const fills = (key: string) => answerTo(page, key).locator("svg[role=img] *").evaluateAll((els) => els.map((el) => getComputedStyle(el).fill));
+      const [day, smell] = [await fills("column"), await fills("smell")];
+      expect(smell[0]).toBe("rgb(233, 237, 245)");
+      expect(smell[0]).toBe(day[0]);
+      expect(smell).toContain("rgb(247, 144, 9)"); // the sun
+      expect(smell.filter((fill) => ["rgb(45, 41, 38)", "rgb(138, 143, 152)"].includes(fill))).toEqual([]);
+      await expect(answerTo(page, "smell").locator("svg[role=img] g path")).toHaveCount(3);
+      // A lower picture than the other two, so its tile, with one more line of words, is no taller than theirs.
+      const heights = await Promise.all(["column", "haze", "smell"].map(async (key) => (await answerTo(page, key).locator("svg[role=img]").boundingBox())!.height));
+      expect(Math.abs(heights[0] - heights[1])).toBeLessThan(0.5);
+      expect(heights[2]).toBeLessThan(heights[0] - 20);
+      expect(heights[2]).toBeGreaterThanOrEqual(56);
       // Not sure has no picture to describe: its question mark is left out of its name.
       const unsure = answerTo(page, "notSure");
       await expect(unsure).toBeVisible();
@@ -370,9 +406,10 @@ test.describe("About these questions: closed until asked for, then clear of the 
             await expect(page.getByRole("button", { name: s(lang, "look.about"), exact: true })).toHaveCount(1);
             await expect(toggle).toHaveAttribute("aria-expanded", "false");
             await expect(toggle).toHaveAttribute("aria-controls", "look-about-text");
-            // A text link: 16 px, underlined, 56 px to tap.
-            expect(await toggle.evaluate((el) => { const st = getComputedStyle(el); return [el.tagName, st.fontSize, st.textDecorationLine]; })).toEqual(["BUTTON", "16px", "underline"]);
-            expect((await toggle.boundingBox())!.height).toBeGreaterThanOrEqual(56);
+            // A small info button, not a text link: an "i" and its words in a navy outline, 16 px, 48 px tall.
+            // (The outline is 1.5 px; a screen with one device pixel per px draws it as 1.)
+            expect(await toggle.evaluate((el) => { const st = getComputedStyle(el); return [el.tagName, st.fontSize, st.textDecorationLine, `${st.borderTopStyle} ${st.borderTopColor}`, parseFloat(st.borderTopWidth) >= 1, el.querySelectorAll("svg").length]; })).toEqual(["BUTTON", "16px", "none", `solid ${NAVY}`, true, 1]);
+            expect((await toggle.boundingBox())!.height).toBe(48);
             await expect(text).toHaveCount(1); // on the page, not shown
             await expect(text).toBeHidden();
 
@@ -386,7 +423,9 @@ test.describe("About these questions: closed until asked for, then clear of the 
             await expect(source).toHaveAttribute("href", SOURCE);
             await expect(source).toHaveAttribute("target", "_blank");
             expect(((await source.getAttribute("rel")) ?? "").split(/\s+/)).toEqual(expect.arrayContaining(["noopener", "noreferrer"]));
+            // The source is a row to tap with the mark of a page that opens outside the app: 56 px or taller, outlined, not underlined.
             expect((await source.boundingBox())!.height).toBeGreaterThanOrEqual(56);
+            expect(await source.evaluate((el) => { const st = getComputedStyle(el); return [st.textDecorationLine, `${st.borderTopStyle} ${st.borderTopColor}`, parseFloat(st.borderTopWidth) >= 1, el.querySelectorAll("svg").length]; })).toEqual(["none", `solid ${NAVY}`, true, 1]);
             // Shown where it can be read: its bottom edge at or above the top of the 911 bar.
             await expect.poll(() => underBar(page)).toEqual({ px: 0, bar: "fixed" });
             // The line and its source, and nothing against calling 911.

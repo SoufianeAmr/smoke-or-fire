@@ -2,7 +2,7 @@
 // and the main action is not hidden behind the 911 bar.
 // The 911 bar: one line of text and the red Call 911 button, about 72 px tall, on every screen but Check, Call 911 now
 // and Nearby fire, which have their own Call 911 button, and the verdict that nothing explains, whose bar is the taller
-// one: "Look outside. See flames or a smoke column?" above a Call 911 button as wide as the bar.
+// one: "Look outside. See flames or thick smoke rising?" above a Call 911 button as wide as the bar.
 // The verdict: the glance card (its shape, Listen, its line) is whole as the screen opens, in the sheet at the foot of
 // the map. The source badges are one tap up (e2e/glance.spec.ts, e2e/map.spec.ts).
 import { expect, test, type Locator, type Page } from "@playwright/test";

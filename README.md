@@ -7,7 +7,7 @@ Bilingual (English/French), built for seniors, nothing to install.
 
 Built at **Hack Atlantic 2026** (UNB Fredericton, Sept 26–27).
 
-> ⚠️ Smoke or Fire? is not an emergency service. If you see flames or a smoke column, call **911**.
+> ⚠️ Smoke or Fire? is not an emergency service. If you see flames or thick smoke rising, call **911**.
 
 ---
 
@@ -45,7 +45,7 @@ Every answer comes with an honest **High / Medium / Low confidence**, official a
 
 **Scenario 1: smoke from far away (Moncton, Aug 25, 2025).** *Drifting smoke · Long Lake fire · 159 km SSW*, with ECCC's special air quality statement for Moncton and southeast New Brunswick shown as active. Behind **Why?**: low confidence and why, the map with the air traced backward and the fire's smoke traced forward meeting near Moncton, official AQHI advice, Health Canada's advice to take a break in places with filtered air (one tap finds the nearest library), and the 811 nurse line.
 
-**Scenario 2: fire near you (Bridgetown, N.S.).** Flames, a rising smoke column, something burning nearby, or simply not sure → **Call 911 now**, with what to tell the dispatcher and, on a tap, the phone's location to read out. *Told to leave?* → the reception centre **Annapolis County actually opened** during the Long Lake evacuation, register first, directions in the phone's Maps app, the officials' grab list, and a one-tap text to family with the user's location. It's shown only to people near that fire.
+**Scenario 2: fire near you (Bridgetown, N.S.).** Flames, thick smoke rising, something burning nearby, or simply not sure → **Call 911 now**, with what to tell the dispatcher and, on a tap, the phone's location to read out. *Told to leave?* → the reception centre **Annapolis County actually opened** during the Long Lake evacuation, register first, the officials' grab list, and a one-tap text to family with the user's location. It's shown only to people near that fire.
 
 **Protect your home from smoke.** One button under the answer opens a screen of what to do at home now. It starts with ECCC's air quality level in words (*Air quality: high risk*), outlined at low risk and filled from moderate up, with the reading, its time and a link one tap away. Under it, four icon tiles, each the opening of Health Canada's own sentence, with the words that limit it: *Keep windows and doors closed as much as possible* (and, under it, *prioritize keeping cool* when it is very hot), *Limit the use of exhaust fans, such as bathroom fans*, *Use a certified portable air cleaner*, *Use the highest quality air filter that your ventilation system can handle*. A tap shows the whole passage and its source: who, the page, its date modified, a link. A switch, *I have asthma or COPD*, off by default, shows ECCC's message for the at-risk population at that level; at low risk the app adds that the reading is area-wide, so it is never an all-clear. The answer is kept on the phone only, with **Forget my answer** beside it: a test makes the same visit with the switch on and off and finds the pages sending the same requests, and Listen reads the at-risk line only with a voice that works on the device. When the fire is close, the verdict's notice to follow official instructions comes first. Every sentence of advice is checked against a saved copy of its official page ([web/src/protect/sources/](web/src/protect/sources/)): a test fails if one word differs. Decisions: [docs/decisions/0004-protect.md](docs/decisions/0004-protect.md).
 

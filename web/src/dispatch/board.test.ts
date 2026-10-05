@@ -180,7 +180,7 @@ describe("the three questions, as a script", () => {
     expect([q1.text, q3.text]).toEqual(["Do you see flames?", "Is anything burning nearby?"]);
     expect(q2.text).toBe("What does the sky look like: smoke rising from one spot, grey haze everywhere, or only a smell?");
     expect(q1.answers.map((a) => a.label)).toEqual(["Yes", "No", "Not sure"]);
-    expect(q2.answers).toEqual([{ id: "column", label: "Rising column" }, { id: "haze", label: "Grey haze" }, { id: "smell", label: "I only smell it" }, { id: "notSure", label: "Not sure" }]);
+    expect(q2.answers).toEqual([{ id: "column", label: "Thick smoke rising" }, { id: "haze", label: "Grey haze" }, { id: "smell", label: "I only smell it" }, { id: "notSure", label: "Not sure" }]);
     expect(q3.answers.map((a) => a.id)).toEqual(["firePit", "mulch", "people", "other", "nothing", "notSure"]);
     expect(questions("fr").map((q) => q.answers[q.answers.length - 1].label)).toEqual(["Je ne sais pas", "Je ne sais pas", "Je ne sais pas"]);
   });

@@ -651,7 +651,7 @@ test("the first public screen has no link to the board; the board links back, wi
   await expect(page.getByRole("link", { name: "I smell smoke" })).toBeVisible();
   await expect(page.locator('a[href*="dispatch"]')).toHaveCount(0);
   await openReplay(page);
-  await expect(page.getByText("Not a call taker? If you see flames or a smoke column, call 911.")).toBeVisible();
+  await expect(page.getByText("Not a call taker? If you see flames or thick smoke rising, call 911.")).toBeVisible();
   await page.getByRole("link", { name: "Open the public app" }).click();
   await expect(page.getByRole("heading", { level: 1, name: "Smoke or Fire?" })).toBeVisible();
   await expect(page).toHaveTitle(/^Smoke or Fire\?/);

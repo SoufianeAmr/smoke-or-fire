@@ -1,5 +1,5 @@
-// Map on "If you’re told to leave", near an active event: large markers for the fire, the two centres and you. Same basemap and label style as the verdict map. No route is drawn: "Get directions"
-// hands the address to the phone's maps app.
+// Map on "If you’re told to leave", near an active event: large markers for the fire, the two centres and you. Same
+// basemap and label style as the verdict map. No route is drawn: the screen says to follow the route officials give.
 import { geoMercator } from "d3-geo";
 import type { CSSProperties } from "react";
 import { useApp, useT } from "../app/state";

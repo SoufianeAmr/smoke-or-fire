@@ -1,10 +1,11 @@
 // What the three questions share: answers that ignore a tap in the screen's first moments, the three-dot progress
-// mark, "About these questions", and the question taking the focus when it follows another screen.
+// mark, "About these questions" (a small info button), and the question taking the focus when it follows another screen.
 import { createContext, useContext, useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { Link, useLocation } from "react-router";
 import { useT } from "../app/state";
 import type { StringKey } from "../i18n";
 import { CLEAR_OF_BAR } from "../components/Sticky911";
+import { ExternalIcon, InfoIcon } from "../components/icons";
 
 export const MAIN: CSSProperties = { flexGrow: "1", display: "flex", flexDirection: "column", gap: "16px", padding: `8px 16px ${CLEAR_OF_BAR}` };
 // The question has the focus after a tap on the screen before: it shows no ring of its own.
@@ -92,10 +93,15 @@ export function useTitleFocus() {
 }
 
 const SMALL: CSSProperties = { fontSize: "16px", lineHeight: "1.45", color: "#1B2A4A" };
+// A small button, not a text link: an "i" and its words in a navy outline, 48 px tall. It is there to read, not to act
+// on, so it is the one thing to tap on these screens that is under 56 px.
+const INFO: CSSProperties = { ...SMALL, display: "flex", alignItems: "center", gap: "8px", minHeight: "48px", padding: "4px 16px 4px 12px", border: "1.5px solid #1B2A4A", borderRadius: "999px", background: "transparent", fontFamily: "inherit", fontWeight: "600", lineHeight: "1.25", textAlign: "left", cursor: "pointer" };
+// A source: a row to tap, 56 px or more, with the mark of a page that opens outside the app.
+const SOURCE: CSSProperties = { ...SMALL, display: "flex", alignItems: "center", gap: "10px", minHeight: "56px", marginTop: "8px", padding: "8px 14px", border: "1.5px solid #1B2A4A", borderRadius: "14px", background: "#FFFFFF", fontWeight: "600", lineHeight: "1.3", textDecoration: "none" };
 
-/** The words of an "About" note: its link, its line, and its source with the source's address. */
-export type AboutWords = { label: StringKey; body: StringKey; source: StringKey; url: StringKey };
-const QUESTIONS: AboutWords = { label: "look.about", body: "look.about.body", source: "look.about.source", url: "look.about.source.url" };
+/** The words of an "About" note: its button, its line, and each source with the source's address. */
+export type AboutWords = { label: StringKey; body: StringKey; sources: [words: StringKey, url: StringKey][] };
+const QUESTIONS: AboutWords = { label: "look.about", body: "look.about.body", sources: [["look.about.source", "look.about.source.url"]] };
 
 /** "About these questions": where they come from, closed until asked for. Opened, it scrolls clear of the 911 bar.
  *  `words`: another screen's own note, made the same way ("About this card"). */
@@ -107,16 +113,20 @@ export function About({ words = QUESTIONS }: { words?: AboutWords }) {
     if (open) text.current?.scrollIntoView({ block: "nearest" });
   }, [open]);
   return (
-    <div className="look-about" style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", padding: "0 4px" }}>
-      <button type="button" className="look-about-toggle" aria-expanded={open} aria-controls="look-about-text" onClick={() => setOpen(!open)} style={{ ...SMALL, minHeight: "56px", padding: "0", border: "0", background: "transparent", fontFamily: "inherit", fontWeight: "600", textAlign: "left", textDecoration: "underline", cursor: "pointer" }}>
+    <div className="look-about" style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: "8px", padding: "0 4px" }}>
+      <button type="button" className="look-about-toggle" aria-expanded={open} aria-controls="look-about-text" onClick={() => setOpen(!open)} style={INFO}>
+        <InfoIcon size={22} />
         {t(words.label)}
       </button>
       {/* No display here: it would show the text while it is hidden. */}
       <div id="look-about-text" ref={text} hidden={!open}>
         <p style={{ ...SMALL, margin: "0", color: "#1A1D21" }}>{t(words.body)}</p>
-        <a href={t(words.url)} target="_blank" rel="noopener noreferrer" style={{ ...SMALL, minHeight: "56px", display: "flex", alignItems: "center", fontWeight: "600" }}>
-          {t(words.source)}
-        </a>
+        {words.sources.map(([source, url]) => (
+          <a key={source} href={t(url)} target="_blank" rel="noopener noreferrer" className="look-about-source" style={SOURCE}>
+            <ExternalIcon size={20} />
+            <span>{t(source)}</span>
+          </a>
+        ))}
       </div>
     </div>
   );

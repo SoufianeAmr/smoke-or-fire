@@ -1,7 +1,7 @@
 // "If you’re told to leave": evacuation centres officials announced during past fires (evacuation-events.json,
 // hand-curated from official sources). An event shows only on the dates it was active: the replay's Aug 25, 2025,
-// or today in live mode. Nothing is looked up at runtime, and no route is planned here: "Get directions" hands
-// the address to the phone's maps app.
+// or today in live mode. Nothing is looked up at runtime, and no route is planned or handed to a maps app: each
+// centre's card says how far it is and which way, and the screen says to follow the route officials give.
 import type { Mode } from "../app/state";
 import { translate, type Lang } from "../i18n";
 import demo from "../../../data/demo/index.json";
@@ -25,7 +25,7 @@ export interface Centre extends LatLon {
   /** As the source writes it, e.g. "295 Commercial St., Middleton". */
   address: string;
   town: string;
-  /** The address handed to the maps app, with the province. */
+  /** The address with its province, as a maps app takes it. Kept in the data; the screen hands out no route. */
   destination: string;
   services: Service[];
   /** Null when the source gives none. */
@@ -100,10 +100,31 @@ export function kmBetween(a: LatLon, b: LatLon): number {
 /** The event's centres apply to someone within its radius of the fire. */
 export const isNear = (event: EvacuationEvent, place: LatLon) => kmBetween(place, event.fire) <= event.radiusKm;
 
-/** Google Maps directions to the address; the phone's maps app plans the route. With no origin it starts where the
- *  phone is; replay passes the chosen town, since the phone is not there. */
-export const directionsUrl = (centre: Centre, origin?: LatLon) =>
-  `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(centre.destination)}${origin ? `&origin=${origin.lat},${origin.lon}` : ""}`;
+/** Which way b lies from a: the first heading of the great circle between them, in degrees clockwise from north. */
+export function bearingTo(a: LatLon, b: LatLon): number {
+  const rad = Math.PI / 180;
+  const [lat1, lat2, dLon] = [a.lat * rad, b.lat * rad, (b.lon - a.lon) * rad];
+  const y = Math.sin(dLon) * Math.cos(lat2);
+  const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLon);
+  return (Math.atan2(y, x) / rad + 360) % 360;
+}
+
+/** The eight compass points, clockwise from north, as the strings name them (compass.at.NE). */
+export const COMPASS_8 = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"] as const;
+export type Compass8 = (typeof COMPASS_8)[number];
+
+/**
+ * How far a centre is from a place, and which way, for its card: whole kilometres in a straight line, the nearest of
+ * the eight compass points, and the angle to turn an arrow to. Under 1 km there is no direction (null): the centre's
+ * point and the place's are both approximate. No route is planned, here or anywhere: the screen says to follow the
+ * route officials give.
+ */
+export function awayFrom(from: LatLon, to: LatLon): { km: number; point: Compass8; deg: number } | null {
+  const km = kmBetween(from, to);
+  if (km < 1) return null;
+  const index = Math.round(bearingTo(from, to) / 45) % 8;
+  return { km: Math.round(km), point: COMPASS_8[index], deg: index * 45 };
+}
 
 /** "1-833-806-1515" → "tel:18338061515". */
 export const telUrl = (number: string) => `tel:${number.replace(/\D/g, "")}`;

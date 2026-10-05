@@ -20,7 +20,7 @@ import { BurnCard } from "../burn/BurnCard";
 import { useBurnView } from "../burn/useBurn";
 import { Sticky911 } from "../components/Sticky911";
 import { LangToggle } from "../components/TopBar";
-import { BackIcon, ChevronDownIcon, ChevronRightIcon, ChevronUpIcon } from "../components/icons";
+import { BackIcon, ChevronDownIcon, ChevronUpIcon, DoorOpenIcon } from "../components/icons";
 import type { Lang } from "../i18n";
 import { ListenButton } from "../listen/ListenButton";
 import { script } from "../listen/speech";
@@ -253,16 +253,17 @@ export function Verdict() {
             {view.notice && (
               // The fire is under 25 km away: follow officials, and what to do if told to leave, for this place. It stays
               // in front at every height: it is what to do, not why.
-              <section style={{ background: "#FFFFFF", borderRadius: "18px", padding: "18px 20px 8px", display: "flex", flexDirection: "column", gap: "4px", boxShadow: "0 1px 2px rgba(26, 29, 33, 0.06), 0 8px 24px rgba(26, 29, 33, 0.07)" }}>
+              <section className="verdict-notice" style={{ background: "#FFFFFF", borderRadius: "18px", padding: "18px 20px 16px", display: "flex", flexDirection: "column", gap: "12px", boxShadow: "0 1px 2px rgba(26, 29, 33, 0.06), 0 8px 24px rgba(26, 29, 33, 0.07)" }}>
                 <div style={{ display: "flex", gap: "14px", alignItems: "flex-start" }}>
                   <span style={{ flexShrink: "0", width: "44px", height: "44px", borderRadius: "50%", background: "#1B2A4A", color: "#FFFFFF", display: "flex", alignItems: "center", justifyContent: "center" }}>
                     <svg className="ic" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" style={{ strokeWidth: "2.3" }}>{VERDICT_ICONS.warning}</svg>
                   </span>
                   <p style={{ margin: "0", fontSize: "18px", fontWeight: "700", lineHeight: "1.45", textWrap: "pretty" }}>{view.notice.text}</p>
                 </div>
-                <Link to="/leave" style={{ alignSelf: "flex-start", minHeight: "56px", display: "flex", alignItems: "center", gap: "6px", marginLeft: "58px", fontSize: "18px", fontWeight: "700", lineHeight: "1.3", color: "#1B2A4A" }}>
-                  {view.notice.link}
-                  <ChevronRightIcon size={20} />
+                {/* Told to leave: a button as wide as the notice, with a door and its words, as on Call 911 now. */}
+                <Link to="/leave" className="press verdict-leave" style={{ minHeight: "56px", display: "flex", alignItems: "center", justifyContent: "center", gap: "10px", padding: "8px 14px", borderRadius: "14px", border: "2px solid #1B2A4A", background: "#FFFFFF", color: "#1B2A4A", textDecoration: "none", fontSize: "18px", fontWeight: "700", lineHeight: "1.25", textAlign: "center" }}>
+                  <DoorOpenIcon size={24} />
+                  <span style={{ textWrap: "balance" }}>{view.notice.link}</span>
                 </Link>
               </section>
             )}

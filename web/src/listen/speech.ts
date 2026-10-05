@@ -112,16 +112,17 @@ export const howVoice = (lang: Lang) => script(lang, "voice.how");
 export const locationOffVoice = (lang: Lang) => script(lang, "voice.locationOff");
 export const noDataVoice = (lang: Lang) => script(lang, "voice.noData");
 
-/** What the leave screen shows: no place yet; the centres near the event; the event far away; or no event (live). */
+/** What the leave screen shows: no place yet; the centres near the event; the event far away; or no event (live).
+ *  `call211`, `links`: the Call 211 button and the official pages are named only when they are on the screen. */
 export type LeaveState =
   | { kind: "where" }
-  | { kind: "near"; name: string; address: string }
+  | { kind: "near"; name: string; address: string; call211: boolean }
   | { kind: "far"; fire: string; km: number; town: string; ofTown: string; links: boolean; call211: boolean }
   | { kind: "none"; links: boolean; call211: boolean };
 
 export function leaveVoice(lang: Lang, state: LeaveState): string[] {
   if (state.kind === "where") return script(lang, "voice.leave.where");
-  if (state.kind === "near") return script(lang, "voice.leave.near", { name: state.name, address: state.address });
+  if (state.kind === "near") return [...script(lang, "voice.leave.near", { name: state.name, address: state.address }), ...(state.call211 ? script(lang, "voice.leave.211") : [])];
   if (state.kind === "far") {
     const far = script(lang, "voice.leave.far", { fire: translate(lang, "fire.the.named", { name: state.fire }), distance: spokenKm(state.km, lang), town: state.town, ofTown: state.ofTown });
     return [...far, ...(state.links ? script(lang, "voice.leave.far.links") : []), ...(state.call211 ? script(lang, "voice.leave.far.211") : [])];

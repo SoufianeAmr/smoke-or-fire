@@ -160,6 +160,8 @@ test.describe("on the verdict: a chip at half, one button after “Why?”", () 
       const leave = notice.getByRole("link", { name: plain(APP[lang]["leave.entry"]) });
       await expect(leave).toHaveAttribute("href", "/leave");
       expect((await leave.boundingBox())!.height).toBeGreaterThanOrEqual(56);
+      // A button with a door and its words, navy on white, as on the verdict and on Call 911 now: not a text link.
+      expect(await leave.evaluate((el) => { const st = getComputedStyle(el); return [st.backgroundColor, `${st.borderTopWidth} ${st.borderTopColor}`, st.textDecorationLine, el.querySelectorAll("svg").length]; })).toEqual(["rgb(255, 255, 255)", "2px rgb(27, 42, 74)", "none", 1]);
       // Above the band and the tiles.
       const [noticeBox, bandBox] = [(await notice.boundingBox())!, (await band(page).boundingBox())!];
       expect(noticeBox.y + noticeBox.height).toBeLessThanOrEqual(bandBox.y);

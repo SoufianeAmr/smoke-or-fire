@@ -9,7 +9,7 @@ import { ReplayBanner } from "../components/ReplayBanner";
 import { Screen } from "../components/Screen";
 import { CLEAR_OF_BAR, Sticky911 } from "../components/Sticky911";
 import { TopBar } from "../components/TopBar";
-import { ChevronDownIcon, ChevronRightIcon, ChevronUpIcon, ExternalIcon } from "../components/icons";
+import { ChevronDownIcon, ChevronUpIcon, DoorOpenIcon, ExternalIcon } from "../components/icons";
 import { forgetAtRisk, readAtRisk, saveAtRisk } from "./atRisk";
 import { GaugeIcon, TileIcon } from "./icons";
 import { useOnDeviceVoice } from "./onDeviceVoice";
@@ -159,9 +159,10 @@ export function Protect() {
           // The fire is close: official instructions come before any advice about staying in.
           <div className="protect-notice">
             <p>{view.notice.text}</p>
-            <Link to="/leave" className="protect-notice-link">
-              {view.notice.link}
-              <ChevronRightIcon size={22} />
+            {/* Told to leave: a button with a door and its words, as on the verdict and on Call 911 now. */}
+            <Link to="/leave" className="press protect-notice-link">
+              <DoorOpenIcon size={24} />
+              <span>{view.notice.link}</span>
             </Link>
           </div>
         )}

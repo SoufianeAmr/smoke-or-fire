@@ -490,10 +490,10 @@ describe("near the fire: Bridgetown and West Dalhousie replays (the fire under 2
   });
 
   test("the notice and its link show when the featured fire is under 25 km away (Bridgetown 17 km, West Dalhousie 3 km), not for Moncton (159 km)", () => {
-    const notice = { text: "The fire is close to you. Follow official instructions, and call 911 if you see flames or a smoke column.", link: "Told to leave your home? What to do" };
+    const notice = { text: "The fire is close to you. Follow official instructions, and call 911 if you see flames or thick smoke rising.", link: "Told to leave your home? What to do" };
     expect([bridgetown, westDalhousie, moncton].map((d) => verdictView(json(d), "en").notice)).toEqual([notice, notice, null]);
     expect(verdictView(json(bridgetown), "fr").notice).toEqual({
-      text: "Le feu est près de vous. Suivez les consignes des autorités et appelez le 911 si vous voyez des flammes ou une colonne de fumée.",
+      text: "Le feu est près de vous. Suivez les consignes des autorités et appelez le 911 si vous voyez des flammes ou de la fumée épaisse qui monte.",
       link: `On vous demande de partir${NBSP}? Que faire`,
     });
   });
