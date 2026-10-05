@@ -499,6 +499,38 @@ describe("the voice: on the device first", () => {
     }
   });
 
+  test("only on the device, in French too, and never with the other language’s voice", () => {
+    const [amelie, googleFr] = [device("Amélie", "fr-CA"), service("Google français", "fr-FR")];
+    expect(named(voice.voiceFor([amelie, googleFr], "fr", true))).toEqual({ voice: "Amélie", online: false });
+    expect(voice.voiceFor([david, googleFr], "fr", true)).toBeNull();
+    expect(voice.voiceFor([amelie], "en", true)).toBeNull();
+    expect(named(voice.voiceFor([clara, david], "en", true))).toEqual({ voice: david.name, online: false });
+  });
+
+  // A button that is off when it has no voice on the device must know which it is before it is tapped. A browser
+  // may list no voice at all for its first moments: that is "not known yet", not "none".
+  test("whether the language has a voice on the device: found, none, or not known yet", () => {
+    const amelie = device("Amélie", "fr-CA");
+    expect([voice.deviceVoice([david, googleUs], "en", false), voice.deviceVoice([googleUs, david], "en", true)]).toEqual(["found", "found"]);
+    // Voices are listed, and none of this language works on the device: a service, one that does not say, a novelty
+    // voice, the other language's.
+    for (const voices of [[googleUs], [clara], [plain("Microsoft Linda - English (Canada)", "en-CA")], [device("Albert", "en-US")], [amelie]]) {
+      expect([voice.deviceVoice(voices, "en", false), voice.deviceVoice(voices, "en", true)]).toEqual(["none", "none"]);
+    }
+    expect([voice.deviceVoice([david], "fr", false), voice.deviceVoice([david, amelie], "fr", false)]).toEqual(["none", "found"]);
+    // No voice listed: not known until the browser has said its list is whole (or was given the time to).
+    expect([voice.deviceVoice([], "en", false), voice.deviceVoice([], "en", true)]).toEqual(["unknown", "none"]);
+  });
+
+  test("“found” is exactly when a tap would be read: the two never disagree", () => {
+    const amelie = device("Amélie", "fr-CA");
+    for (const voices of [[], [david], [googleUs], [clara, david], [amelie], [device("Albert", "en-US")], [plain("Linda", "en-CA")], [amelie, david, googleUs]]) {
+      for (const lang of ["en", "fr"] as const) {
+        for (const listed of [false, true]) expect(voice.deviceVoice(voices, lang, listed) === "found").toBe(voice.voiceFor(voices, lang, true) !== null);
+      }
+    }
+  });
+
   test("what Listen says first when the voice is a service: one sentence, in English and French", () => {
     expect(voice.onlineVoiceNotice("en")).toEqual(["This voice works over the internet, so what I read is sent to a voice service."]);
     expect(voice.onlineVoiceNotice("fr")).toEqual(["Cette voix fonctionne par Internet, alors ce que je lis est envoyé à un service vocal."]);

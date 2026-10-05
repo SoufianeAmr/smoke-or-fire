@@ -43,6 +43,19 @@ export function voiceFor<V extends Voice>(voices: V[], lang: Lang, onDeviceOnly 
   return { voice: other, online: other?.localService === false };
 }
 
+/** Whether a language has a voice that works on the device. */
+export type DeviceVoice = "found" | "none" | "unknown";
+
+/**
+ * For a button that reads only on the device and must show, before it is tapped, whether it can. "found" is exactly
+ * when a tap would be read (voiceFor, on the device only). Some browsers list no voice for their first moments: an
+ * empty list is "unknown" until `listed`, the browser having said its list is whole or been given the time to.
+ */
+export function deviceVoice<V extends Voice>(voices: V[], lang: Lang, listed: boolean): DeviceVoice {
+  if (voiceFor(voices, lang, true)) return "found";
+  return voices.length > 0 || listed ? "none" : "unknown";
+}
+
 /** Sentences: split after . ? or ! followed by a space. */
 const sentences = (text: string) => text.split(/(?<=[.?!])\s+(?=\S)/).filter((s) => s.trim() !== "");
 

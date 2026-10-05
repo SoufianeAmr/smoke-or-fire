@@ -1,6 +1,7 @@
 // The dispatch board (/dispatch) in the browser, at a desk: 1366 × 768, by keyboard first.
 // Replay: type a place, the answer and its sources, the three questions with the public app's routing, the copy for
 // call notes, and surge mode's messages and images. Live: the engine answered by the test, and "not checked".
+// Listen: read by a voice on the device only (the browser's voices are stood in for), and off, with its reason, without one.
 import { expect, test, type Locator, type Page, type Route } from "@playwright/test";
 import { readFileSync } from "node:fs";
 import { TEST_ENGINE_URL } from "./engine";
@@ -24,6 +25,70 @@ const placeBox = (page: Page) => page.getByRole("combobox");
 const card = (page: Page) => page.locator(".d-known");
 const result = (page: Page) => page.locator(".d-result");
 const fact = (page: Page, id: string) => page.locator(`.d-facts > li[data-fact="${id}"]`);
+
+// --- The browser's voices, stood in for -------------------------------------------------------------------------------
+
+// Which voices a test browser has depends on the machine. Every test here gets a known list: for each language a voice
+// that works on the device and a voice service (the words go to a server to be spoken). A test that needs another list
+// installs it after this one, or changes it on the page.
+type Voice = { lang: string; name: string; localService?: boolean };
+const ON_DEVICE = { en: "Microsoft Linda - English (Canada)", fr: "Amélie" };
+const SERVICE = { en: "Google US English", fr: "Google français" };
+const VOICES: Voice[] = [
+  { lang: "en-CA", name: ON_DEVICE.en, localService: true },
+  { lang: "en-US", name: SERVICE.en, localService: false },
+  { lang: "fr-CA", name: ON_DEVICE.fr, localService: true },
+  { lang: "fr-FR", name: SERVICE.fr, localService: false },
+];
+/** A browser whose only voices are voice services. */
+const SERVICES_ONLY = VOICES.filter((voice) => !voice.localService);
+
+/** `voices`: what the browser lists. `__setVoices(next, quietly)` changes the list, and says so unless `quietly`. */
+function fakeSpeech(voices: Voice[]) {
+  const w = window as unknown as Record<string, unknown>;
+  const spoken: { u: Record<string, unknown>; end: number }[] = [];
+  const listeners = new Set<() => void>();
+  let list = voices;
+  w.__spoken = spoken;
+  w.__cancels = 0;
+  w.__autoEnd = true; // false: a sentence lasts until it is stopped
+  w.__setVoices = (next: Voice[], quietly = false) => {
+    list = next;
+    if (!quietly) for (const listener of listeners) listener();
+  };
+  class Utterance {
+    text: string; lang = ""; voice: unknown = null; rate = 1; pitch = 1; volume = 1; onend: (() => void) | null = null; onerror: (() => void) | null = null;
+    constructor(text: string) { this.text = text; }
+  }
+  Object.defineProperty(window, "SpeechSynthesisUtterance", { value: Utterance, configurable: true, writable: true });
+  Object.defineProperty(window, "speechSynthesis", {
+    configurable: true,
+    value: {
+      getVoices: () => list,
+      addEventListener: (type: string, listener: () => void) => { if (type === "voiceschanged") listeners.add(listener); },
+      removeEventListener: (_: string, listener: () => void) => { listeners.delete(listener); },
+      speak: (u: Record<string, unknown>) => {
+        const entry = { u, end: 0 };
+        spoken.push(entry);
+        if (w.__autoEnd) setTimeout(() => { if (entry.end) return; entry.end = performance.now(); (u.onend as (() => void) | null)?.(); }, 10);
+      },
+      cancel: () => {
+        w.__cancels = (w.__cancels as number) + 1;
+        const saying = spoken.find((entry) => !entry.end);
+        if (saying) { saying.end = performance.now(); (saying.u.onerror as ((e: { error: string }) => void) | null)?.({ error: "interrupted" }); }
+      },
+    },
+  });
+}
+type Said = { text: string; lang: string; voice: string | null };
+const spoken = (page: Page): Promise<Said[]> =>
+  page.evaluate(() => (window as unknown as { __spoken: { u: { text: string; lang: string; voice: { name: string } | null } }[] }).__spoken.map(({ u }) => ({ text: u.text, lang: u.lang, voice: u.voice?.name ?? null })));
+const cancels = (page: Page) => page.evaluate(() => (window as unknown as { __cancels: number }).__cancels);
+const setVoices = (page: Page, voices: Voice[], quietly = false) => page.evaluate(([list, quiet]) => (window as unknown as { __setVoices: (v: unknown, q: unknown) => void }).__setVoices(list, quiet), [voices, quietly] as const);
+
+test.beforeEach(async ({ page }) => {
+  await page.addInitScript(fakeSpeech, VOICES);
+});
 
 /** Open the board in replay and type a town: Enter takes the first match. */
 async function check(page: Page, typed: string) {
@@ -642,3 +707,340 @@ for (const [name, width, height] of [["a desk screen", 1366, 768], ["200% zoom",
     }
   });
 }
+
+// --- Burning restricted to the night: the result gives the hours ------------------------------------------------------
+
+test("live, burning restricted to the night: a fire pit is not Dispatch by itself; the result and the notes give the hours, in English and French", async ({ page }) => {
+  await standInClipboard(page);
+  const live = { ...MONCTON, mode: "live", time: new Date().toISOString().replace(/\.\d+Z$/, "Z"), wind: { ...MONCTON.wind, run: "2026-10-03T18:00:00Z", recordedAt: null } };
+  const at = (minutes: number) => new Date(Date.parse(live.time) + minutes * 60_000).toISOString().replace(/\.\d+Z$/, "Z");
+  const burn = { state: "restricted", county: "Westmorland", validUntil: at(300), checkedAt: at(-8), source: "gnb_burn_categories", reason: null };
+  await page.route(`${TEST_ENGINE_URL}/verdict**`, (route: Route) => route.fulfill({ json: { ...live, burn }, headers: { "access-control-allow-origin": "*" } }));
+  await page.goto("/dispatch?mode=live");
+  // Live covers every Maritimes community: its list is fetched, so the match is waited for before Enter.
+  await placeBox(page).fill("Shedi");
+  await expect(page.getByRole("option").first()).toHaveText(/^Shediac, NB/);
+  await placeBox(page).press("Enter");
+  await expect(card(page)).toBeVisible();
+
+  // The fact: the status as the public app's burn badge names it, and the hours.
+  await expect(fact(page, "burn").locator("h4")).toHaveText("Burning: Restricted");
+  await expect(fact(page, "burn")).toContainText("Burning only from 8 p.m. to 8 a.m. Westmorland County.");
+  // The result: the public app's two conditions, and the hours, so the call taker can judge.
+  await answer(page, ["no", "haze", "firePit"]);
+  await expect(result(page)).toHaveAttribute("data-kind", "firePit");
+  await expect(result(page).getByRole("heading")).toHaveText("Result: Fire pit or bonfire nearby");
+  await expect(result(page).locator("p")).toHaveText("Dispatch if it is out of control, or if burning is banned. Burn status: burning only from 8 p.m. to 8 a.m.");
+  await page.getByRole("button", { name: "Copy for call notes" }).click();
+  await expect(page.locator(".d-notes .d-status")).toHaveText("Copied. Paste it into your call notes.");
+  expect((await lastCopied(page))!.split("\n")).toEqual(expect.arrayContaining([
+    "- Burning only from 8 p.m. to 8 a.m.",
+    "Result: Fire pit or bonfire nearby. Dispatch if it is out of control, or if burning is banned. Burn status: burning only from 8 p.m. to 8 a.m.",
+  ]));
+
+  await page.getByRole("button", { name: "Français" }).click();
+  await expect(page.locator("html")).toHaveAttribute("lang", "fr");
+  await expect(fact(page, "burn").locator("h4")).toHaveText(`Brûlage${NBSP}: restreint`);
+  await expect(fact(page, "burn")).toContainText("Brûlage seulement de 20 h à 8 h. Comté de Westmorland.");
+  await expect(result(page).getByRole("heading")).toHaveText(`Résultat${NBSP}: Foyer ou feu de camp à proximité`);
+  await expect(result(page).locator("p")).toHaveText("Envoyez une équipe s’il est hors de contrôle, ou si le brûlage est interdit. Statut : brûlage seulement de 20 h à 8 h.");
+  await page.getByRole("button", { name: "Copier pour les notes d’appel" }).click();
+  await expect(page.locator(".d-notes .d-status")).toHaveText("Copié. Collez-le dans vos notes d’appel.");
+  expect((await lastCopied(page))!.split("\n")).toContain("Résultat : Foyer ou feu de camp à proximité. Envoyez une équipe s’il est hors de contrôle, ou si le brûlage est interdit. Statut : brûlage seulement de 20 h à 8 h.");
+  expect(await page.locator("body").innerText()).not.toMatch(NO_RESPONSE);
+});
+
+// --- Listen: on the device only ---------------------------------------------------------------------------------------
+
+// The footer says nothing about a call is sent. A voice service would be sent the caller's town to say it. So the
+// board's Listen reads only with a voice that works on the device; with none for the language it is off, and says why.
+test.describe("Listen reads on the device only; with no voice on the device it is off, and says why", () => {
+  const WORDS = {
+    en: JSON.parse(readFileSync(new URL("../src/dispatch/en.json", import.meta.url), "utf8")) as Record<string, string>,
+    fr: JSON.parse(readFileSync(new URL("../src/dispatch/fr.json", import.meta.url), "utf8")) as Record<string, string>,
+  };
+  const APP = {
+    en: JSON.parse(readFileSync(new URL("../src/i18n/en.json", import.meta.url), "utf8")) as Record<string, string>,
+    fr: JSON.parse(readFileSync(new URL("../src/i18n/fr.json", import.meta.url), "utf8")) as Record<string, string>,
+  };
+  type Lang = "en" | "fr";
+  const listen = (page: Page, lang: Lang = "en") => page.getByRole("button", { name: APP[lang]["listen.play"], exact: true });
+  const reason = (page: Page) => page.locator(".dispatch .listen-off");
+  const french = async (page: Page) => {
+    await page.getByRole("button", { name: "Français" }).click();
+    await expect(page.locator("html")).toHaveAttribute("lang", "fr");
+  };
+
+  /** Off: said to be so to a screen reader, still named, and described by the reason shown with it. */
+  async function expectOff(page: Page, lang: Lang = "en") {
+    const button = listen(page, lang);
+    await expect(button).toBeVisible();
+    await expect(button).toBeDisabled();
+    await expect(button).toHaveAttribute("aria-disabled", "true");
+    await expect(reason(page)).toBeVisible();
+    await expect(reason(page)).toHaveText(WORDS[lang]["listen.off"]);
+    // Tied to the button: what a screen reader reads with it.
+    const id = await reason(page).getAttribute("id");
+    expect(id).toBeTruthy();
+    await expect(button).toHaveAttribute("aria-describedby", id!);
+    await expect(button).toHaveAccessibleDescription(WORDS[lang]["listen.off"]);
+    expect(parseFloat(await reason(page).evaluate((el) => getComputedStyle(el).fontSize))).toBeGreaterThanOrEqual(18);
+  }
+  async function expectOn(page: Page, lang: Lang = "en") {
+    const button = listen(page, lang);
+    await expect(button).toBeEnabled();
+    expect([await button.getAttribute("aria-disabled"), await button.getAttribute("aria-describedby")]).toEqual([null, null]);
+    await expect(reason(page)).toHaveCount(0);
+  }
+  /** Every way to press it: a click that takes no account of "off", a click event, then Enter and Space with the focus on it. */
+  async function pressEveryWay(page: Page, lang: Lang = "en") {
+    const button = listen(page, lang);
+    await button.click({ force: true });
+    await button.dispatchEvent("click");
+    // It can still be reached by keyboard, so its reason is read with it.
+    await button.focus();
+    await expect(button).toBeFocused();
+    await page.keyboard.press("Enter");
+    await page.keyboard.press("Space");
+    await page.waitForTimeout(800); // longer than two pauses between sentences
+  }
+  /** One reading, from the tap to its end: what was said since. */
+  async function read(page: Page, lang: Lang = "en") {
+    const before = (await spoken(page)).length;
+    await listen(page, lang).click();
+    await expect.poll(async () => (await spoken(page)).length, { timeout: 15_000 }).toBeGreaterThan(before);
+    await expect(listen(page, lang)).toBeVisible({ timeout: 30_000 }); // it says Listen again: the reading has ended
+    return (await spoken(page)).slice(before);
+  }
+
+  test("a voice on the device: Listen reads with it, and never with a voice service, however natural or Canadian", async ({ page }) => {
+    await openReplay(page);
+    await expectOn(page);
+    expect(await spoken(page)).toEqual([]);
+    // Before a place is typed: what the board is, then the banner.
+    expect(await read(page)).toEqual([WORDS.en["voice.intro"], BANNER].map((text) => ({ text, lang: "en-CA", voice: ON_DEVICE.en })));
+    // With an answer: the caller's town is in what is read. Every sentence by the device's voice.
+    await check(page, "Monc");
+    const answerRead = await read(page);
+    expect(answerRead.map((said) => said.text)).toEqual([
+      "Moncton. Drifting smoke, most likely from the Long Lake fire, about 159 kilometres away, to the south-southwest.",
+      "Low confidence.",
+      "ECCC air quality alert: active.",
+      "Burn status: ban in effect.",
+      BANNER,
+    ]);
+    expect(answerRead.filter((said) => said.voice !== ON_DEVICE.en)).toEqual([]);
+    // A plainer voice on the device, and a natural Canadian voice service: the device's.
+    const [david, clara] = ["Microsoft David - English (United States)", "Microsoft Clara Online (Natural) - English (Canada)"];
+    await setVoices(page, [{ lang: "en-US", name: david, localService: true }, { lang: "en-CA", name: clara, localService: false }]);
+    await expectOn(page);
+    expect((await read(page)).map((said) => said.voice)).toEqual(Array(5).fill(david));
+    // Never the sentence a voice service starts with: there is no voice service here.
+    expect((await spoken(page)).filter((said) => APP.en["voice.online"].includes(said.text))).toEqual([]);
+  });
+
+  test("only voice services: Listen is off and says why; pressed every way, with or without an answer, nothing is said", async ({ page }) => {
+    await page.addInitScript(fakeSpeech, SERVICES_ONLY);
+    await openReplay(page);
+    await expectOff(page);
+    // Pressed, it touches the browser's speech in no way: nothing said, and nobody's reading stopped.
+    const before = await cancels(page);
+    await pressEveryWay(page);
+    expect([await spoken(page), await cancels(page)]).toEqual([[], before]);
+    await check(page, "Monc");
+    await expectOff(page);
+    const withAnswer = await cancels(page);
+    await pressEveryWay(page);
+    expect([await spoken(page), await cancels(page)]).toEqual([[], withAnswer]);
+    await expect(page.getByRole("button", { name: "Stop", exact: true })).toHaveCount(0);
+    // The reason is on the page for everyone, and tells nobody not to respond.
+    const body = await page.locator("body").innerText();
+    expect(body).toContain("Listen is off: this browser has no English voice that works on the device, and the board sends nothing to a voice service.");
+    expect(body).not.toMatch(NO_RESPONSE);
+    // Other browsers with nothing on the device for English: no voice at all, a voice that does not say where it
+    // works, only a novelty voice, only a French voice.
+    for (const voices of [[], [{ lang: "en-CA", name: ON_DEVICE.en }], [{ lang: "en-US", name: "Albert", localService: true }], [{ lang: "fr-CA", name: ON_DEVICE.fr, localService: true }]] as Voice[][]) {
+      await setVoices(page, VOICES);
+      await expectOn(page);
+      await setVoices(page, voices);
+      await expectOff(page);
+      await listen(page).click({ force: true });
+    }
+    await page.waitForTimeout(800);
+    expect(await spoken(page)).toEqual([]);
+  });
+
+  test("the browser lists its voices late, or loses them: off until a voice on the device is there, and off again without one", async ({ page }) => {
+    await page.addInitScript(fakeSpeech, []);
+    await openReplay(page, "Monc");
+    await expectOff(page); // no voice was listed, and the browser was given the time to
+    await setVoices(page, VOICES); // the browser says its voices changed
+    await expectOn(page);
+    const said = await read(page);
+    expect([said.length, said.filter((line) => line.voice !== ON_DEVICE.en)]).toEqual([5, []]);
+    await setVoices(page, SERVICES_ONLY);
+    await expectOff(page);
+    // The device's voice goes without the browser saying so: the tap finds none, says nothing, and Listen turns off.
+    await setVoices(page, VOICES);
+    await expectOn(page);
+    await setVoices(page, SERVICES_ONLY, true);
+    const before = (await spoken(page)).length;
+    await listen(page).click();
+    await expectOff(page);
+    await page.waitForTimeout(800);
+    expect((await spoken(page)).length).toBe(before);
+  });
+
+  test("by language: English has a voice on the device and French has not, or the other way round", async ({ page }) => {
+    await page.addInitScript(fakeSpeech, VOICES.filter((voice) => voice.name !== ON_DEVICE.fr));
+    await openReplay(page, "Monc");
+    await expectOn(page);
+    expect((await read(page)).filter((said) => said.voice !== ON_DEVICE.en)).toEqual([]);
+    await french(page);
+    await expectOff(page, "fr");
+    const before = await spoken(page);
+    await pressEveryWay(page, "fr");
+    expect(await spoken(page)).toEqual(before);
+    expect(before.filter((said) => said.lang === "fr-CA" || said.voice === SERVICE.fr)).toEqual([]);
+    await page.getByRole("button", { name: "EN", exact: true }).click();
+    await expect(page.locator("html")).toHaveAttribute("lang", "en");
+    await expectOn(page);
+
+    // The other way round: only a French voice on the device.
+    await setVoices(page, [{ lang: "fr-CA", name: ON_DEVICE.fr, localService: true }, { lang: "en-US", name: SERVICE.en, localService: false }]);
+    await expectOff(page);
+    await french(page);
+    await expectOn(page, "fr");
+    const inFrench = await read(page, "fr");
+    expect([inFrench.length, inFrench.filter((said) => said.voice !== ON_DEVICE.fr || said.lang !== "fr-CA")]).toEqual([5, []]);
+    expect(inFrench.filter((said) => APP.fr["voice.online"].includes(said.text))).toEqual([]);
+  });
+
+  test("a browser that cannot speak at all: Listen is off there too, with the same reason", async ({ page }) => {
+    await page.addInitScript(() => {
+      Object.defineProperty(window, "speechSynthesis", { value: undefined, configurable: true });
+    });
+    const errors: string[] = [];
+    page.on("pageerror", (error) => errors.push(String(error)));
+    await openReplay(page, "Monc");
+    await expectOff(page);
+    await pressEveryWay(page);
+    await french(page);
+    await expectOff(page, "fr");
+    await pressEveryWay(page, "fr");
+    // Pressed, it never reaches for the speech the browser does not have.
+    expect(errors).toEqual([]);
+  });
+
+  test("the device’s voice goes while Listen is reading: Stop still works, and only then is Listen off", async ({ page }) => {
+    await openReplay(page, "Monc");
+    await page.evaluate(() => { (window as unknown as Record<string, unknown>).__autoEnd = false; });
+    await listen(page).click();
+    const stop = page.getByRole("button", { name: APP.en["listen.stop"], exact: true });
+    await expect(stop).toBeVisible();
+    await setVoices(page, SERVICES_ONLY); // the browser says its voices changed: none on the device now
+    // What is being read is read by the device's voice: the button stays Stop, in use, with no reason beside it.
+    await expect(stop).toBeEnabled();
+    expect([await stop.getAttribute("aria-disabled"), await stop.getAttribute("aria-describedby")]).toEqual([null, null]);
+    await expect(reason(page)).toHaveCount(0);
+    const [said, before] = [await spoken(page), await cancels(page)];
+    expect(said.map((line) => line.voice)).toEqual([ON_DEVICE.en]);
+    await stop.click();
+    await expectOff(page);
+    expect(await cancels(page)).toBeGreaterThan(before);
+    await page.waitForTimeout(800);
+    expect(await spoken(page)).toEqual(said); // nothing more was said
+  });
+
+  // A browser may list no voice for its first moments. That is not "none": the reason must not flash on every load.
+  /** On the page: when the board began to follow the browser's voices, and when the reason first showed, if ever. */
+  function watch(arrive: { after: number; voices: Voice[] } | null) {
+    const w = window as unknown as Record<string, unknown>;
+    w.__followedAt = null;
+    w.__offAt = null;
+    new MutationObserver(() => { if (w.__offAt === null && document.querySelector(".listen-off")) w.__offAt = performance.now(); }).observe(document, { childList: true, subtree: true });
+    const synth = window.speechSynthesis as unknown as { addEventListener: (type: string, listener: () => void) => void };
+    const add = synth.addEventListener;
+    synth.addEventListener = (type, listener) => {
+      add(type, listener);
+      if (type !== "voiceschanged" || w.__followedAt !== null) return;
+      w.__followedAt = performance.now();
+      // The browser's list arrives a moment after the board began to follow it.
+      if (arrive) setTimeout(() => (w.__setVoices as (voices: unknown) => void)(arrive.voices), arrive.after);
+    };
+  }
+  const watched = (page: Page) => page.evaluate(() => { const w = window as unknown as { __followedAt: number | null; __offAt: number | null }; return { followedAt: w.__followedAt, offAt: w.__offAt }; });
+
+  test("the voices are listed a moment after the page opens: Listen is never shown off, not even briefly", async ({ page }) => {
+    await page.addInitScript(fakeSpeech, []);
+    await page.addInitScript(watch, { after: 300, voices: VOICES });
+    await openReplay(page, "Monc");
+    await expect.poll(async () => (await watched(page)).followedAt).not.toBeNull();
+    await page.waitForTimeout(1500); // past the second the browser is given
+    expect((await watched(page)).offAt).toBeNull();
+    await expectOn(page);
+    expect((await read(page)).filter((said) => said.voice !== ON_DEVICE.en)).toEqual([]);
+  });
+
+  test("no voice is ever listed: Listen is shown off only once the browser has had a second to list one", async ({ page }) => {
+    await page.addInitScript(fakeSpeech, []);
+    await page.addInitScript(watch, null);
+    await openReplay(page, "Monc");
+    await expectOff(page);
+    const { followedAt, offAt } = await watched(page);
+    expect([followedAt !== null, offAt !== null]).toEqual([true, true]);
+    expect(offAt! - followedAt!).toBeGreaterThanOrEqual(950);
+  });
+
+  for (const [name, width, height] of [["a desk screen", 1366, 768], ["200% zoom", 683, 384], ["a phone", 390, 844], ["400% zoom", 320, 256]] as const) {
+    test(`off, on ${name} (${width} × ${height}): the reason is whole on the screen, no sideways scrolling, every word 18 px or more, every control named; the footer word for word`, async ({ page }) => {
+      await page.addInitScript(fakeSpeech, SERVICES_ONLY);
+      await page.setViewportSize({ width, height });
+      await openReplay(page, "Monc");
+      for (const lang of ["en", "fr"] as const) {
+        if (lang === "fr") await french(page);
+        await expectOff(page, lang);
+        expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(0);
+        const box = (await reason(page).boundingBox())!;
+        expect([box.x >= 0, box.x + box.width <= width + 0.5]).toEqual([true, true]);
+        // The reason is under the tools, never between them: the language switch is where it was, and at a desk
+        // (where the tools fit one row) it is beside Listen.
+        const [button, switcher] = [(await listen(page, lang).boundingBox())!, (await page.getByRole("group", { name: APP[lang]["lang.group"] }).boundingBox())!];
+        expect(box.y).toBeGreaterThanOrEqual(Math.max(button.y + button.height, switcher.y + switcher.height) - 0.5);
+        if (width >= 1366) expect(Math.abs(button.y + button.height / 2 - (switcher.y + switcher.height / 2))).toBeLessThanOrEqual(1);
+        const small = await page.locator(".dispatch").evaluate((root) => {
+          const found: string[] = [];
+          const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+          for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+            const el = node.parentElement!;
+            if (!node.textContent?.trim() || el.closest("[hidden]")) continue;
+            if (parseFloat(getComputedStyle(el).fontSize) < 18) found.push(`${getComputedStyle(el).fontSize} ${node.textContent.trim().slice(0, 40)}`);
+          }
+          return found;
+        });
+        expect(small).toEqual([]);
+        const unnamed = await page.locator("button, a, input, textarea").evaluateAll((els) =>
+          els.filter((el) => !(el.getAttribute("aria-label") || el.textContent?.trim() || (el as HTMLInputElement).labels?.length)).map((el) => el.outerHTML.slice(0, 80)),
+        );
+        expect(unnamed).toEqual([]);
+        // The promise the reason keeps true.
+        await expect(page.locator(".d-foot p").first()).toHaveText(WORDS[lang].stored);
+      }
+    });
+  }
+
+  test("the footer is the same sentence whatever voices the browser has, and a whole reading sends nothing", async ({ page }) => {
+    const requests: { method: string; url: string }[] = [];
+    page.on("request", (request) => requests.push({ method: request.method(), url: request.url() }));
+    await openReplay(page, "Monc");
+    await expect(page.locator(".d-foot p").first()).toHaveText("Nothing about a call is stored or sent: the place, the answers and the drafts stay on this screen, and are gone when it closes.");
+    expect((await read(page)).length).toBe(5);
+    for (const voices of [SERVICES_ONLY, [], VOICES]) {
+      await setVoices(page, voices);
+      await expect(page.locator(".d-foot p").first()).toHaveText(WORDS.en.stored);
+    }
+    expect(requests.filter((r) => r.method !== "GET")).toEqual([]);
+    const hosts = [...new Set(requests.filter((r) => !r.url.startsWith("blob:") && !r.url.startsWith("data:")).map((r) => new URL(r.url).host))];
+    expect(hosts.filter((host) => ![new URL(page.url()).host, "fonts.googleapis.com", "fonts.gstatic.com"].includes(host))).toEqual([]);
+  });
+});

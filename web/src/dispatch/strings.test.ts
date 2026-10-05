@@ -47,6 +47,22 @@ describe("dispatch strings", () => {
     expect([dt("en", "banner"), dt("fr", "banner")]).toEqual(["Decision support only. Your dispatch protocol governs.", "Aide à la décision seulement. Votre protocole de répartition prévaut."]);
   });
 
+  // The footer's promise, and what the board says when Listen is off so that the promise holds: a voice service
+  // would be sent the caller's town.
+  test("nothing about a call is stored or sent, word for word", () => {
+    expect([dt("en", "stored"), dt("fr", "stored")]).toEqual([
+      "Nothing about a call is stored or sent: the place, the answers and the drafts stay on this screen, and are gone when it closes.",
+      `Rien d’un appel n’est conservé ni envoyé${String.fromCharCode(0xa0)}: le lieu, les réponses et les brouillons restent sur cet écran et disparaissent à sa fermeture.`,
+    ]);
+  });
+
+  test("why Listen is off, word for word: no voice on the device for the language, and nothing goes to a voice service", () => {
+    expect([dt("en", "listen.off"), dt("fr", "listen.off")]).toEqual([
+      "Listen is off: this browser has no English voice that works on the device, and the board sends nothing to a voice service.",
+      `Écouter est désactivé${String.fromCharCode(0xa0)}: ce navigateur n’a pas de voix française qui fonctionne sur l’appareil, et le tableau n’envoie rien à un service vocal.`,
+    ]);
+  });
+
   test("the public message and the image say when to call 911, in both languages", () => {
     expect([dt("en", "msg.call"), dt("fr", "msg.call")]).toEqual([
       "If you see flames or smoke from a building or vehicle, call 911.",

@@ -11,6 +11,7 @@
   "place.hint": "Type a few letters, then press Enter.",
   "place.none": "No place matches. Check the spelling.",
   "place.none.replay": "No place matches. The replay has these towns: {towns}.",
+  "listen.off": "Listen is off: this browser has no English voice that works on the device, and the board sends nothing to a voice service.",
   "newCall": "New call",
   "answer.title": "Answer",
   "answer.empty": "Type the caller’s town to see the answer here.",

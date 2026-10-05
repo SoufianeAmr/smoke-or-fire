@@ -117,8 +117,41 @@ describe("the three questions, as a script", () => {
     expect(said(null)).toEqual(pit("not checked"));
     expect(outcome("/nearby-fire", "en", { status: "none" })).toEqual(pit("not checked"));
     expect(outcome("/nearby-fire", "en", ready(charlottetown))).toEqual(pit("not checked"));
-    expect(outcome("/nearby-fire", "fr", ready(charlottetown, "fr")).text.replace(/\s/g, " ")).toBe("Envoyez une équipe s’il est hors de contrôle, ou si le brûlage est interdit. Brûlage : non vérifié.");
+    expect(outcome("/nearby-fire", "fr", ready(charlottetown, "fr")).text.replace(/\s/g, " ")).toBe("Envoyez une équipe s’il est hors de contrôle, ou si le brûlage est interdit. Statut : non vérifié.");
   });
+
+  test("burning restricted to the night: the fire-pit result gives the hours, on the screen and in the notes, in English and French", () => {
+    const restricted = (lang: Lang) => ready(live(moncton, burnOf("restricted")), lang);
+    // Not Dispatch by itself: the call taker judges by the hour, so the hours are in the sentence.
+    expect(outcome("/nearby-fire", "en", restricted("en"))).toEqual({
+      kind: "firePit",
+      title: "Fire pit or bonfire nearby",
+      text: `Dispatch if it is out of control, or if burning is banned. Burn status: burning only from 8${NBSP}p.m. to 8${NBSP}a.m.`,
+    });
+    expect(outcome("/nearby-fire", "fr", restricted("fr"))).toEqual({
+      kind: "firePit",
+      title: "Foyer ou feu de camp à proximité",
+      // ("Statut", not "Brûlage": the status begins with that word.)
+      text: `Envoyez une équipe s’il est hors de contrôle, ou si le brûlage est interdit. Statut${NBSP}: brûlage seulement de 20${NBSP}h à 8${NBSP}h.`,
+    });
+    // The notes: the same sentence, and the hours again under the burn fact, in plain spaces.
+    const noted = (lang: Lang) => {
+      const answer = restricted(lang);
+      const answers: Answers = { q1: "no", q2: "haze", q3: "firePit" };
+      return callNotes(lang, (answer as Extract<Answer, { status: "ready" }>).board, answers, outcome(progress(answers).end!, lang, answer)).split("\n");
+    };
+    expect(noted("en")).toEqual(expect.arrayContaining([
+      "Burning: Restricted",
+      "- Burning only from 8 p.m. to 8 a.m.",
+      "Result: Fire pit or bonfire nearby. Dispatch if it is out of control, or if burning is banned. Burn status: burning only from 8 p.m. to 8 a.m.",
+    ]));
+    expect(noted("fr")).toEqual(expect.arrayContaining([
+      "Brûlage : restreint",
+      "- Brûlage seulement de 20 h à 8 h",
+      "Résultat : Foyer ou feu de camp à proximité. Envoyez une équipe s’il est hors de contrôle, ou si le brûlage est interdit. Statut : brûlage seulement de 20 h à 8 h.",
+    ]));
+  });
+
   test("no flames, haze or a smell, nothing burning: the trace's answer stands, in its own words", () => {
     const text = (answer: Answer, lang: Lang = "en") => outcome("/location", lang, answer);
     expect(text(ready(moncton))).toEqual({ kind: "noFire", title: "Caller reports no fire nearby", text: "This fits the known smoke from the Long Lake fire, 159 km away." });

@@ -163,7 +163,9 @@ export default function Dispatch() {
               <button type="button" aria-pressed={!isReplay} onClick={() => switchMode("live")}>{t("check.live")}</button>
               <button type="button" aria-pressed={isReplay} onClick={() => switchMode("replay")}>{t("check.replay")}</button>
             </div>
-            <ListenButton sentences={view ? view.voice : [d("voice.intro"), d("banner")]} />
+            {/* What is read names the caller's town, and nothing about a call is sent: only a voice on the device reads it.
+                Without one, Listen is off and says why. */}
+            <ListenButton sentences={view ? view.voice : [d("voice.intro"), d("banner")]} noVoice={d("listen.off")} />
             <LangToggle />
           </div>
         </header>

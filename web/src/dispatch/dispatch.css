@@ -31,6 +31,10 @@ html:has(.dispatch){scroll-padding-bottom:16px}
 .d-head h1{font-size:34px;font-weight:800;line-height:1.1;letter-spacing:-0.02em}
 .d-head-words p{margin-top:4px;color:#4F5561;text-wrap:pretty}
 .d-head-tools{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+/* Why Listen is off: a row of its own under the tools, as wide as they are (no width of its own, so the sentence
+   never widens the row and pushes the title). Drawn after the language switch, which stays beside Listen; in the
+   page it still follows its button, so it is read with it. */
+.d-head-tools .listen-off{order:1;flex:1 0 100%;width:0;min-width:100%;text-wrap:pretty}
 /* Live or replay: the selected one white with a navy outline, as on the public app's first screen. */
 .d-modes{display:flex;gap:4px;padding:4px;border-radius:18px;background:#EDE6DA}
 .d-modes button{min-height:48px;padding:4px 14px;border:0;border-radius:14px;background:transparent;color:#1A1D21;font-size:18px;font-weight:700;line-height:1.25;cursor:pointer}
